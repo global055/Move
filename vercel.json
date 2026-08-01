@@ -1,5 +1,13 @@
 {
   "version": 2,
   "outputDirectory": "frontend",
-  "cleanUrls": true
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/admin-dashboard", "destination": "/admin-dashboard.html" },
+    { "source": "/admin-login", "destination": "/admin-login.html" },
+    { "source": "/track", "destination": "/track.html" },
+    { "source": "/services", "destination": "/services.html" },
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/contact", "destination": "/contact.html" }
+  ]
 }
