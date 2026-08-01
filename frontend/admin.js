@@ -89,14 +89,45 @@ function handleTrackingNumberBlur(event) {
 function populateShipmentForm(shipment) {
   setVal('shipmentId', shipment._id);
   setVal('trackingNumber', shipment.trackingNumber);
-  setVal('senderName', shipment.senderName);
-  setVal('receiverName', shipment.receiverName);
+  setVal('senderName', shipment.senderName || shipment.shipper?.name || '');
+  setVal('receiverName', shipment.receiverName || shipment.receiver?.name || '');
   setVal('origin', shipment.originName);
   setVal('destination', shipment.destinationName);
   setVal('estimatedDelivery', shipment.estimatedDelivery);
-  setVal('status', shipment.status);
+  setVal('status', shipment.status || 'In Transit');
   setVal('weight', shipment.weight);
   setVal('description', shipment.description);
+  setVal('currentLocation', shipment.currentLocationName || shipment.currentLocation || '');
+
+  setVal('shipperCompany', shipment.shipper?.company || '');
+  setVal('shipperName', shipment.shipper?.name || shipment.senderName || '');
+  setVal('shipperPhone', shipment.shipper?.phone || '');
+  setVal('shipperEmail', shipment.shipper?.email || '');
+  setVal('shipperAddress', shipment.shipper?.address || '');
+  setVal('shipperCity', shipment.shipper?.city || '');
+  setVal('shipperState', shipment.shipper?.state || '');
+  setVal('shipperPostalCode', shipment.shipper?.postalCode || '');
+  setVal('shipperCountry', shipment.shipper?.country || '');
+
+  setVal('receiverCompany', shipment.receiver?.company || '');
+  setVal('receiverPhone', shipment.receiver?.phone || '');
+  setVal('receiverEmail', shipment.receiver?.email || '');
+  setVal('receiverAddress', shipment.receiver?.address || '');
+  setVal('receiverCity', shipment.receiver?.city || '');
+  setVal('receiverState', shipment.receiver?.state || '');
+  setVal('receiverPostalCode', shipment.receiver?.postalCode || '');
+  setVal('receiverCountry', shipment.receiver?.country || '');
+
+  setVal('cargoType', shipment.cargo?.type || '');
+  setVal('cargoDescription', shipment.cargo?.description || '');
+  setVal('cargoPieces', shipment.cargo?.pieces ?? '');
+  setVal('cargoWeight', shipment.cargo?.weight ?? '');
+  setVal('cargoVolume', shipment.cargo?.volume ?? '');
+  setVal('cargoDimensions', shipment.cargo?.dimensions || '');
+  setVal('cargoValue', shipment.cargo?.value ?? '');
+  setVal('cargoIncoterms', shipment.cargo?.incoterms || '');
+  setVal('cargoDangerousGoods', shipment.cargo?.dangerousGoods == null ? '' : String(shipment.cargo.dangerousGoods));
+  setVal('cargoInstructions', shipment.cargo?.specialInstructions || '');
 
   if (shipment.coordinates) {
     setVal('originLat', shipment.coordinates.origin?.lat);
@@ -109,10 +140,10 @@ function populateShipmentForm(shipment) {
       'currentLocation',
       shipment.coordinates.currentLocation
         ? `${shipment.coordinates.currentLocation.lat}, ${shipment.coordinates.currentLocation.lng}`
-        : shipment.currentLocation || ''
+        : shipment.currentLocationName || shipment.currentLocation || ''
     );
   } else {
-    setVal('currentLocation', shipment.currentLocation || '');
+    setVal('currentLocation', shipment.currentLocationName || shipment.currentLocation || '');
   }
 
   renderShipmentDetails(shipment);
@@ -183,41 +214,72 @@ async function editShipment(trackingNumber) {
     const result = await response.json();
 
     if (result.success) {
-      const s = result.data;
-
-      setVal('shipmentId', s._id);
-      setVal('trackingNumber', s.trackingNumber);
-      setVal('senderName', s.senderName);
-      setVal('receiverName', s.receiverName);
-      setVal('origin', s.originName);
-      setVal('destination', s.destinationName);
-      setVal('estimatedDelivery', s.estimatedDelivery);
-      setVal('status', s.status);
-      setVal('weight', s.weight);
-      setVal('description', s.description);
-
-      if (s.coordinates) {
-        setVal('originLat', s.coordinates.origin?.lat);
-        setVal('originLng', s.coordinates.origin?.lng);
-        setVal('destLat', s.coordinates.destination?.lat);
-        setVal('destLng', s.coordinates.destination?.lng);
-        setVal('currentLat', s.coordinates.currentLocation?.lat);
-        setVal('currentLng', s.coordinates.currentLocation?.lng);
-        setVal(
-          'currentLocation',
-          s.coordinates.currentLocation
-            ? `${s.coordinates.currentLocation.lat}, ${s.coordinates.currentLocation.lng}`
-            : s.currentLocation || ''
-        );
-      } else {
-        setVal('currentLocation', s.currentLocation || '');
-      }
-
+      populateShipmentForm(result.data);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   } catch (error) {
     console.error('Error fetching shipment:', error);
   }
+}
+
+function buildShipmentPayload() {
+  const weightValue = parseFloat(getVal('weight'));
+  const cargoWeightValue = parseFloat(getVal('cargoWeight'));
+  const cargoVolumeValue = parseFloat(getVal('cargoVolume'));
+  const cargoValueValue = parseFloat(getVal('cargoValue'));
+  const cargoPiecesValue = parseInt(getVal('cargoPieces'), 10);
+  const dangerousGoodsValue = getVal('cargoDangerousGoods');
+
+  return {
+    trackingNumber: getVal('trackingNumber'),
+    senderName: getVal('senderName'),
+    receiverName: getVal('receiverName'),
+    originName: getVal('origin'),
+    destinationName: getVal('destination'),
+    estimatedDelivery: getVal('estimatedDelivery'),
+    status: getVal('status') || 'In Transit',
+    weight: Number.isFinite(weightValue) ? weightValue : null,
+    description: getVal('description'),
+    currentLocationName: getVal('currentLocation'),
+    coordinates: {
+      origin: getCoords('originLat', 'originLng'),
+      destination: getCoords('destLat', 'destLng'),
+      currentLocation: getCoords('currentLat', 'currentLng')
+    },
+    shipper: {
+      company: getVal('shipperCompany'),
+      name: getVal('shipperName'),
+      phone: getVal('shipperPhone'),
+      email: getVal('shipperEmail'),
+      address: getVal('shipperAddress'),
+      city: getVal('shipperCity'),
+      state: getVal('shipperState'),
+      postalCode: getVal('shipperPostalCode'),
+      country: getVal('shipperCountry')
+    },
+    receiver: {
+      company: getVal('receiverCompany'),
+      phone: getVal('receiverPhone'),
+      email: getVal('receiverEmail'),
+      address: getVal('receiverAddress'),
+      city: getVal('receiverCity'),
+      state: getVal('receiverState'),
+      postalCode: getVal('receiverPostalCode'),
+      country: getVal('receiverCountry')
+    },
+    cargo: {
+      type: getVal('cargoType'),
+      description: getVal('cargoDescription'),
+      pieces: Number.isFinite(cargoPiecesValue) ? cargoPiecesValue : null,
+      weight: Number.isFinite(cargoWeightValue) ? cargoWeightValue : null,
+      volume: Number.isFinite(cargoVolumeValue) ? cargoVolumeValue : null,
+      dimensions: getVal('cargoDimensions'),
+      value: Number.isFinite(cargoValueValue) ? cargoValueValue : null,
+      incoterms: getVal('cargoIncoterms'),
+      dangerousGoods: dangerousGoodsValue === 'true',
+      specialInstructions: getVal('cargoInstructions')
+    }
+  };
 }
 
 async function saveShipment() {
@@ -231,22 +293,8 @@ async function saveShipment() {
   const method = existingShipment ? 'PUT' : 'POST';
   const endpoint = existingShipment ? `${API_URL}/${encodeURIComponent(trackingNumber)}` : API_URL;
 
-  const payload = {
-    trackingNumber,
-    senderName: getVal('senderName'),
-    receiverName: getVal('receiverName'),
-    originName: getVal('origin'),
-    destinationName: getVal('destination'),
-    estimatedDelivery: getVal('estimatedDelivery'),
-    status: getVal('status') || 'In Transit',
-    weight: parseFloat(getVal('weight')) || null,
-    description: getVal('description'),
-    coordinates: {
-      origin: getCoords('originLat', 'originLng'),
-      destination: getCoords('destLat', 'destLng'),
-      currentLocation: getCoords('currentLat', 'currentLng')
-    }
-  };
+  const payload = buildShipmentPayload();
+  payload.trackingNumber = trackingNumber;
 
   const validationError = validateShipmentPayload(payload);
   if (validationError) {
@@ -330,16 +378,27 @@ function renderShipmentDetails(shipment) {
   }
 
   const currentLocation = shipment.coordinates?.currentLocation;
+  const timeline = Array.isArray(shipment.timeline) && shipment.timeline.length
+    ? shipment.timeline.map((entry) => `
+        <div class="details-row"><strong>${escapeHtml(entry.status || 'Update')}:</strong> ${escapeHtml(entry.description || 'No details')} <span style="color: var(--muted);">${escapeHtml(entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '')}</span></div>
+      `).join('')
+    : '<div class="details-row">No tracking timeline yet.</div>';
+
   detailsEl.innerHTML = `
     <div class="details-row"><strong>Tracking:</strong> ${escapeHtml(shipment.trackingNumber || 'N/A')}</div>
-    <div class="details-row"><strong>Sender:</strong> ${escapeHtml(shipment.senderName || 'N/A')}</div>
-    <div class="details-row"><strong>Receiver:</strong> ${escapeHtml(shipment.receiverName || 'N/A')}</div>
+    <div class="details-row"><strong>Sender:</strong> ${escapeHtml(shipment.senderName || shipment.shipper?.name || 'N/A')}</div>
+    <div class="details-row"><strong>Receiver:</strong> ${escapeHtml(shipment.receiverName || shipment.receiver?.name || 'N/A')}</div>
     <div class="details-row"><strong>Route:</strong> ${escapeHtml(shipment.originName || 'N/A')} → ${escapeHtml(shipment.destinationName || 'N/A')}</div>
     <div class="details-row"><strong>Status:</strong> ${escapeHtml(shipment.status || 'N/A')}</div>
     <div class="details-row"><strong>ETA:</strong> ${escapeHtml(shipment.estimatedDelivery || 'N/A')}</div>
     <div class="details-row"><strong>Current Location:</strong> ${currentLocation ? `${currentLocation.lat}, ${currentLocation.lng}` : 'N/A'}</div>
     <div class="details-row"><strong>Weight:</strong> ${shipment.weight != null ? `${shipment.weight} kg` : 'N/A'}</div>
     <div class="details-row"><strong>Description:</strong> ${escapeHtml(shipment.description || 'N/A')}</div>
+    <div class="details-row"><strong>Shipper:</strong> ${escapeHtml(shipment.shipper?.company || 'N/A')}</div>
+    <div class="details-row"><strong>Receiver:</strong> ${escapeHtml(shipment.receiver?.company || 'N/A')}</div>
+    <div class="details-row"><strong>Cargo:</strong> ${escapeHtml(shipment.cargo?.type || 'N/A')}</div>
+    <div class="details-row"><strong>Timeline:</strong></div>
+    ${timeline}
   `;
 }
 
@@ -667,7 +726,10 @@ function resetShipmentForm() {
     'shipmentId', 'trackingNumber', 'senderName', 'receiverName',
     'origin', 'destination', 'estimatedDelivery', 'status',
     'originLat', 'originLng', 'destLat', 'destLng',
-    'currentLat', 'currentLng', 'currentLocation', 'weight', 'description'
+    'currentLat', 'currentLng', 'currentLocation', 'weight', 'description',
+    'shipperCompany', 'shipperName', 'shipperPhone', 'shipperEmail', 'shipperAddress', 'shipperCity', 'shipperState', 'shipperPostalCode', 'shipperCountry',
+    'receiverCompany', 'receiverPhone', 'receiverEmail', 'receiverAddress', 'receiverCity', 'receiverState', 'receiverPostalCode', 'receiverCountry',
+    'cargoType', 'cargoDescription', 'cargoPieces', 'cargoWeight', 'cargoVolume', 'cargoDimensions', 'cargoValue', 'cargoIncoterms', 'cargoDangerousGoods', 'cargoInstructions'
   ];
   fields.forEach((id) => setVal(id, ''));
   setVal('status', 'Order Received');

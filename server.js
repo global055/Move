@@ -93,8 +93,50 @@ const shipmentSchema = new mongoose.Schema({
   originName: String,
   destinationName: String,
   estimatedDelivery: { type: String, default: 'Pending' },
+  currentLocationName: String,
   weight: Number,
   description: String,
+  shipper: {
+    company: String,
+    name: String,
+    phone: String,
+    email: String,
+    address: String,
+    city: String,
+    state: String,
+    postalCode: String,
+    country: String
+  },
+  receiver: {
+    company: String,
+    name: String,
+    phone: String,
+    email: String,
+    address: String,
+    city: String,
+    state: String,
+    postalCode: String,
+    country: String
+  },
+  cargo: {
+    type: String,
+    description: String,
+    weight: Number,
+    volume: Number,
+    pieces: Number,
+    dimensions: String,
+    value: Number,
+    incoterms: String,
+    specialInstructions: String,
+    dangerousGoods: Boolean
+  },
+  timeline: [{
+    status: String,
+    location: String,
+    description: String,
+    timestamp: { type: Date, default: Date.now },
+    updatedBy: String
+  }],
   coordinates: {
     origin: { lat: Number, lng: Number },
     currentLocation: { lat: Number, lng: Number },
@@ -243,6 +285,57 @@ const deleteShipmentInMemory = async (trackingNumber) => {
   return inMemoryShipments.delete(normalizedTrackingNumber);
 };
 
+const buildTimelineEntry = (payload = {}, existingShipment = null) => ({
+  status: payload.status || existingShipment?.status || 'In Transit',
+  location: payload.currentLocationName || existingShipment?.currentLocationName || payload.currentLocation || existingShipment?.currentLocation || '',
+  description: payload.description || existingShipment?.description || 'Shipment updated',
+  timestamp: new Date(),
+  updatedBy: payload.updatedBy || 'admin'
+});
+
+const normalizeShipmentPayload = (payload = {}, existingShipment = null, isCreate = false) => {
+  const normalizedPayload = {
+    ...payload,
+    senderName: payload.senderName || existingShipment?.senderName || payload.shipper?.name || '',
+    receiverName: payload.receiverName || existingShipment?.receiverName || payload.receiver?.name || '',
+    shipper: {
+      ...(existingShipment?.shipper || {}),
+      ...(payload.shipper || {})
+    },
+    receiver: {
+      ...(existingShipment?.receiver || {}),
+      ...(payload.receiver || {})
+    },
+    cargo: {
+      ...(existingShipment?.cargo || {}),
+      ...(payload.cargo || {})
+    },
+    coordinates: {
+      ...(existingShipment?.coordinates || {}),
+      ...(payload.coordinates || {})
+    }
+  };
+
+  if (!normalizedPayload.originName && existingShipment?.originName) {
+    normalizedPayload.originName = existingShipment.originName;
+  }
+  if (!normalizedPayload.destinationName && existingShipment?.destinationName) {
+    normalizedPayload.destinationName = existingShipment.destinationName;
+  }
+
+  if (isCreate) {
+    normalizedPayload.timeline = Array.isArray(payload.timeline) && payload.timeline.length > 0
+      ? payload.timeline
+      : [buildTimelineEntry(normalizedPayload, null)];
+    return normalizedPayload;
+  }
+
+  const existingTimeline = Array.isArray(existingShipment?.timeline) ? existingShipment.timeline : [];
+  const nextTimeline = [...existingTimeline, buildTimelineEntry(normalizedPayload, existingShipment)];
+  normalizedPayload.timeline = nextTimeline;
+  return normalizedPayload;
+};
+
 // Admin auth routes
 app.post('/api/admin/login', async (req, res) => {
   try {
@@ -326,12 +419,14 @@ app.get('/api/shipments/:trackingNumber', async (req, res) => {
 // 4. API Route: Create / Seed a New Shipment (Admin action)
 app.post('/api/shipments', authenticateAdmin, async (req, res) => {
   try {
+    const shipmentPayload = normalizeShipmentPayload(req.body, null, true);
+
     if (!isMongoAvailable()) {
-      const shipment = await saveShipmentToMemory(req.body);
+      const shipment = await saveShipmentToMemory(shipmentPayload);
       return res.status(201).json({ success: true, data: shipment });
     }
 
-    const shipment = new Shipment(req.body);
+    const shipment = new Shipment(shipmentPayload);
     await shipment.save();
     res.status(201).json({ success: true, data: shipment });
   } catch (err) {
@@ -348,13 +443,18 @@ app.post('/api/shipments', authenticateAdmin, async (req, res) => {
 // ==========================================
 app.put('/api/shipments/:trackingNumber', authenticateAdmin, async (req, res) => {
   try {
+    const existingShipment = isMongoAvailable()
+      ? await Shipment.findOne({ trackingNumber: req.params.trackingNumber })
+      : lookupShipmentInMemory(req.params.trackingNumber);
+
+    const shipmentPayload = normalizeShipmentPayload(req.body, existingShipment, false);
     const updatedShipment = isMongoAvailable()
       ? await Shipment.findOneAndUpdate(
           { trackingNumber: req.params.trackingNumber },
-          req.body,
+          shipmentPayload,
           { new: true } // returns the updated document
         )
-      : await updateShipmentInMemory(req.params.trackingNumber, req.body);
+      : await updateShipmentInMemory(req.params.trackingNumber, shipmentPayload);
 
     if (!updatedShipment) {
       return res.status(404).json({ success: false, message: 'Shipment not found' });

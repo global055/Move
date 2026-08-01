@@ -104,6 +104,55 @@
               <label>Weight (kg)<input id="weight" type="number" step="0.01" /></label>
               <label>Description<textarea id="description" rows="2" style="font-family: inherit;"></textarea></label>
             </div>
+
+            <div class="form-section">
+              <h3 class="form-section-title">Shipper information</h3>
+              <div class="form-grid">
+                <label>Shipper company<input id="shipperCompany" type="text" /></label>
+                <label>Shipper name<input id="shipperName" type="text" /></label>
+                <label>Shipper phone<input id="shipperPhone" type="text" /></label>
+                <label>Shipper email<input id="shipperEmail" type="email" /></label>
+                <label>Shipper address<input id="shipperAddress" type="text" /></label>
+                <label>Shipper city<input id="shipperCity" type="text" /></label>
+                <label>Shipper state<input id="shipperState" type="text" /></label>
+                <label>Shipper postal code<input id="shipperPostalCode" type="text" /></label>
+                <label>Shipper country<input id="shipperCountry" type="text" /></label>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3 class="form-section-title">Receiver information</h3>
+              <div class="form-grid">
+                <label>Receiver company<input id="receiverCompany" type="text" /></label>
+                <label>Receiver phone<input id="receiverPhone" type="text" /></label>
+                <label>Receiver email<input id="receiverEmail" type="email" /></label>
+                <label>Receiver address<input id="receiverAddress" type="text" /></label>
+                <label>Receiver city<input id="receiverCity" type="text" /></label>
+                <label>Receiver state<input id="receiverState" type="text" /></label>
+                <label>Receiver postal code<input id="receiverPostalCode" type="text" /></label>
+                <label>Receiver country<input id="receiverCountry" type="text" /></label>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3 class="form-section-title">Cargo details</h3>
+              <div class="form-grid">
+                <label>Cargo type<input id="cargoType" type="text" /></label>
+                <label>Cargo description<input id="cargoDescription" type="text" /></label>
+                <label>Pieces<input id="cargoPieces" type="number" min="1" /></label>
+                <label>Weight (kg)<input id="cargoWeight" type="number" step="0.01" /></label>
+                <label>Volume (m³)<input id="cargoVolume" type="number" step="0.01" /></label>
+                <label>Dimensions<input id="cargoDimensions" type="text" /></label>
+                <label>Declared value<input id="cargoValue" type="number" step="0.01" /></label>
+                <label>Incoterms<input id="cargoIncoterms" type="text" /></label>
+                <label>Dangerous goods<select id="cargoDangerousGoods">
+                  <option value="">Select</option>
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select></label>
+                <label>Special instructions<textarea id="cargoInstructions" rows="2" style="font-family: inherit;"></textarea></label>
+              </div>
+            </div>
             <div class="form-actions">
               <button type="submit" class="btn btn-primary">Save shipment</button>
               <button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
