@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: global-movement-backend
+    env: node
+    branch: main
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGODB_URI
+      - key: MONGO_DB_NAME
+      - key: ADMIN_EMAIL
+      - key: ADMIN_PASSWORD
+      - key: CORS_ORIGIN
