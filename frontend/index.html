@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Global Movement | Premium Global Logistics</title>
+    <meta name="description" content="Global Movement provides secure global freight forwarding, air cargo, sea freight, and real-time shipment tracking." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="index.html">
+        <img src="imges/logo.png" alt="Global Movement logo" loading="eager" />
+        <span>Global Movement</span>
+      </a>
+      <button class="mobile-nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <nav class="nav-links" id="siteNav">
+        <a href="index.html">Home</a>
+        <a href="services.html">Services</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a class="nav-cta" href="#tracking">Track Shipment</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero-section">
+        <div class="hero-copy reveal">
+          <p class="eyebrow">Global Movement Logistics</p>
+          <h1>Fast. Secure. Global Logistics.</h1>
+          <p>Reliable freight forwarding, air cargo, sea freight, and package tracking worldwide — all delivered with precision and care.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#tracking">Track Shipment</a>
+            <a class="btn btn-secondary" href="contact.html">Get a Quote</a>
+          </div>
+          <div class="hero-badges">
+            <span>24/7 Operations</span>
+            <span>Door-to-Door Visibility</span>
+            <span>Global Compliance</span>
+          </div>
+        </div>
+
+        <div class="hero-visual reveal">
+          <img src="imges/Our Truck And Aircraft.jpeg" alt="Cargo truck and aircraft in logistics operations" loading="eager" />
+          <div class="hero-panel-card">
+            <p>Live network visibility</p>
+            <strong>Chicago → Singapore</strong>
+            <span>Route optimized • real-time milestone updates</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="trust-bar reveal">
+        <span>Trusted by industry leaders</span>
+        <strong>Air freight</strong>
+        <strong>Road transport</strong>
+        <strong>Sea freight</strong>
+        <strong>Express delivery</strong>
+      </section>
+
+      <section id="tracking" class="tracking-section">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Live tracking</p>
+          <h2>Track your shipment like a premium logistics partner.</h2>
+          <p>Enter your reference number to view the latest status, current route details, and estimated arrival.</p>
+        </div>
+        <div class="tracking-grid">
+          <div class="tracking-form-card reveal">
+            <h3>Enter your tracking code</h3>
+            <form id="trackingForm">
+              <div class="tracking-number-wrapper">
+                <input id="trackingInput" type="text" placeholder="Select existing or create new" list="trackingNumbers" />
+                <datalist id="trackingNumbers"></datalist>
+              </div>
+              <button type="submit">Track now</button>
+            </form>
+            <div id="statusBox" class="status-box">
+              <p>Awaiting shipment details...</p>
+            </div>
+          </div>
+          <div class="tracking-info-card reveal">
+            <h3>What you can expect</h3>
+            <ul>
+              <li>Real-time milestone updates with end-to-end transparency</li>
+              <li>Dedicated support for urgent and time-sensitive freight</li>
+              <li>Trusted delivery estimates and proactive communication</li>
+            </ul>
+          </div>
+        </div>
+        <div id="homepage-map" class="homepage-map hidden" aria-hidden="true"></div>
+      </section>
+
+      <section id="services" class="services-section">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Our services</p>
+          <h2>Integrated logistics solutions built for global commerce.</h2>
+        </div>
+        <div class="services-grid">
+          <article class="service-card reveal">
+            <div class="service-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M3 7h14v8H3z"/><path d="M17 10h3l2 2v3h-2"/></svg>
+            </div>
+            <h3>Air Freight</h3>
+            <p>Fast global dispatch for urgent cargo and critical supply chain needs.</p>
+          </article>
+          <article class="service-card reveal">
+            <div class="service-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M3 8h14l2 3v5H3z"/><path d="M8 16v2m6-2v2"/></svg>
+            </div>
+            <h3>Road Transport</h3>
+            <p>Reliable domestic and regional distribution with full route visibility.</p>
+          </article>
+          <article class="service-card reveal">
+            <div class="service-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 8h16v8H4z"/><path d="M8 8V6h8v2"/></svg>
+            </div>
+            <h3>Sea Freight</h3>
+            <p>Cost-efficient container shipping for large-scale international freight.</p>
+          </article>
+          <article class="service-card reveal">
+            <div class="service-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 8h16v8H4z"/><path d="M8 16l4-4 4 4"/></svg>
+            </div>
+            <h3>Express Delivery</h3>
+            <p>Priority handling for time-sensitive parcels and urgent documents.</p>
+          </article>
+          <article class="service-card reveal">
+            <div class="service-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M3 7h18v10H3z"/><path d="M7 7V5h10v2"/></svg>
+            </div>
+            <h3>Warehousing</h3>
+            <p>Secure storage solutions with inventory management and cross-docking.</p>
+          </article>
+          <article class="service-card reveal">
+            <div class="service-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 8l8-4 8 4v8l-8 4-8-4z"/><path d="M12 4v16"/></svg>
+            </div>
+            <h3>Customs Clearance</h3>
+            <p>Expert support for customs compliance, documentation, and import control.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="features-section">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Why Global Movement</p>
+          <h2>Premium service, built around your cargo and customer experience.</h2>
+        </div>
+        <div class="features-grid">
+          <article class="feature-card reveal">
+            <h3>Real-Time Tracking</h3>
+            <p>Monitor every milestone from pickup to final delivery with live visibility.</p>
+          </article>
+          <article class="feature-card reveal">
+            <h3>Fast Delivery</h3>
+            <p>Rapid dispatch options for urgent, high-priority shipments and tight schedules.</p>
+          </article>
+          <article class="feature-card reveal">
+            <h3>Secure Packaging</h3>
+            <p>Protect your cargo with professional handling and quality-controlled packing.</p>
+          </article>
+          <article class="feature-card reveal">
+            <h3>Global Coverage</h3>
+            <p>Reach markets across continents with a connected international network.</p>
+          </article>
+          <article class="feature-card reveal">
+            <h3>Professional Support</h3>
+            <p>Expert teams guide each shipment from planning through delivery.</p>
+          </article>
+          <article class="feature-card reveal">
+            <h3>Reliable Logistics</h3>
+            <p>Dependable coordination powered by modern operations and trusted partners.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="stats-section">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Global performance</p>
+          <h2>Built for scale, trusted by businesses and individuals worldwide.</h2>
+        </div>
+        <div class="stats-grid">
+          <article class="stat-card reveal">
+            <h3 class="stat-number" data-target="120">0</h3>
+            <p>Countries Served</p>
+          </article>
+          <article class="stat-card reveal">
+            <h3 class="stat-number" data-target="50000">0</h3>
+            <p>Deliveries Completed</p>
+          </article>
+          <article class="stat-card reveal">
+            <h3 class="stat-number" data-target="8000">0</h3>
+            <p>Happy Clients</p>
+          </article>
+          <article class="stat-card reveal">
+            <h3 class="stat-number" data-target="15">0</h3>
+            <p>Years Experience</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="testimonials-section">
+        <div class="section-heading reveal">
+          <p class="eyebrow">Client stories</p>
+          <h2>Trusted by companies that need precision under pressure.</h2>
+        </div>
+        <div class="testimonial-grid">
+          <article class="testimonial-card reveal">
+            <div class="avatar">AL</div>
+            <p>“Global Movement kept our urgent shipment moving with clear updates and flawless handoffs.”</p>
+            <strong>Alicia L.</strong>
+            <span>Operations Director</span>
+          </article>
+          <article class="testimonial-card reveal">
+            <div class="avatar">MR</div>
+            <p>“Their team brought calm, transparency, and speed to a complex cross-border delivery.”</p>
+            <strong>Marcus R.</strong>
+            <span>Retail Supply Lead</span>
+          </article>
+          <article class="testimonial-card reveal">
+            <div class="avatar">SK</div>
+            <p>“From customs to final mile, every step was handled with professionalism and care.”</p>
+            <strong>Sophia K.</strong>
+            <span>Manufacturing Partner</span>
+          </article>
+        </div>
+      </section>
+
+      <section class="cta-banner reveal">
+        <div>
+          <p class="eyebrow">Ready to move</p>
+          <h2>Ready to Ship Worldwide?</h2>
+        </div>
+        <div class="cta-actions">
+          <a class="btn btn-primary" href="track.html">Track Package</a>
+          <a class="btn btn-secondary" href="contact.html">Contact Us</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-brand">
+        <img src="imges/logo.png" alt="Global Movement logo" loading="lazy" />
+        <div>
+          <h3>Global Movement</h3>
+          <p>Premium logistics support for fast, secure, and dependable global movement.</p>
+        </div>
+      </div>
+      <div class="footer-links">
+        <div>
+          <h4>Quick Links</h4>
+          <a href="index.html">Home</a>
+          <a href="services.html">Services</a>
+          <a href="about.html">About</a>
+          <a href="contact.html">Contact</a>
+        </div>
+        <div>
+          <h4>Services</h4>
+          <a href="services.html">Air Freight</a>
+          <a href="services.html">Road Transport</a>
+          <a href="services.html">Sea Freight</a>
+        </div>
+        <div>
+          <h4>Contact</h4>
+          <a href="mailto:info@globalmovement.com">info@globalmovement.com</a>
+          <a href="tel:+18005550199">+1 (800) 555-0199</a>
+        </div>
+      </div>
+      <div class="footer-social" aria-label="Social links">
+        <a href="#" aria-label="LinkedIn">in</a>
+        <a href="#" aria-label="Instagram">◎</a>
+        <a href="#" aria-label="X">✕</a>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin></script>
+    
+    <script id="chatway" async="true" src="https://cdn.chatway.app/widget.js?id=ErM2lKYtFwBk"></script>
+  </body>
+</html>

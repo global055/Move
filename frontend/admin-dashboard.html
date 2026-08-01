@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard | Global Movement</title>
+    <link rel="stylesheet" href="admin.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  </head>
+  <body data-page="dashboard">
+    <div class="dashboard-shell">
+      <aside class="sidebar">
+        <div class="brand-block">
+          <div class="brand-badge">GM</div>
+          <div>
+            <p class="eyebrow">Operations Hub</p>
+            <h2>Global Movement</h2>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a class="active" href="#overview">Overview</a>
+          <a href="#shipments">Shipments</a>
+          <a href="#mapSection">Map</a>
+          <a href="#history">Tracking History</a>
+        </nav>
+
+        <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+      </aside>
+
+      <main class="dashboard-main">
+        <header class="dashboard-topbar">
+          <div>
+            <p class="eyebrow">Admin Control Center</p>
+            <h1>Shipment management dashboard</h1>
+          </div>
+          <div id="adminUserBadge" class="user-badge">Loading...</div>
+        </header>
+
+        <section id="overview" class="cards-grid">
+          <article class="card stat-card">
+            <p>Total shipments</p>
+            <h3 id="totalShipments">0</h3>
+          </article>
+          <article class="card stat-card">
+            <p>Pending</p>
+            <h3 id="pendingShipments">0</h3>
+          </article>
+          <article class="card stat-card">
+            <p>In Transit</p>
+            <h3 id="inTransitShipments">0</h3>
+          </article>
+          <article class="card stat-card">
+            <p>Delivered</p>
+            <h3 id="deliveredShipments">0</h3>
+          </article>
+          <article class="card stat-card">
+            <p>Cancelled</p>
+            <h3 id="cancelledShipments">0</h3>
+          </article>
+        </section>
+
+        <section id="shipments" class="card panel-card">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Operations</p>
+              <h2>Shipment manager</h2>
+            </div>
+            <div class="action-btns">
+              <button id="seedSampleBtn" class="btn btn-secondary" type="button">Seed sample</button>
+              <button id="resetFormBtn" class="btn btn-secondary">New shipment</button>
+            </div>
+          </div>
+
+          <form id="shipmentForm" class="shipment-form">
+            <input type="hidden" id="shipmentId" />
+            <div class="form-grid">
+              <label>Tracking number
+                <div class="tracking-number-wrapper">
+                  <input id="trackingNumber" type="text" placeholder="Select existing or create new" list="trackingNumbers" />
+                  <datalist id="trackingNumbers"></datalist>
+                </div>
+              </label>
+              <label>Sender<input id="senderName" type="text" required /></label>
+              <label>Receiver<input id="receiverName" type="text" required /></label>
+              <label>Origin<input id="origin" type="text" required /></label>
+              <label>Destination<input id="destination" type="text" required /></label>
+              <label>Estimated delivery<input id="estimatedDelivery" type="date" required /></label>
+              <label>Status<select id="status">
+                <option>Order Received</option>
+                <option>Processing</option>
+                <option>In Transit</option>
+                <option>Arriving Soon</option>
+                <option>Delivered</option>
+                <option>Cancelled</option>
+              </select></label>
+              <label>Origin latitude<input id="originLat" type="number" step="0.0001" /></label>
+              <label>Origin longitude<input id="originLng" type="number" step="0.0001" /></label>
+              <label>Destination latitude<input id="destLat" type="number" step="0.0001" /></label>
+              <label>Destination longitude<input id="destLng" type="number" step="0.0001" /></label>
+              <label>Current latitude<input id="currentLat" type="number" step="0.0001" /></label>
+              <label>Current longitude<input id="currentLng" type="number" step="0.0001" /></label>
+              <label>Current location<input id="currentLocation" type="text" /></label>
+              <label>Weight (kg)<input id="weight" type="number" step="0.01" /></label>
+              <label>Description<textarea id="description" rows="2" style="font-family: inherit;"></textarea></label>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save shipment</button>
+              <button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card panel-card">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Search & filter</p>
+              <h2>Shipment list</h2>
+            </div>
+          </div>
+          <div class="toolbar">
+            <input id="searchInput" type="text" placeholder="Search tracking number" />
+            <select id="statusFilter">
+              <option value="">All statuses</option>
+              <option>Order Received</option>
+              <option>Processing</option>
+              <option>In Transit</option>
+              <option>Arriving Soon</option>
+              <option>Delivered</option>
+              <option>Cancelled</option>
+            </select>
+          </div>
+          <div class="table-wrap">
+            <table id="shipmentsTable">
+              <thead>
+                <tr>
+                  <th>Tracking</th>
+                  <th>Customer</th>
+                  <th>Route</th>
+                  <th>Status</th>
+                  <th>ETA</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="shipmentsTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="mapSection" class="card panel-card hidden">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Map view</p>
+              <h2>Live shipment routes</h2>
+            </div>
+          </div>
+          <div id="shipmentMap" class="shipment-map"></div>
+        </section>
+
+        <section id="history" class="card panel-card">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Timeline</p>
+              <h2>Shipment details</h2>
+            </div>
+          </div>
+          <div id="shipmentDetails" class="details-box">Select a shipment to view its tracking history.</div>
+        </section>
+      </main>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="admin.js"></script>
+  </body>
+</html>

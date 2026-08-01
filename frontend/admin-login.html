@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login | Global Movement</title>
+    <link rel="stylesheet" href="admin.css" />
+  </head>
+  <body class="auth-page">
+    <div class="auth-shell">
+      <div class="auth-card">
+        <div class="auth-brand">
+          <div class="brand-badge">GM</div>
+          <div>
+            <p class="eyebrow">Global Movement</p>
+            <h1>Admin Access</h1>
+          </div>
+        </div>
+
+        <form id="adminLoginForm" class="auth-form">
+          <label>
+            Email
+            <input id="adminEmail" type="email" placeholder="admin@example.com" required />
+          </label>
+          <label>
+            Password
+            <input id="adminPassword" type="password" placeholder="Enter password" required />
+          </label>
+          <button type="submit" class="btn btn-primary">Sign in</button>
+        </form>
+
+        <p id="authMessage" class="auth-message"></p>
+        <p class="auth-hint">Sign in with your backend admin credentials. Default admin email: globalmovement05@gmail.com</p>
+      </div>
+    </div>
+
+    <script src="admin-auth.js"></script>
+  </body>
+</html>
