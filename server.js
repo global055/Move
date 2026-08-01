@@ -130,6 +130,20 @@ const shipmentSchema = new mongoose.Schema({
     specialInstructions: String,
     dangerousGoods: Boolean
   },
+  // New scheduling and logistics fields
+  pickupDate: { type: String },
+  pickupTime: { type: String },
+  deliveryTime: { type: String },
+  expectedDeliveryTime: { type: String },
+  shipmentType: {
+    type: String,
+    enum: ['Air Freight', 'Sea Freight', 'Land Freight'],
+    default: 'Land Freight'
+  },
+  carrier: {
+    type: String,
+    enum: ['ISC','DHL','USPS','FedEx','WCF','UPS','Royal Mail','International Shipping Agency']
+  },
   timeline: [{
     status: String,
     location: String,

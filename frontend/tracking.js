@@ -63,6 +63,10 @@ async function trackShipment(trackingNumber) {
           <h3>Shipment details</h3>
           <div class="tracking-result-row"><span>Tracking #:</span><span>${shipment.trackingNumber || 'N/A'}</span></div>
           <div class="tracking-result-row"><span>Status:</span><span>${shipment.status || 'N/A'}</span></div>
+          <div class="tracking-result-row"><span>Shipment type:</span><span>${shipment.shipmentType || 'N/A'}</span></div>
+          <div class="tracking-result-row"><span>Carrier:</span><span>${shipment.carrier || 'N/A'}</span></div>
+          <div class="tracking-result-row"><span>Pickup date:</span><span>${shipment.pickupDate || 'N/A'}</span></div>
+          <div class="tracking-result-row"><span>Pickup time:</span><span>${shipment.pickupTime || 'N/A'}</span></div>
           <div class="tracking-result-row"><span>Origin:</span><span>${shipment.originName || 'N/A'}</span></div>
           <div class="tracking-result-row"><span>Destination:</span><span>${shipment.destinationName || 'N/A'}</span></div>
           <div class="tracking-result-row"><span>Sender:</span><span>${shipment.senderName || 'N/A'}</span></div>
@@ -70,6 +74,8 @@ async function trackShipment(trackingNumber) {
           <div class="tracking-result-row"><span>Sender location:</span><span>${shipment.senderLocation || 'N/A'}</span></div>
           <div class="tracking-result-row"><span>Receiver location:</span><span>${shipment.receiverLocation || 'N/A'}</span></div>
           <div class="tracking-result-row"><span>Estimated delivery:</span><span>${shipment.estimatedDelivery || 'Pending'}</span></div>
+          <div class="tracking-result-row"><span>Expected delivery time:</span><span>${shipment.expectedDeliveryTime || 'N/A'}</span></div>
+          <div class="tracking-result-row"><span>Delivery time:</span><span>${shipment.deliveryTime || 'N/A'}</span></div>
           <div class="tracking-result-row"><span>Origin coords:</span><span>${originText}</span></div>
           <div class="tracking-result-row"><span>Destination coords:</span><span>${destinationText}</span></div>
           <div class="tracking-result-row"><span>Current location:</span><span>${currentLocationText}</span></div>

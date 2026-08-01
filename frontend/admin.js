@@ -295,6 +295,13 @@ async function saveShipment() {
 
   const payload = buildShipmentPayload();
   payload.trackingNumber = trackingNumber;
+  // New fields
+  payload.pickupDate = getVal('pickupDate');
+  payload.pickupTime = getVal('pickupTime');
+  payload.deliveryTime = getVal('deliveryTime');
+  payload.expectedDeliveryTime = getVal('expectedDeliveryTime');
+  payload.shipmentType = getVal('shipmentType');
+  payload.carrier = getVal('carrier');
 
   const validationError = validateShipmentPayload(payload);
   if (validationError) {

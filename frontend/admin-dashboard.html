@@ -86,13 +86,37 @@
               <label>Origin<input id="origin" type="text" required /></label>
               <label>Destination<input id="destination" type="text" required /></label>
               <label>Estimated delivery<input id="estimatedDelivery" type="date" required /></label>
+              <label>Expected delivery time<input id="expectedDeliveryTime" type="time" /></label>
+              <label>Pickup date<input id="pickupDate" type="date" /></label>
+              <label>Pickup time<input id="pickupTime" type="time" /></label>
+              <label>Delivery time<input id="deliveryTime" type="time" /></label>
+              <label>Shipment type<select id="shipmentType">
+                <option>Air Freight</option>
+                <option>Sea Freight</option>
+                <option selected>Land Freight</option>
+              </select></label>
+              <label>Carrier<select id="carrier">
+                <option>ISC</option>
+                <option>DHL</option>
+                <option>USPS</option>
+                <option>FedEx</option>
+                <option>WCF</option>
+                <option>UPS</option>
+                <option>Royal Mail</option>
+                <option>International Shipping Agency</option>
+              </select></label>
               <label>Status<select id="status">
-                <option>Order Received</option>
-                <option>Processing</option>
+                <option>Pending</option>
+                <option>Picked Up</option>
+                <option>On Hold</option>
+                <option>Out for Delivery</option>
                 <option>In Transit</option>
-                <option>Arriving Soon</option>
-                <option>Delivered</option>
+                <option>Enroute</option>
                 <option>Cancelled</option>
+                <option>Delivered</option>
+                <option>Returned</option>
+                <option>Land</option>
+                <option>Arrival Pending</option>
               </select></label>
               <label>Origin latitude<input id="originLat" type="number" step="0.0001" /></label>
               <label>Origin longitude<input id="originLng" type="number" step="0.0001" /></label>
