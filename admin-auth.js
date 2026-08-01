@@ -1,4 +1,5 @@
-const ADMIN_API_URL = 'http://localhost:5000/api/admin';
+const API_BASE_URL = 'https://move-2.onrender.com';
+const ADMIN_API_URL = `${API_BASE_URL}/api/admin`;
 const SESSION_TOKEN_KEY = 'gm_admin_token';
 
 window.addEventListener('DOMContentLoaded', () => {

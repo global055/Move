@@ -1,3 +1,6 @@
+const API_BASE_URL = 'https://move-2.onrender.com';
+const API_URL = `${API_BASE_URL}/api/shipments`;
+
 let homepageMap = null;
 let homepageRouteLine = null;
 let homepageOriginMarker = null;
@@ -66,7 +69,7 @@ function animateCounters() {
 
 async function loadTrackingDatalist() {
   try {
-    const response = await fetch('http://localhost:5000/api/shipments');
+    const response = await fetch(API_URL);
     const result = await response.json();
 
     if (!result.success || !Array.isArray(result.data)) {
@@ -115,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     statusBox.innerHTML = '<div class="loading-state"><span></span>Searching shipment details...</div>';
 
     try {
-      const response = await fetch(`http://localhost:5000/api/shipments/${trackingNumber}`);
+      const response = await fetch(`${API_URL}/${trackingNumber}`);
       const result = await response.json();
 
       if (result.success) {

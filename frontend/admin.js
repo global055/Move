@@ -1,6 +1,7 @@
-﻿const API_URL = 'http://localhost:5000/api/shipments';
-const ADMIN_CHECK_URL = 'http://localhost:5000/api/admin/check';
-const ADMIN_LOGOUT_URL = 'http://localhost:5000/api/admin/logout';
+﻿const API_BASE_URL = 'https://move-2.onrender.com';
+const API_URL = `${API_BASE_URL}/api/shipments`;
+const ADMIN_CHECK_URL = `${API_BASE_URL}/api/admin/check`;
+const ADMIN_LOGOUT_URL = `${API_BASE_URL}/api/admin/logout`;
 const SESSION_TOKEN_KEY = 'gm_admin_token';
 
 let shipmentsCache = [];

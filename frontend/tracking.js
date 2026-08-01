@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:5000/api/shipments';
+const API_BASE_URL = 'https://move-2.onrender.com';
+const API_URL = `${API_BASE_URL}/api/shipments`;
 
 // Load shipments and populate datalist on page load
 window.addEventListener('DOMContentLoaded', () => {
@@ -31,7 +32,7 @@ function renderTrackingDatalist(shipments) {
 // Function to handle tracking lookup
 async function trackShipment(trackingNumber) {
   try {
-    const response = await fetch(`http://localhost:5000/api/shipments/${trackingNumber}`);
+    const response = await fetch(`${API_URL}/${trackingNumber}`);
     const result = await response.json();
 
     if (!result.success) {
