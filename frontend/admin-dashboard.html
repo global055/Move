@@ -81,21 +81,21 @@
                   <datalist id="trackingNumbers"></datalist>
                 </div>
               </label>
-              <label>Sender<input id="senderName" type="text" required /></label>
-              <label>Receiver<input id="receiverName" type="text" required /></label>
-              <label>Origin<input id="origin" type="text" required /></label>
-              <label>Destination<input id="destination" type="text" required /></label>
-              <label>Estimated delivery<input id="estimatedDelivery" type="date" required /></label>
-              <label>Expected delivery time<input id="expectedDeliveryTime" type="time" /></label>
-              <label>Pickup date<input id="pickupDate" type="date" /></label>
-              <label>Pickup time<input id="pickupTime" type="time" /></label>
-              <label>Delivery time<input id="deliveryTime" type="time" /></label>
-              <label>Shipment type<select id="shipmentType">
+              <label>Sender<input id="senderName" name="senderName" type="text" required /></label>
+              <label>Receiver<input id="receiverName" name="receiverName" type="text" required /></label>
+              <label>Origin<input id="origin" name="origin" type="text" required /></label>
+              <label>Destination<input id="destination" name="destination" type="text" required /></label>
+              <label>Estimated delivery<input id="estimatedDelivery" name="estimatedDelivery" type="date" required /></label>
+              <label>Expected delivery time<input id="expectedDeliveryTime" name="expectedDeliveryTime" type="time" /></label>
+              <label>Pickup date<input id="pickupDate" name="pickupDate" type="date" /></label>
+              <label>Pickup time<input id="pickupTime" name="pickupTime" type="time" /></label>
+              <label>Delivery time<input id="deliveryTime" name="deliveryTime" type="time" /></label>
+              <label>Shipment type<select id="shipmentType" name="shipmentType">
                 <option>Air Freight</option>
                 <option>Sea Freight</option>
                 <option selected>Land Freight</option>
               </select></label>
-              <label>Carrier<select id="carrier">
+              <label>Carrier<select id="carrier" name="carrier">
                 <option>ISC</option>
                 <option>DHL</option>
                 <option>USPS</option>
@@ -105,7 +105,8 @@
                 <option>Royal Mail</option>
                 <option>International Shipping Agency</option>
               </select></label>
-              <label>Status<select id="status">
+              <label>Total freight<input id="totalFreight" name="totalFreight" type="number" step="0.01" /></label>
+              <label>Status<select id="status" name="status">
                 <option>Pending</option>
                 <option>Picked Up</option>
                 <option>On Hold</option>
@@ -118,58 +119,58 @@
                 <option>Land</option>
                 <option>Arrival Pending</option>
               </select></label>
-              <label>Origin latitude<input id="originLat" type="number" step="0.0001" /></label>
-              <label>Origin longitude<input id="originLng" type="number" step="0.0001" /></label>
-              <label>Destination latitude<input id="destLat" type="number" step="0.0001" /></label>
-              <label>Destination longitude<input id="destLng" type="number" step="0.0001" /></label>
-              <label>Current latitude<input id="currentLat" type="number" step="0.0001" /></label>
-              <label>Current longitude<input id="currentLng" type="number" step="0.0001" /></label>
-              <label>Current location<input id="currentLocation" type="text" /></label>
-              <label>Weight (kg)<input id="weight" type="number" step="0.01" /></label>
-              <label>Description<textarea id="description" rows="2" style="font-family: inherit;"></textarea></label>
+              <label>Origin latitude<input id="originLat" name="originLat" type="number" step="0.0001" /></label>
+              <label>Origin longitude<input id="originLng" name="originLng" type="number" step="0.0001" /></label>
+              <label>Destination latitude<input id="destLat" name="destLat" type="number" step="0.0001" /></label>
+              <label>Destination longitude<input id="destLng" name="destLng" type="number" step="0.0001" /></label>
+              <label>Current latitude<input id="currentLat" name="currentLat" type="number" step="0.0001" /></label>
+              <label>Current longitude<input id="currentLng" name="currentLng" type="number" step="0.0001" /></label>
+              <label>Current location<input id="currentLocation" name="currentLocation" type="text" /></label>
+              <label>Weight (kg)<input id="weight" name="weight" type="number" step="0.01" /></label>
+              <label>Description<textarea id="description" name="description" rows="2" style="font-family: inherit;"></textarea></label>
             </div>
 
             <div class="form-section">
               <h3 class="form-section-title">Shipper information</h3>
               <div class="form-grid">
-                <label>Shipper company<input id="shipperCompany" type="text" /></label>
-                <label>Shipper name<input id="shipperName" type="text" /></label>
-                <label>Shipper phone<input id="shipperPhone" type="text" /></label>
-                <label>Shipper email<input id="shipperEmail" type="email" /></label>
-                <label>Shipper address<input id="shipperAddress" type="text" /></label>
-                <label>Shipper city<input id="shipperCity" type="text" /></label>
-                <label>Shipper state<input id="shipperState" type="text" /></label>
-                <label>Shipper postal code<input id="shipperPostalCode" type="text" /></label>
-                <label>Shipper country<input id="shipperCountry" type="text" /></label>
+                <label>Shipper company<input id="shipperCompany" name="shipperCompany" type="text" /></label>
+                <label>Shipper name<input id="shipperName" name="shipperName" type="text" /></label>
+                <label>Shipper phone<input id="shipperPhone" name="shipperPhone" type="text" /></label>
+                <label>Shipper email<input id="shipperEmail" name="shipperEmail" type="email" /></label>
+                <label>Shipper address<input id="shipperAddress" name="shipperAddress" type="text" /></label>
+                <label>Shipper city<input id="shipperCity" name="shipperCity" type="text" /></label>
+                <label>Shipper state<input id="shipperState" name="shipperState" type="text" /></label>
+                <label>Shipper postal code<input id="shipperPostalCode" name="shipperPostalCode" type="text" /></label>
+                <label>Shipper country<input id="shipperCountry" name="shipperCountry" type="text" /></label>
               </div>
             </div>
 
             <div class="form-section">
               <h3 class="form-section-title">Receiver information</h3>
               <div class="form-grid">
-                <label>Receiver company<input id="receiverCompany" type="text" /></label>
-                <label>Receiver phone<input id="receiverPhone" type="text" /></label>
-                <label>Receiver email<input id="receiverEmail" type="email" /></label>
-                <label>Receiver address<input id="receiverAddress" type="text" /></label>
-                <label>Receiver city<input id="receiverCity" type="text" /></label>
-                <label>Receiver state<input id="receiverState" type="text" /></label>
-                <label>Receiver postal code<input id="receiverPostalCode" type="text" /></label>
-                <label>Receiver country<input id="receiverCountry" type="text" /></label>
+                <label>Receiver company<input id="receiverCompany" name="receiverCompany" type="text" /></label>
+                <label>Receiver phone<input id="receiverPhone" name="receiverPhone" type="text" /></label>
+                <label>Receiver email<input id="receiverEmail" name="receiverEmail" type="email" /></label>
+                <label>Receiver address<input id="receiverAddress" name="receiverAddress" type="text" /></label>
+                <label>Receiver city<input id="receiverCity" name="receiverCity" type="text" /></label>
+                <label>Receiver state<input id="receiverState" name="receiverState" type="text" /></label>
+                <label>Receiver postal code<input id="receiverPostalCode" name="receiverPostalCode" type="text" /></label>
+                <label>Receiver country<input id="receiverCountry" name="receiverCountry" type="text" /></label>
               </div>
             </div>
 
             <div class="form-section">
               <h3 class="form-section-title">Cargo details</h3>
               <div class="form-grid">
-                <label>Cargo type<input id="cargoType" type="text" /></label>
-                <label>Cargo description<input id="cargoDescription" type="text" /></label>
-                <label>Pieces<input id="cargoPieces" type="number" min="1" /></label>
-                <label>Weight (kg)<input id="cargoWeight" type="number" step="0.01" /></label>
-                <label>Volume (m³)<input id="cargoVolume" type="number" step="0.01" /></label>
-                <label>Dimensions<input id="cargoDimensions" type="text" /></label>
-                <label>Declared value<input id="cargoValue" type="number" step="0.01" /></label>
-                <label>Incoterms<input id="cargoIncoterms" type="text" /></label>
-                <label>Dangerous goods<select id="cargoDangerousGoods">
+                <label>Cargo type<input id="cargoType" name="cargoType" type="text" /></label>
+                <label>Cargo description<input id="cargoDescription" name="cargoDescription" type="text" /></label>
+                <label>Pieces<input id="cargoPieces" name="cargoPieces" type="number" min="1" /></label>
+                <label>Weight (kg)<input id="cargoWeight" name="cargoWeight" type="number" step="0.01" /></label>
+                <label>Volume (m³)<input id="cargoVolume" name="cargoVolume" type="number" step="0.01" /></label>
+                <label>Dimensions<input id="cargoDimensions" name="cargoDimensions" type="text" /></label>
+                <label>Declared value<input id="cargoValue" name="cargoValue" type="number" step="0.01" /></label>
+                <label>Incoterms<input id="cargoIncoterms" name="cargoIncoterms" type="text" /></label>
+                <label>Dangerous goods<select id="cargoDangerousGoods" name="cargoDangerousGoods">
                   <option value="">Select</option>
                   <option value="true">Yes</option>
                   <option value="false">No</option>

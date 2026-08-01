@@ -94,6 +94,13 @@ function populateShipmentForm(shipment) {
   setVal('origin', shipment.originName);
   setVal('destination', shipment.destinationName);
   setVal('estimatedDelivery', shipment.estimatedDelivery);
+  setVal('expectedDeliveryTime', shipment.expectedDeliveryTime || '');
+  setVal('pickupDate', shipment.pickupDate || '');
+  setVal('pickupTime', shipment.pickupTime || '');
+  setVal('deliveryTime', shipment.deliveryTime || '');
+  setVal('shipmentType', shipment.shipmentType || 'Land Freight');
+  setVal('carrier', shipment.carrier || 'ISC');
+  setVal('totalFreight', shipment.totalFreight ?? '');
   setVal('status', shipment.status || 'In Transit');
   setVal('weight', shipment.weight);
   setVal('description', shipment.description);
@@ -228,6 +235,7 @@ function buildShipmentPayload() {
   const cargoVolumeValue = parseFloat(getVal('cargoVolume'));
   const cargoValueValue = parseFloat(getVal('cargoValue'));
   const cargoPiecesValue = parseInt(getVal('cargoPieces'), 10);
+  const totalFreightValue = parseFloat(getVal('totalFreight'));
   const dangerousGoodsValue = getVal('cargoDangerousGoods');
 
   return {
@@ -237,6 +245,13 @@ function buildShipmentPayload() {
     originName: getVal('origin'),
     destinationName: getVal('destination'),
     estimatedDelivery: getVal('estimatedDelivery'),
+    expectedDeliveryTime: getVal('expectedDeliveryTime'),
+    pickupDate: getVal('pickupDate'),
+    pickupTime: getVal('pickupTime'),
+    deliveryTime: getVal('deliveryTime'),
+    shipmentType: getVal('shipmentType'),
+    carrier: getVal('carrier'),
+    totalFreight: Number.isFinite(totalFreightValue) ? totalFreightValue : null,
     status: getVal('status') || 'In Transit',
     weight: Number.isFinite(weightValue) ? weightValue : null,
     description: getVal('description'),
@@ -295,13 +310,6 @@ async function saveShipment() {
 
   const payload = buildShipmentPayload();
   payload.trackingNumber = trackingNumber;
-  // New fields
-  payload.pickupDate = getVal('pickupDate');
-  payload.pickupTime = getVal('pickupTime');
-  payload.deliveryTime = getVal('deliveryTime');
-  payload.expectedDeliveryTime = getVal('expectedDeliveryTime');
-  payload.shipmentType = getVal('shipmentType');
-  payload.carrier = getVal('carrier');
 
   const validationError = validateShipmentPayload(payload);
   if (validationError) {
@@ -731,7 +739,7 @@ function getAuthHeaders() {
 function resetShipmentForm() {
   const fields = [
     'shipmentId', 'trackingNumber', 'senderName', 'receiverName',
-    'origin', 'destination', 'estimatedDelivery', 'status',
+    'origin', 'destination', 'estimatedDelivery', 'expectedDeliveryTime', 'pickupDate', 'pickupTime', 'deliveryTime', 'shipmentType', 'carrier', 'totalFreight', 'status',
     'originLat', 'originLng', 'destLat', 'destLng',
     'currentLat', 'currentLng', 'currentLocation', 'weight', 'description',
     'shipperCompany', 'shipperName', 'shipperPhone', 'shipperEmail', 'shipperAddress', 'shipperCity', 'shipperState', 'shipperPostalCode', 'shipperCountry',
@@ -740,6 +748,8 @@ function resetShipmentForm() {
   ];
   fields.forEach((id) => setVal(id, ''));
   setVal('status', 'Order Received');
+  setVal('shipmentType', 'Land Freight');
+  setVal('carrier', 'ISC');
   hideMapSection();
   if (selectedMarker && shipmentMap) {
     shipmentMap.removeLayer(selectedMarker);

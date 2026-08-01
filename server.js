@@ -95,6 +95,7 @@ const shipmentSchema = new mongoose.Schema({
   estimatedDelivery: { type: String, default: 'Pending' },
   currentLocationName: String,
   weight: Number,
+  totalFreight: Number,
   description: String,
   shipper: {
     company: String,
