@@ -471,6 +471,129 @@ main {
   border: 1px solid var(--border);
 }
 
+.package-marker-wrapper {
+  background: transparent;
+  border: none;
+}
+
+.package-map-marker {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ff5f6d, #ff2d55);
+  box-shadow: 0 0 18px rgba(255, 45, 85, 0.38);
+  transform: translate3d(0, 0, 0);
+}
+
+.package-map-marker::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 45, 85, 0.25);
+  opacity: 0;
+  transform: scale(0.75);
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.package-map-marker.is-active::before {
+  animation: package-glow 1.2s ease-in-out infinite;
+}
+
+.package-map-marker.is-delivered {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.32);
+}
+
+.package-map-marker.is-delivered::before {
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.package-map-marker__body {
+  position: absolute;
+  inset: 8px 10px 12px 10px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(224,231,255,0.5));
+  box-shadow: inset 0 -4px 10px rgba(15, 23, 42, 0.18);
+}
+
+.package-map-marker__body::before {
+  content: '';
+  position: absolute;
+  inset: 6px 8px auto 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(12, 18, 32, 0.18);
+}
+
+.package-map-marker__body::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  bottom: 6px;
+  width: 12px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.28);
+}
+
+.package-map-marker__wheel {
+  position: absolute;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0f172a;
+}
+
+.package-map-marker__wheel.wheel-left { left: 11px; }
+.package-map-marker__wheel.wheel-right { right: 11px; }
+
+.package-map-marker__tick {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #effff2, #22c55e);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.95), inset 0 0 4px rgba(255, 255, 255, 0.55);
+  display: grid;
+  place-items: center;
+}
+
+.package-map-marker__tick::after {
+  content: '';
+  width: 6px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.package-map-marker.is-active .package-map-marker__tick,
+.package-map-marker.is-current-location .package-map-marker__tick {
+  animation: package-tick 1.2s ease-in-out infinite;
+}
+
+.package-map-marker.is-delivered .package-map-marker__tick {
+  animation: none;
+}
+
+@keyframes package-glow {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  50% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1.2); opacity: 0; }
+}
+
+@keyframes package-tick {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.85; }
+}
+
 .services-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

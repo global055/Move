@@ -225,19 +225,31 @@ function createHomepageCircleMarker(coords, options) {
   return window.L.circleMarker([coords.lat, coords.lng], options).addTo(homepageMap);
 }
 
-function createHomepagePackageIcon() {
+function buildHomepagePackageMarkerHtml(status) {
+  const statusClass = status === 'Delivered' ? 'is-delivered' : status === 'In Transit' ? 'is-active' : 'is-pending';
+  return `
+    <div class="package-map-marker ${statusClass} is-current-location">
+      <span class="package-map-marker__body"></span>
+      <span class="package-map-marker__wheel wheel-left"></span>
+      <span class="package-map-marker__wheel wheel-right"></span>
+      <span class="package-map-marker__tick"></span>
+    </div>
+  `;
+}
+
+function createHomepagePackageIcon(status) {
   return window.L.divIcon({
-    className: 'moving-package-icon',
-    html: '<span class="moving-package-dot"></span>',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
+    className: 'package-marker-wrapper',
+    html: buildHomepagePackageMarkerHtml(status),
+    iconSize: [48, 48],
+    iconAnchor: [24, 24],
     popupAnchor: [0, -16]
   });
 }
 
-function createHomepagePackageMarker(coords, popupText) {
+function createHomepagePackageMarker(coords, popupText, status) {
   const marker = window.L.marker([coords.lat, coords.lng], {
-    icon: createHomepagePackageIcon(),
+    icon: createHomepagePackageIcon(status),
     riseOnHover: true
   }).addTo(homepageMap);
 
@@ -338,7 +350,7 @@ function renderShipmentOnHomepageMap(shipment) {
         homepagePackageMarker.setPopupContent(popupText);
       }
     } else {
-      homepagePackageMarker = createHomepagePackageMarker(currentCoords, popupText);
+      homepagePackageMarker = createHomepagePackageMarker(currentCoords, popupText, shipment.status);
     }
 
     homepageLastPackageLatLng = currentCoords;
