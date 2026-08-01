@@ -93,8 +93,64 @@ const shipmentSchema = new mongoose.Schema({
   originName: String,
   destinationName: String,
   estimatedDelivery: { type: String, default: 'Pending' },
+  currentLocationName: String,
   weight: Number,
+  totalFreight: Number,
   description: String,
+  shipper: {
+    company: String,
+    name: String,
+    phone: String,
+    email: String,
+    address: String,
+    city: String,
+    state: String,
+    postalCode: String,
+    country: String
+  },
+  receiver: {
+    company: String,
+    name: String,
+    phone: String,
+    email: String,
+    address: String,
+    city: String,
+    state: String,
+    postalCode: String,
+    country: String
+  },
+  cargo: {
+    type: String,
+    description: String,
+    weight: Number,
+    volume: Number,
+    pieces: Number,
+    dimensions: String,
+    value: Number,
+    incoterms: String,
+    specialInstructions: String,
+    dangerousGoods: Boolean
+  },
+  pickupDate: { type: String },
+  pickupTime: { type: String },
+  deliveryTime: { type: String },
+  expectedDeliveryTime: { type: String },
+  shipmentType: {
+    type: String,
+    enum: ['Air Freight', 'Sea Freight', 'Land Freight'],
+    default: 'Land Freight'
+  },
+  carrier: {
+    type: String,
+    enum: ['ISC','DHL','USPS','FedEx','WCF','UPS','Royal Mail','International Shipping Agency']
+  },
+  timeline: [{
+    status: String,
+    location: String,
+    description: String,
+    timestamp: { type: Date, default: Date.now },
+    updatedBy: String
+  }],
   coordinates: {
     origin: { lat: Number, lng: Number },
     currentLocation: { lat: Number, lng: Number },
