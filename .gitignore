@@ -1,0 +1,5 @@
+node_modules/
+glbal-backend/node_modules/
+glbal-backend/node_modules copy/
+glbal-backend/.env
+
