@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const BASE_URL = process.env.BASE_URL || 'http://localhost:5000';
+const BASE_URL = process.env.BASE_URL || 'https://move-2.onrender.com';
 
 test('admin login accepts valid credentials and rejects invalid ones', async () => {
   const validResponse = await fetch(`${BASE_URL}/api/admin/login`, {
