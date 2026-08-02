@@ -395,27 +395,101 @@ function renderShipmentDetails(shipment) {
   }
 
   const currentLocation = shipment.coordinates?.currentLocation;
+  const originCoords = shipment.coordinates?.origin;
+  const destinationCoords = shipment.coordinates?.destination;
+
+  const buildRows = (rows) => rows.map(([label, value]) => `
+    <div class="details-row"><strong>${label}</strong><span>${escapeHtml(value || 'N/A')}</span></div>
+  `).join('');
+
+  const mainRows = buildRows([
+    ['Tracking', shipment.trackingNumber],
+    ['Sender', shipment.senderName || shipment.shipper?.name],
+    ['Receiver', shipment.receiverName || shipment.receiver?.name],
+    ['Status', shipment.status],
+    ['Shipment type', shipment.shipmentType],
+    ['Carrier', shipment.carrier],
+    ['Total freight', shipment.totalFreight != null ? `$${shipment.totalFreight.toFixed(2)}` : ''],
+    ['Weight', shipment.weight != null ? `${shipment.weight} kg` : ''],
+    ['Origin', shipment.originName],
+    ['Destination', shipment.destinationName],
+    ['Origin coordinates', originCoords ? `${originCoords.lat}, ${originCoords.lng}` : ''],
+    ['Destination coordinates', destinationCoords ? `${destinationCoords.lat}, ${destinationCoords.lng}` : ''],
+    ['Current location', currentLocation ? `${currentLocation.lat}, ${currentLocation.lng}` : shipment.currentLocationName || shipment.currentLocation],
+    ['Estimated delivery', shipment.estimatedDelivery],
+    ['Expected delivery', shipment.expectedDeliveryTime],
+    ['Pickup date', shipment.pickupDate],
+    ['Pickup time', shipment.pickupTime],
+    ['Delivery time', shipment.deliveryTime],
+    ['Description', shipment.description]
+  ]);
+
+  const shipperRows = buildRows([
+    ['Shipper company', shipment.shipper?.company],
+    ['Shipper name', shipment.shipper?.name || shipment.senderName],
+    ['Shipper phone', shipment.shipper?.phone],
+    ['Shipper email', shipment.shipper?.email],
+    ['Shipper address', shipment.shipper?.address],
+    ['Shipper city', shipment.shipper?.city],
+    ['Shipper state', shipment.shipper?.state],
+    ['Shipper postal code', shipment.shipper?.postalCode],
+    ['Shipper country', shipment.shipper?.country]
+  ]);
+
+  const receiverRows = buildRows([
+    ['Receiver company', shipment.receiver?.company],
+    ['Receiver phone', shipment.receiver?.phone],
+    ['Receiver email', shipment.receiver?.email],
+    ['Receiver address', shipment.receiver?.address],
+    ['Receiver city', shipment.receiver?.city],
+    ['Receiver state', shipment.receiver?.state],
+    ['Receiver postal code', shipment.receiver?.postalCode],
+    ['Receiver country', shipment.receiver?.country]
+  ]);
+
+  const cargoRows = buildRows([
+    ['Cargo type', shipment.cargo?.type],
+    ['Cargo description', shipment.cargo?.description],
+    ['Pieces', shipment.cargo?.pieces != null ? String(shipment.cargo.pieces) : ''],
+    ['Cargo weight', shipment.cargo?.weight != null ? `${shipment.cargo.weight} kg` : ''],
+    ['Volume', shipment.cargo?.volume != null ? `${shipment.cargo.volume} m³` : ''],
+    ['Dimensions', shipment.cargo?.dimensions],
+    ['Declared value', shipment.cargo?.value != null ? `$${shipment.cargo.value}` : ''],
+    ['Incoterms', shipment.cargo?.incoterms],
+    ['Dangerous goods', shipment.cargo?.dangerousGoods != null ? (shipment.cargo.dangerousGoods ? 'Yes' : 'No') : ''],
+    ['Special instructions', shipment.cargo?.specialInstructions]
+  ]);
+
   const timeline = Array.isArray(shipment.timeline) && shipment.timeline.length
     ? shipment.timeline.map((entry) => `
-        <div class="details-row"><strong>${escapeHtml(entry.status || 'Update')}:</strong> ${escapeHtml(entry.description || 'No details')} <span style="color: var(--muted);">${escapeHtml(entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '')}</span></div>
+        <div class="details-row timeline-entry"><strong>${escapeHtml(entry.status || 'Update')}</strong>
+          <span>${escapeHtml(entry.description || 'No details')}</span>
+          <small>${escapeHtml(entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '')}</small>
+        </div>
       `).join('')
     : '<div class="details-row">No tracking timeline yet.</div>';
 
   detailsEl.innerHTML = `
-    <div class="details-row"><strong>Tracking:</strong> ${escapeHtml(shipment.trackingNumber || 'N/A')}</div>
-    <div class="details-row"><strong>Sender:</strong> ${escapeHtml(shipment.senderName || shipment.shipper?.name || 'N/A')}</div>
-    <div class="details-row"><strong>Receiver:</strong> ${escapeHtml(shipment.receiverName || shipment.receiver?.name || 'N/A')}</div>
-    <div class="details-row"><strong>Route:</strong> ${escapeHtml(shipment.originName || 'N/A')} → ${escapeHtml(shipment.destinationName || 'N/A')}</div>
-    <div class="details-row"><strong>Status:</strong> ${escapeHtml(shipment.status || 'N/A')}</div>
-    <div class="details-row"><strong>ETA:</strong> ${escapeHtml(shipment.estimatedDelivery || 'N/A')}</div>
-    <div class="details-row"><strong>Current Location:</strong> ${currentLocation ? `${currentLocation.lat}, ${currentLocation.lng}` : 'N/A'}</div>
-    <div class="details-row"><strong>Weight:</strong> ${shipment.weight != null ? `${shipment.weight} kg` : 'N/A'}</div>
-    <div class="details-row"><strong>Description:</strong> ${escapeHtml(shipment.description || 'N/A')}</div>
-    <div class="details-row"><strong>Shipper:</strong> ${escapeHtml(shipment.shipper?.company || 'N/A')}</div>
-    <div class="details-row"><strong>Receiver:</strong> ${escapeHtml(shipment.receiver?.company || 'N/A')}</div>
-    <div class="details-row"><strong>Cargo:</strong> ${escapeHtml(shipment.cargo?.type || 'N/A')}</div>
-    <div class="details-row"><strong>Timeline:</strong></div>
-    ${timeline}
+    <div class="details-section">
+      <h3>Shipment details</h3>
+      <div class="details-grid">${mainRows}</div>
+    </div>
+    <div class="details-section">
+      <h3>Shipper information</h3>
+      <div class="details-grid">${shipperRows}</div>
+    </div>
+    <div class="details-section">
+      <h3>Receiver information</h3>
+      <div class="details-grid">${receiverRows}</div>
+    </div>
+    <div class="details-section">
+      <h3>Cargo details</h3>
+      <div class="details-grid">${cargoRows}</div>
+    </div>
+    <div class="details-section">
+      <h3>Tracking timeline</h3>
+      <div class="details-grid timeline-grid">${timeline}</div>
+    </div>
   `;
 }
 
@@ -600,37 +674,35 @@ function showShipmentOnMap(shipment) {
   setTimeout(() => shipmentMap.invalidateSize(), 150);
 }
 
-function buildPackageMarkerHtml(status, isCurrent = false) {
-  const statusClass = status === 'Delivered' ? 'is-delivered' : status === 'In Transit' ? 'is-active' : 'is-pending';
-  const currentClass = isCurrent ? 'is-current-location' : '';
-  if (isCurrent) {
-    const imgSrc = '/imges/package%20indicator.png';
-    return `
-      <div class="package-map-marker ${statusClass} ${currentClass}">
-        <img src="${imgSrc}" class="package-indicator-img" alt="Package Indicator" />
-      </div>
-    `;
-  }
+function isShipmentMovingStatus(status) {
+  if (!status) return false;
+  const normalized = status.toLowerCase();
+  const movingKeywords = ['in transit', 'out for delivery', 'enroute', 'arriving soon', 'picked up', 'on the way', 'moving', 'departed', 'shipped'];
+  return movingKeywords.some((keyword) => normalized.includes(keyword));
+}
 
+function buildPackageMarkerHtml(status) {
+  const statusClass = isShipmentMovingStatus(status) ? 'is-active' : 'is-paused';
   return `
-    <div class="package-map-marker ${statusClass} ${currentClass}">
-      <span class="package-map-marker__body"></span>
-      <span class="package-map-marker__wheel wheel-left"></span>
-      <span class="package-map-marker__wheel wheel-right"></span>
-      <span class="package-map-marker__tick"></span>
+    <div class="package-map-marker ${statusClass} is-current-location">
+      <div class="package-map-marker__body"></div>
+      <div class="package-map-marker__wheel wheel-left"></div>
+      <div class="package-map-marker__wheel wheel-right"></div>
+      <div class="package-map-marker__tick"></div>
     </div>
   `;
 }
 
 function animatePackageMarker(marker, homePoint, status) {
-  const isDelivered = status === 'Delivered';
+  const moving = isShipmentMovingStatus(status);
+  if (!marker || !homePoint) return;
+  if (!moving) {
+    marker.setLatLng(homePoint);
+    return;
+  }
+
   const update = (timestamp) => {
     if (!marker || !shipmentMap?.hasLayer(marker)) return;
-    if (isDelivered) {
-      marker.setLatLng(homePoint);
-      return;
-    }
-
     const wobble = Math.sin(timestamp / 450) * 0.00025;
     marker.setLatLng([homePoint[0] + wobble, homePoint[1] + wobble]);
     activePackageAnimationFrame = requestAnimationFrame(update);

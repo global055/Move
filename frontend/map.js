@@ -56,19 +56,34 @@
     return window.L.circleMarker([coords.lat, coords.lng], options).addTo(map);
   }
 
-  function createPackageIcon() {
-    return window.L.icon({
-      iconUrl: 'imges/package indicator.png',
-      iconSize: [40, 40],
-      iconAnchor: [20, 20],
-      popupAnchor: [0, -20],
-      className: 'package-tracker-icon'
+  function isShipmentMovingStatus(status) {
+    if (!status) return false;
+    const normalized = status.toLowerCase();
+    const movingKeywords = ['in transit', 'out for delivery', 'enroute', 'arriving soon', 'picked up', 'on the way', 'moving', 'departed', 'shipped'];
+    return movingKeywords.some((keyword) => normalized.includes(keyword));
+  }
+
+  function createPackageIcon(status) {
+    const statusClass = isShipmentMovingStatus(status) ? 'is-active' : 'is-paused';
+    return window.L.divIcon({
+      html: `
+        <div class="package-map-marker ${statusClass} is-current-location">
+          <div class="package-map-marker__body"></div>
+          <div class="package-map-marker__wheel wheel-left"></div>
+          <div class="package-map-marker__wheel wheel-right"></div>
+          <div class="package-map-marker__tick"></div>
+        </div>
+      `,
+      className: 'package-marker-wrapper',
+      iconSize: [64, 64],
+      iconAnchor: [32, 32],
+      popupAnchor: [0, -20]
     });
   }
 
-  function createPackageMarker(coords, popupText) {
+  function createPackageMarker(coords, popupText, status) {
     const marker = window.L.marker([coords.lat, coords.lng], {
-      icon: createPackageIcon(),
+      icon: createPackageIcon(status),
       riseOnHover: true
     }).addTo(map);
 
@@ -156,19 +171,26 @@
     if (current?.lat != null && current?.lng != null) {
       const currentCoords = { lat: current.lat, lng: current.lng };
       const popupText = `<strong>Package Location</strong><br>Status: ${shipment.status || 'Unknown'}`;
+      const moving = isShipmentMovingStatus(shipment.status);
 
       if (packageMarker && lastPackageLatLng) {
-        animateMarkerMovement(packageMarker, lastPackageLatLng, currentCoords);
+        packageMarker.setIcon(createPackageIcon(shipment.status));
         if (packageMarker.getPopup && packageMarker.getPopup()) {
           packageMarker.setPopupContent(popupText);
         }
+        if (moving) {
+          animateMarkerMovement(packageMarker, lastPackageLatLng, currentCoords);
+        } else {
+          packageMarker.setLatLng([currentCoords.lat, currentCoords.lng]);
+        }
       } else if (packageMarker) {
+        packageMarker.setIcon(createPackageIcon(shipment.status));
         packageMarker.setLatLng([currentCoords.lat, currentCoords.lng]);
         if (packageMarker.getPopup && packageMarker.getPopup()) {
           packageMarker.setPopupContent(popupText);
         }
       } else {
-        packageMarker = createPackageMarker(currentCoords, popupText);
+        packageMarker = createPackageMarker(currentCoords, popupText, shipment.status);
       }
 
       lastPackageLatLng = currentCoords;

@@ -666,20 +666,20 @@ main {
 
 .package-map-marker {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: 64px;
+  height: 64px;
   display: grid;
   place-items: center;
-  border-radius: 16px;
+  border-radius: 18px;
   background: linear-gradient(135deg, #ff5f6d, #ff2d55);
-  box-shadow: 0 0 18px rgba(255, 45, 85, 0.38);
+  box-shadow: 0 0 24px rgba(255, 45, 85, 0.38);
   transform: translate3d(0, 0, 0);
 }
 
 .package-map-marker::before {
   content: '';
   position: absolute;
-  inset: -8px;
+  inset: -10px;
   border-radius: 50%;
   border: 2px solid rgba(255, 45, 85, 0.25);
   opacity: 0;
@@ -762,13 +762,18 @@ main {
   transform: rotate(45deg);
 }
 
-.package-map-marker.is-active .package-map-marker__tick,
-.package-map-marker.is-current-location .package-map-marker__tick {
+.package-map-marker.is-active .package-map-marker__tick {
   animation: package-tick 1.2s ease-in-out infinite;
 }
 
+.package-map-marker.is-paused .package-map-marker__tick,
 .package-map-marker.is-delivered .package-map-marker__tick {
   animation: none;
+}
+
+.package-map-marker.is-paused {
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  box-shadow: 0 0 18px rgba(249, 115, 22, 0.28);
 }
 
 @keyframes package-glow {
