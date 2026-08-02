@@ -119,17 +119,11 @@ const shipmentSchema = new mongoose.Schema({
     postalCode: String,
     country: String
   },
+  // Allow `cargo` to be either an object (new payloads) or legacy string values.
+  // Use a flexible Mixed type to accept both forms without casting errors.
   cargo: {
-    type: String,
-    description: String,
-    weight: Number,
-    volume: Number,
-    pieces: Number,
-    dimensions: String,
-    value: Number,
-    incoterms: String,
-    specialInstructions: String,
-    dangerousGoods: Boolean
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
   },
   pickupDate: { type: String },
   pickupTime: { type: String },
