@@ -11,8 +11,8 @@ const mongoose = require('mongoose');
 const FRONTEND_DIR = path.join(__dirname, 'frontend');
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
 const dbName = process.env.MONGO_DB_NAME || process.env.DB_NAME || 'globalmovement';
-const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL || null;
-const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || null;
+const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'globalmovement05@gmail.com';
+const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Global100';
 const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((value) => value.trim())
@@ -542,7 +542,7 @@ app.delete('/api/shipments/:trackingNumber', authenticateAdmin, async (req, res)
   }
 });
 
-app.get('*', (req, res, next) => {
+app.use((req, res, next) => {
   if (req.path.startsWith('/api/')) {
     return next();
   }
