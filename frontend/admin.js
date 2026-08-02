@@ -1,9 +1,7 @@
-﻿const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '::1')
-  ? 'http://localhost:5000'
-  : 'https://move-2.onrender.com';
-const API_URL = `${API_BASE_URL}/api/shipments`;
-const ADMIN_CHECK_URL = `${API_BASE_URL}/api/admin/check`;
-const ADMIN_LOGOUT_URL = `${API_BASE_URL}/api/admin/logout`;
+﻿const API_BASE_URL = '';
+const API_URL = '/api/shipments';
+const ADMIN_CHECK_URL = '/api/admin/check';
+const ADMIN_LOGOUT_URL = '/api/admin/logout';
 const SESSION_TOKEN_KEY = 'gm_admin_token';
 
 let shipmentsCache = [];
@@ -404,8 +402,6 @@ function renderShipmentDetails(shipment) {
 
   const mainRows = buildRows([
     ['Tracking', shipment.trackingNumber],
-    ['Sender', shipment.senderName || shipment.shipper?.name],
-    ['Receiver', shipment.receiverName || shipment.receiver?.name],
     ['Status', shipment.status],
     ['Shipment type', shipment.shipmentType],
     ['Carrier', shipment.carrier],
@@ -416,10 +412,10 @@ function renderShipmentDetails(shipment) {
     ['Origin coordinates', originCoords ? `${originCoords.lat}, ${originCoords.lng}` : ''],
     ['Destination coordinates', destinationCoords ? `${destinationCoords.lat}, ${destinationCoords.lng}` : ''],
     ['Current location', currentLocation ? `${currentLocation.lat}, ${currentLocation.lng}` : shipment.currentLocationName || shipment.currentLocation],
-    ['Estimated delivery', shipment.estimatedDelivery],
-    ['Expected delivery', shipment.expectedDeliveryTime],
     ['Pickup date', shipment.pickupDate],
     ['Pickup time', shipment.pickupTime],
+    ['Estimated delivery', shipment.estimatedDelivery],
+    ['Expected delivery', shipment.expectedDeliveryTime],
     ['Delivery time', shipment.deliveryTime],
     ['Description', shipment.description]
   ]);
@@ -438,6 +434,7 @@ function renderShipmentDetails(shipment) {
 
   const receiverRows = buildRows([
     ['Receiver company', shipment.receiver?.company],
+    ['Receiver name', shipment.receiverName],
     ['Receiver phone', shipment.receiver?.phone],
     ['Receiver email', shipment.receiver?.email],
     ['Receiver address', shipment.receiver?.address],

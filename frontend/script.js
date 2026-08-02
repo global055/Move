@@ -1,5 +1,6 @@
-const API_BASE_URL = 'https://move-2.onrender.com';
-const API_URL = `${API_BASE_URL}/api/shipments`;
+const API_BASE_URL = '';
+const API_URL = '/api/shipments';
+const TRACKING_NUMBERS_URL = '/api/shipments/tracking-numbers';
 
 let homepageMap = null;
 let homepageRouteLine = null;
@@ -69,7 +70,7 @@ function animateCounters() {
 
 async function loadTrackingDatalist() {
   try {
-    const response = await fetch(API_URL);
+    const response = await fetch(TRACKING_NUMBERS_URL);
     const result = await response.json();
 
     if (!result.success || !Array.isArray(result.data)) {
@@ -80,8 +81,8 @@ async function loadTrackingDatalist() {
     if (!datalist) return;
 
     datalist.innerHTML = result.data
-      .filter((shipment) => shipment.trackingNumber)
-      .map((shipment) => `<option value="${escapeHtml(shipment.trackingNumber)}"></option>`)
+      .filter((trackingNumber) => trackingNumber)
+      .map((trackingNumber) => `<option value="${escapeHtml(trackingNumber)}"></option>`)
       .join('');
   } catch (error) {
     console.error('Error loading tracking suggestions:', error);
@@ -227,7 +228,7 @@ function createHomepageCircleMarker(coords, options) {
 
 function buildHomepagePackageMarkerHtml(status) {
   const statusClass = status === 'Delivered' ? 'is-delivered' : status === 'In Transit' ? 'is-active' : 'is-pending';
-  const imgSrc = '/imges/package%20indicator.png';
+  const imgSrc = 'imges/package indicator.png';
   return `
     <div class="package-map-marker ${statusClass} is-current-location">
       <img src="${imgSrc}" class="package-indicator-img" alt="Package Indicator" />

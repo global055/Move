@@ -1,17 +1,23 @@
+const fs = require('fs');
 const path = require('path');
 const dns = require('dns');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
-require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
-// Use public DNS for MongoDB Atlas SRV lookups when the default resolver fails.
+const FRONTEND_DIR = path.join(__dirname, 'frontend');
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
 const dbName = process.env.MONGO_DB_NAME || process.env.DB_NAME || 'globalmovement';
-const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'globalmovement05@gmail.com';
-const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Global100';
+const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL || null;
+const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || null;
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
+const ALLOW_ALL_ORIGINS = process.env.ALLOW_ALL_ORIGINS === 'true';
 
 if (mongoUri && mongoUri.startsWith('mongodb+srv://')) {
   dns.setServers(['8.8.8.8', '1.1.1.1']);
@@ -19,20 +25,23 @@ if (mongoUri && mongoUri.startsWith('mongodb+srv://')) {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const allowedOrigins = [
-  'https://move-2.onrender.com',
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  process.env.CORS_ORIGIN,
-  process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null
-].filter(Boolean);
 
 mongoose.set('bufferCommands', false);
+app.set('trust proxy', true);
 
-// Middleware
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    if (ALLOW_ALL_ORIGINS || ALLOWED_ORIGINS.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    if (origin.endsWith('.vercel.app') || origin.endsWith('.railway.app') || origin.endsWith('.onrender.com')) {
       callback(null, true);
       return;
     }
@@ -44,6 +53,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(express.static(FRONTEND_DIR, { index: 'index.html' }));
 
 const connectToDatabase = async () => {
   if (!mongoUri) {
@@ -216,8 +227,13 @@ const authenticateAdmin = async (req, res, next) => {
 };
 
 const ensureDefaultAdmin = async () => {
-  const defaultAdminEmail = DEFAULT_ADMIN_EMAIL;
-  const defaultAdminPassword = DEFAULT_ADMIN_PASSWORD;
+  if (!DEFAULT_ADMIN_EMAIL || !DEFAULT_ADMIN_PASSWORD) {
+    console.warn('ADMIN_EMAIL and ADMIN_PASSWORD must be configured to create admin user.');
+    return;
+  }
+
+  const defaultAdminEmail = String(DEFAULT_ADMIN_EMAIL).trim().toLowerCase();
+  const defaultAdminPassword = String(DEFAULT_ADMIN_PASSWORD);
   const passwordHash = await bcrypt.hash(defaultAdminPassword, 10);
 
   if (isMongoAvailable()) {
@@ -425,6 +441,23 @@ app.get('/api/shipments/:trackingNumber', async (req, res) => {
   }
 });
 
+app.get('/api/shipments/tracking-numbers', async (req, res) => {
+  try {
+    if (isMongoAvailable()) {
+      const shipments = await Shipment.find({}, { trackingNumber: 1, _id: 0 }).limit(500).lean();
+      const trackingNumbers = shipments
+        .map((shipment) => shipment.trackingNumber)
+        .filter(Boolean);
+      return res.json({ success: true, data: trackingNumbers });
+    }
+
+    return res.json({ success: true, data: Array.from(inMemoryShipments.keys()) });
+  } catch (err) {
+    console.error('TRACKING_NUMBERS_ERR', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // 4. API Route: Create / Seed a New Shipment (Admin action)
 app.post('/api/shipments', authenticateAdmin, async (req, res) => {
   try {
@@ -509,13 +542,41 @@ app.delete('/api/shipments/:trackingNumber', authenticateAdmin, async (req, res)
   }
 });
 
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) {
+    return next();
+  }
+  if (req.method !== 'GET') {
+    return res.status(404).send('Not found');
+  }
+
+  const requestedPath = req.path === '/'
+    ? path.join(FRONTEND_DIR, 'index.html')
+    : path.join(FRONTEND_DIR, `${req.path.slice(1)}.html`);
+
+  if (fs.existsSync(requestedPath)) {
+    return res.sendFile(requestedPath);
+  }
+
+  return res.sendFile(path.join(FRONTEND_DIR, 'index.html'));
+});
+
+app.use((err, req, res, next) => {
+  console.error('SERVER_ERROR', err);
+  if (req.originalUrl.startsWith('/api/')) {
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+
+  return res.status(500).sendFile(path.join(FRONTEND_DIR, 'index.html'));
+});
+
 const startServer = async () => {
   try {
     await connectToDatabase();
     await ensureDefaultAdmin();
     app.get('/_who', (req, res) => res.json({ pid: process.pid }));
     app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Server running on port ${PORT}`);
       console.log('Process PID:', process.pid);
     });
   } catch (err) {
@@ -524,7 +585,7 @@ const startServer = async () => {
     await ensureDefaultAdmin();
     app.get('/_who', (req, res) => res.json({ pid: process.pid }));
     app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Server running on port ${PORT}`);
       console.log('Process PID:', process.pid);
     });
   }

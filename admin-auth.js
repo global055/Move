@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://move-2.onrender.com';
+const API_BASE_URL = '';
 const ADMIN_API_URL = `${API_BASE_URL}/api/admin`;
 const SESSION_TOKEN_KEY = 'gm_admin_token';
 

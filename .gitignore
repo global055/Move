@@ -7,3 +7,5 @@ glbal-backend/node_modules copy/
 glbal-backend/.env
 glbal-backend/.env.*
 
+.vercel
+.env*

@@ -1,5 +1,5 @@
-const API_BASE_URL = 'https://move-2.onrender.com';
-const API_URL = `${API_BASE_URL}/api/shipments`;
+const API_BASE_URL = '';
+const API_URL = '/api/shipments';
 
 // Load shipments and populate datalist on page load
 window.addEventListener('DOMContentLoaded', () => {
