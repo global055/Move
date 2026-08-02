@@ -603,6 +603,15 @@ function showShipmentOnMap(shipment) {
 function buildPackageMarkerHtml(status, isCurrent = false) {
   const statusClass = status === 'Delivered' ? 'is-delivered' : status === 'In Transit' ? 'is-active' : 'is-pending';
   const currentClass = isCurrent ? 'is-current-location' : '';
+  if (isCurrent) {
+    const imgSrc = '/imges/package%20indicator.png';
+    return `
+      <div class="package-map-marker ${statusClass} ${currentClass}">
+        <img src="${imgSrc}" class="package-indicator-img" alt="Package Indicator" />
+      </div>
+    `;
+  }
+
   return `
     <div class="package-map-marker ${statusClass} ${currentClass}">
       <span class="package-map-marker__body"></span>

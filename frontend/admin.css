@@ -117,6 +117,12 @@ th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border)
 .action-btns .view { background: var(--accent-2); }
 .shipment-map { height: 360px; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
 .package-marker-wrapper { background: transparent; border: none; }
+.package-indicator-img {
+  width: 40px;
+  height: 40px;
+  display: block;
+  object-fit: contain;
+}
 .package-map-marker {
   position: relative;
   width: 48px;

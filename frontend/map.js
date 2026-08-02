@@ -57,12 +57,12 @@
   }
 
   function createPackageIcon() {
-    return window.L.divIcon({
-      className: 'moving-package-icon',
-      html: '<span class="moving-package-dot"></span>',
-      iconSize: [24, 24],
-      iconAnchor: [12, 12],
-      popupAnchor: [0, -16]
+    return window.L.icon({
+      iconUrl: 'imges/package indicator.png',
+      iconSize: [40, 40],
+      iconAnchor: [20, 20],
+      popupAnchor: [0, -20],
+      className: 'package-tracker-icon'
     });
   }
 
