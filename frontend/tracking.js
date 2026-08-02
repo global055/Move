@@ -80,7 +80,11 @@ async function trackShipment(trackingNumber) {
         `;
       }).join('') : '<li class="timeline-item"><div class="timeline-marker"></div><div class="timeline-content"><p>No timeline entries available.</p></div></li>';
 
-      statusBox.innerHTML = `
+      const originName = shipment.origin || shipment.originName || 'N/A';
+      const destinationName = shipment.destination || shipment.destinationName || 'N/A';
+      const cargoType = shipment.cargoType || shipment.cargo?.type || 'N/A';
+
+      const shipmentInfoHtml = `
         <div class="tracking-results-grid">
           <section class="tracking-card tracking-summary-card">
             <div class="tracking-card-header">
@@ -95,53 +99,59 @@ async function trackShipment(trackingNumber) {
               <div><strong>Carrier</strong><span>${escapeHtml(shipment.carrier || 'N/A')}</span></div>
               <div><strong>Total freight</strong><span>${shipment.totalFreight != null ? `$${shipment.totalFreight.toFixed(2)}` : 'N/A'}</span></div>
               <div><strong>Weight</strong><span>${shipment.weight != null ? `${shipment.weight} kg` : 'N/A'}</span></div>
-              <div><strong>Origin</strong><span>${escapeHtml(shipment.originName || 'N/A')}</span></div>
-              <div><strong>Destination</strong><span>${escapeHtml(shipment.destinationName || 'N/A')}</span></div>
+              <div><strong>Cargo type</strong><span>${escapeHtml(cargoType)}</span></div>
+              <div><strong>Origin</strong><span>${escapeHtml(originName)}</span></div>
+              <div><strong>Destination</strong><span>${escapeHtml(destinationName)}</span></div>
+              <div><strong>Pickup date</strong><span>${escapeHtml(shipment.pickupDate || 'N/A')}</span></div>
+              <div><strong>Pickup time</strong><span>${escapeHtml(shipment.pickupTime || 'N/A')}</span></div>
+              <div><strong>Expected delivery</strong><span>${escapeHtml(shipment.expectedDeliveryTime || 'N/A')}</span></div>
+              <div><strong>Delivery time</strong><span>${escapeHtml(shipment.deliveryTime || 'N/A')}</span></div>
               <div><strong>Current location</strong><span>${escapeHtml(currentLocationText)}</span></div>
+              <div><strong>Route</strong><span>${escapeHtml(originName)} → ${escapeHtml(destinationName)}</span></div>
+              <div><strong>Current coordinates</strong><span>${currentLocation?.lat != null && currentLocation?.lng != null ? `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}` : 'N/A'}</span></div>
+              <div><strong>Origin coordinates</strong><span>${originText}</span></div>
+              <div><strong>Destination coordinates</strong><span>${destinationText}</span></div>
               <div class="full"><strong>Description</strong><span>${escapeHtml(shipment.description || 'N/A')}</span></div>
             </div>
           </section>
 
           <section class="tracking-card">
-            <div class="tracking-card-header"><h3>Shipping information</h3></div>
+            <div class="tracking-card-header"><h3>Sender & receiver</h3></div>
             <div class="tracking-result-grid">
-              <div><strong>Pickup date</strong><span>${escapeHtml(shipment.pickupDate || 'N/A')}</span></div>
-              <div><strong>Pickup time</strong><span>${escapeHtml(shipment.pickupTime || 'N/A')}</span></div>
-              <div><strong>Estimated delivery</strong><span>${escapeHtml(shipment.estimatedDelivery || 'N/A')}</span></div>
-              <div><strong>Expected delivery</strong><span>${escapeHtml(shipment.expectedDeliveryTime || 'N/A')}</span></div>
-              <div><strong>Delivery time</strong><span>${escapeHtml(shipment.deliveryTime || 'N/A')}</span></div>
-              <div><strong>Origin coordinates</strong><span>${escapeHtml(originText)}</span></div>
-              <div><strong>Destination coordinates</strong><span>${escapeHtml(destinationText)}</span></div>
-              <div class="full"><strong>Route</strong><span>${escapeHtml(shipment.originName || 'N/A')} → ${escapeHtml(shipment.destinationName || 'N/A')}</span></div>
+              <div><strong>Sender</strong><span>${escapeHtml(shipment.senderName || 'N/A')}</span></div>
+              <div><strong>Receiver</strong><span>${escapeHtml(shipment.receiverName || 'N/A')}</span></div>
+              <div><strong>Shipper company</strong><span>${escapeHtml(shipment.shipper?.company || 'N/A')}</span></div>
+              <div><strong>Receiver company</strong><span>${escapeHtml(shipment.receiver?.company || 'N/A')}</span></div>
+              <div><strong>Shipper phone</strong><span>${escapeHtml(shipment.shipper?.phone || 'N/A')}</span></div>
+              <div><strong>Receiver phone</strong><span>${escapeHtml(shipment.receiver?.phone || 'N/A')}</span></div>
+              <div><strong>Shipper email</strong><span>${escapeHtml(shipment.shipper?.email || 'N/A')}</span></div>
+              <div><strong>Receiver email</strong><span>${escapeHtml(shipment.receiver?.email || 'N/A')}</span></div>
+              <div class="full"><strong>Shipper address</strong><span>${escapeHtml(shipment.shipper?.address || 'N/A')}</span></div>
+              <div class="full"><strong>Receiver address</strong><span>${escapeHtml(shipment.receiver?.address || 'N/A')}</span></div>
+              <div><strong>Shipper city</strong><span>${escapeHtml(shipment.shipper?.city || 'N/A')}</span></div>
+              <div><strong>Receiver city</strong><span>${escapeHtml(shipment.receiver?.city || 'N/A')}</span></div>
+              <div><strong>Shipper state</strong><span>${escapeHtml(shipment.shipper?.state || 'N/A')}</span></div>
+              <div><strong>Receiver state</strong><span>${escapeHtml(shipment.receiver?.state || 'N/A')}</span></div>
+              <div><strong>Shipper postal code</strong><span>${escapeHtml(shipment.shipper?.postalCode || 'N/A')}</span></div>
+              <div><strong>Receiver postal code</strong><span>${escapeHtml(shipment.receiver?.postalCode || 'N/A')}</span></div>
+              <div><strong>Shipper country</strong><span>${escapeHtml(shipment.shipper?.country || 'N/A')}</span></div>
+              <div><strong>Receiver country</strong><span>${escapeHtml(shipment.receiver?.country || 'N/A')}</span></div>
             </div>
           </section>
 
           <section class="tracking-card">
-            <div class="tracking-card-header"><h3>Package information</h3></div>
+            <div class="tracking-card-header"><h3>Cargo details</h3></div>
             <div class="tracking-result-grid">
               <div><strong>Cargo type</strong><span>${escapeHtml(typeof shipment.cargo === 'string' ? shipment.cargo : shipment.cargo?.type || 'N/A')}</span></div>
               <div><strong>Pieces</strong><span>${shipment.cargo?.pieces != null ? escapeHtml(String(shipment.cargo.pieces)) : 'N/A'}</span></div>
+              <div><strong>Cargo weight</strong><span>${shipment.cargo?.weight != null ? `${shipment.cargo.weight} kg` : 'N/A'}</span></div>
               <div><strong>Volume</strong><span>${shipment.cargo?.volume != null ? `${escapeHtml(String(shipment.cargo.volume))} m³` : 'N/A'}</span></div>
               <div><strong>Dimensions</strong><span>${escapeHtml(shipment.cargo?.dimensions || 'N/A')}</span></div>
-              <div><strong>Cargo value</strong><span>${shipment.cargo?.value != null ? `$${shipment.cargo.value}` : 'N/A'}</span></div>
+              <div><strong>Declared value</strong><span>${shipment.cargo?.value != null ? `$${shipment.cargo.value}` : 'N/A'}</span></div>
               <div><strong>Incoterms</strong><span>${escapeHtml(shipment.cargo?.incoterms || 'N/A')}</span></div>
               <div><strong>Dangerous goods</strong><span>${shipment.cargo?.dangerousGoods != null ? (shipment.cargo.dangerousGoods ? 'Yes' : 'No') : 'N/A'}</span></div>
               <div class="full"><strong>Cargo description</strong><span>${escapeHtml(shipment.cargo?.description || 'N/A')}</span></div>
-              <div class="full"><strong>Instructions</strong><span>${escapeHtml(shipment.cargo?.specialInstructions || 'N/A')}</span></div>
-            </div>
-          </section>
-
-          <section class="tracking-card">
-            <div class="tracking-card-header"><h3>Contacts</h3></div>
-            <div class="tracking-result-grid">
-              <div><strong>Shipper</strong><span>${escapeHtml(shipment.shipper?.company || shipment.shipper?.name || 'N/A')}</span></div>
-              <div><strong>Receiver</strong><span>${escapeHtml(shipment.receiver?.company || shipment.receiver?.name || 'N/A')}</span></div>
-              <div><strong>Shipper phone</strong><span>${escapeHtml(shipment.shipper?.phone || 'N/A')}</span></div>
-              <div><strong>Receiver phone</strong><span>${escapeHtml(shipment.receiver?.phone || 'N/A')}</span></div>
-              <div><strong>Shipper location</strong><span>${escapeHtml(shipment.senderLocation || 'N/A')}</span></div>
-              <div><strong>Receiver location</strong><span>${escapeHtml(shipment.receiverLocation || 'N/A')}</span></div>
-              <div class="full"><strong>Shipper address</strong><span>${escapeHtml(shipment.shipper?.address || 'N/A')}</span></div>
-              <div class="full"><strong>Receiver address</strong><span>${escapeHtml(shipment.receiver?.address || 'N/A')}</span></div>
+              <div class="full"><strong>Special instructions</strong><span>${escapeHtml(shipment.cargo?.specialInstructions || 'N/A')}</span></div>
             </div>
           </section>
 
@@ -151,6 +161,7 @@ async function trackShipment(trackingNumber) {
           </section>
         </div>
       `;
+      statusBox.innerHTML = shipmentInfoHtml;
       statusBox.classList.add('tracking-results-card-wrapper');
     }
 
