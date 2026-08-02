@@ -1,6 +1,8 @@
-const API_BASE_URL = '';
-const API_URL = '/api/shipments';
-const TRACKING_NUMBERS_URL = '/api/shipments/tracking-numbers';
+const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '::1')
+  ? 'http://localhost:5000'
+  : 'https://move-2.onrender.com';
+const API_URL = `${API_BASE_URL}/api/shipments`;
+const TRACKING_NUMBERS_URL = `${API_BASE_URL}/api/shipments/tracking-numbers`;
 
 let homepageMap = null;
 let homepageRouteLine = null;
