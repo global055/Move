@@ -217,8 +217,8 @@ th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border)
   animation: none;
 }
 .package-map-marker.is-paused {
-  background: linear-gradient(135deg, #f59e0b, #f97316);
-  box-shadow: 0 0 18px rgba(249, 115, 22, 0.28);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.18), rgba(34, 197, 94, 0.08));
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.22);
 }
 .hidden { display: none !important; }
 .details-box { background: var(--panel-2); padding: 16px; border-radius: 14px; color: var(--muted); }

@@ -50,7 +50,6 @@ async function handleAdminLogin() {
   }
 
   try {
-    console.log('DEBUG handleAdminLogin - sending login request', { email, passwordLength: password.length });
     const response = await fetch(`${ADMIN_API_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

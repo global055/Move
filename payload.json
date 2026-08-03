@@ -1,0 +1,23 @@
+﻿{
+  "trackingNumber": "VALIDATE-4e51b11b",
+  "senderName": "Test Sender",
+  "senderLocation": "Test Origin",
+  "receiverName": "Test Receiver",
+  "receiverLocation": "Test Dest",
+  "originName": "Origin City",
+  "destinationName": "Destination City",
+  "estimatedDelivery": "2026-08-10",
+  "currentLocationName": "Checkpoint A",
+  "weight": 12.5,
+  "totalFreight": 150.75,
+  "description": "Validation payload with new fields",
+  "shipper": { "company":"Shipper Co","name":"Alice","phone":"1234567890","email":"alice@example.com","address":"123 Ship St","city":"Shipcity","state":"Stateland","postalCode":"12345","country":"Country" },
+  "receiver": { "company":"Receiver Co","name":"Bob","phone":"0987654321","email":"bob@example.com","address":"456 Receive Rd","city":"Recvcity","state":"Stateland","postalCode":"67890","country":"Country" },
+  "cargo": { "type":"General","description":"Boxes","weight":12.5,"volume":2.3,"pieces":3,"dimensions":"30x20x10","value":500,"incoterms":"FOB","specialInstructions":"Handle with care","dangerousGoods":false },
+  "pickupDate": "2026-08-01",
+  "pickupTime": "09:30",
+  "deliveryTime": "17:00",
+  "expectedDeliveryTime": "2026-08-10T17:00:00Z",
+  "shipmentType": "Land Freight",
+  "carrier": "FedEx"
+}
