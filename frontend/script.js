@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://move-638e.onrender.com';
+const API_BASE_URL = '';
 const API_URL = `${API_BASE_URL}/api/shipments`;
 const TRACKING_NUMBERS_URL = `${API_BASE_URL}/api/shipments/tracking-numbers`;
 
@@ -89,6 +89,16 @@ async function loadTrackingDatalist() {
   }
 }
 
+function buildHomepageFieldRow(label, value) {
+  if (value == null || value === '') return '';
+  return `<p><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</p>`;
+}
+
+function formatCurrency(value) {
+  if (value == null || Number.isNaN(Number(value))) return '';
+  return `$${Number(Number(value)).toFixed(2)}`;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   hideHomepageMap();
   initNavigation();
@@ -125,6 +135,35 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.success) {
         const shipment = result.data;
 
+        const currentLocationText = shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation || '';
+        const summaryRows = [
+          ['Sender', shipment.senderName],
+          ['Receiver', shipment.receiverName],
+          ['Origin', shipment.originName],
+          ['Destination', shipment.destinationName],
+          ['Current Status', shipment.status],
+          ['Shipment Type', shipment.shipmentType],
+          ['Carrier', shipment.carrier],
+          ['Mode of Shipment', shipment.modeOfShipment],
+          ['Package Weight', shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : '')],
+          ['Total Freight', formatCurrency(shipment.totalFreight)],
+          ['Estimated Delivery', shipment.estimatedDelivery],
+          ['Expected Delivery Time', shipment.expectedDeliveryTime],
+          ['Pickup Date', shipment.pickupDate],
+          ['Pickup Time', shipment.pickupTime],
+          ['Delivery Date', shipment.deliveryDate],
+          ['Delivery Time', shipment.deliveryTime],
+          ['Departure Airport/Port', shipment.departureAirportPort],
+          ['Arrival Airport/Port', shipment.arrivalAirportPort],
+          ['Current Location', currentLocationText],
+          ['Current Package Location', shipment.currentPackageLocation],
+          ['Payment Status', shipment.paymentStatus],
+          ['Reference Number', shipment.referenceNumber],
+          ['Package Dimensions', shipment.packageDimensions],
+          ['Insurance', shipment.insurance],
+          ['Special Instructions', shipment.specialInstructions]
+        ].map(([label, value]) => buildHomepageFieldRow(label, value)).join('');
+
         statusBox.classList.remove('is-loading');
         statusBox.innerHTML = `
           <div class="tracking-result-card">
@@ -133,14 +172,9 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="tracking-pill">${escapeHtml(shipment.status || 'Unknown')}</span>
             </div>
             <div class="tracking-result-grid">
-              <p><strong>Sender:</strong> ${escapeHtml(shipment.senderName || 'N/A')}</p>
-              <p><strong>Receiver:</strong> ${escapeHtml(shipment.receiverName || 'N/A')}</p>
-              <p><strong>Origin:</strong> ${escapeHtml(shipment.originName || 'N/A')}</p>
-              <p><strong>Destination:</strong> ${escapeHtml(shipment.destinationName || 'N/A')}</p>
-              <p><strong>Weight:</strong> ${shipment.weight != null ? `${shipment.weight} kg` : 'N/A'}</p>
-              <p class="full"><strong>Description:</strong> ${escapeHtml(shipment.description || 'N/A')}</p>
-              <p class="full"><strong>Est. Delivery:</strong> ${escapeHtml(shipment.estimatedDelivery || 'Pending')}</p>
+              ${summaryRows}
             </div>
+            ${shipment.description ? `<div class="tracking-result-description"><strong>Description:</strong> ${escapeHtml(shipment.description)}</div>` : ''}
           </div>
         `;
 
