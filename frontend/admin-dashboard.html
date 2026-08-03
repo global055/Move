@@ -105,7 +105,19 @@
                 <option>Royal Mail</option>
                 <option>International Shipping Agency</option>
               </select></label>
+              <label>Mode of shipment<input id="modeOfShipment" name="modeOfShipment" type="text" /></label>
+              <label>Package description<input id="packageDescription" name="packageDescription" type="text" /></label>
+              <label>Package weight (kg)<input id="packageWeight" name="packageWeight" type="number" step="0.01" /></label>
               <label>Total freight<input id="totalFreight" name="totalFreight" type="number" step="0.01" /></label>
+              <label>Current package location<input id="currentPackageLocation" name="currentPackageLocation" type="text" /></label>
+              <label>Departure airport/port<input id="departureAirportPort" name="departureAirportPort" type="text" /></label>
+              <label>Arrival airport/port<input id="arrivalAirportPort" name="arrivalAirportPort" type="text" /></label>
+              <label>Quantity<input id="quantity" name="quantity" type="number" min="1" /></label>
+              <label>Service type<input id="serviceType" name="serviceType" type="text" /></label>
+              <label>Payment status<input id="paymentStatus" name="paymentStatus" type="text" /></label>
+              <label>Reference number<input id="referenceNumber" name="referenceNumber" type="text" /></label>
+              <label>Package dimensions<input id="packageDimensions" name="packageDimensions" type="text" /></label>
+              <label>Insurance<input id="insurance" name="insurance" type="text" /></label>
               <label>Status<select id="status" name="status">
                 <option>Pending</option>
                 <option>Picked Up</option>
@@ -175,7 +187,7 @@
                   <option value="true">Yes</option>
                   <option value="false">No</option>
                 </select></label>
-                <label>Special instructions<textarea id="cargoInstructions" rows="2" style="font-family: inherit;"></textarea></label>
+                <label>Special instructions<textarea id="specialInstructions" name="specialInstructions" rows="2" style="font-family: inherit;"></textarea></label>
               </div>
             </div>
             <div class="form-actions">

@@ -1,7 +1,7 @@
-﻿const API_BASE_URL = (window.BACKEND_API_BASE || 'https://move-638e.onrender.com').replace(/\/$/, '');
-const API_URL = `${API_BASE_URL}/api/shipments`;
-const ADMIN_CHECK_URL = `${API_BASE_URL}/api/admin/check`;
-const ADMIN_LOGOUT_URL = `${API_BASE_URL}/api/admin/logout`;
+﻿const API_BASE_URL = '';
+const API_URL = '/api/shipments';
+const ADMIN_CHECK_URL = '/api/admin/check';
+const ADMIN_LOGOUT_URL = '/api/admin/logout';
 const SESSION_TOKEN_KEY = 'gm_admin_token';
 
 let shipmentsCache = [];
@@ -86,84 +86,90 @@ function handleTrackingNumberBlur(event) {
   }
 }
 
+function setOptionalVal(fieldId, value) {
+  const normalizedValue = value == null ? '' : (typeof value === 'string' ? value.trim() : value);
+  setVal(fieldId, normalizedValue === '' ? '' : normalizedValue);
+}
+
 function populateShipmentForm(shipment) {
-  setVal('shipmentId', shipment._id);
-  setVal('trackingNumber', shipment.trackingNumber);
-  setVal('senderName', shipment.senderName || shipment.shipper?.name || '');
-  setVal('receiverName', shipment.receiverName || shipment.receiver?.name || '');
-  setVal('origin', shipment.originName);
-  setVal('destination', shipment.destinationName);
-  setVal('estimatedDelivery', shipment.estimatedDelivery);
-  setVal('expectedDeliveryTime', shipment.expectedDeliveryTime || '');
-  setVal('pickupDate', shipment.pickupDate || '');
-  setVal('pickupTime', shipment.pickupTime || '');
-  setVal('deliveryTime', shipment.deliveryTime || '');
-  setVal('shipmentType', shipment.shipmentType || 'Land Freight');
-  setVal('carrier', shipment.carrier || 'ISC');
-  setVal('modeOfShipment', shipment.modeOfShipment || '');
-  setVal('packageDescription', shipment.packageDescription || shipment.description || '');
-  setVal('packageWeight', shipment.packageWeight ?? shipment.weight ?? '');
-  setVal('totalFreight', shipment.totalFreight ?? '');
-  setVal('status', shipment.status || 'In Transit');
-  setVal('weight', shipment.weight);
-  setVal('description', shipment.description);
-  setVal('currentLocation', shipment.currentLocationName || shipment.currentLocation || '');
-  setVal('currentPackageLocation', shipment.currentPackageLocation || shipment.currentLocationName || shipment.currentLocation || '');
-  setVal('departureAirportPort', shipment.departureAirportPort || '');
-  setVal('arrivalAirportPort', shipment.arrivalAirportPort || '');
-  setVal('quantity', shipment.quantity ?? '');
-  setVal('serviceType', shipment.serviceType || '');
-  setVal('paymentStatus', shipment.paymentStatus || '');
-  setVal('referenceNumber', shipment.referenceNumber || '');
-  setVal('specialInstructions', shipment.specialInstructions || '');
-  setVal('packageDimensions', shipment.packageDimensions || shipment.cargo?.dimensions || '');
-  setVal('insurance', shipment.insurance || '');
+  setOptionalVal('shipmentId', shipment._id);
+  setOptionalVal('trackingNumber', shipment.trackingNumber);
+  setOptionalVal('senderName', shipment.senderName || shipment.shipper?.name);
+  setOptionalVal('receiverName', shipment.receiverName || shipment.receiver?.name);
+  setOptionalVal('origin', shipment.originName);
+  setOptionalVal('destination', shipment.destinationName);
+  setOptionalVal('estimatedDelivery', shipment.estimatedDelivery);
+  setOptionalVal('expectedDeliveryTime', shipment.expectedDeliveryTime);
+  setOptionalVal('pickupDate', shipment.pickupDate);
+  setOptionalVal('pickupTime', shipment.pickupTime);
+  setOptionalVal('deliveryTime', shipment.deliveryTime);
+  setOptionalVal('shipmentType', shipment.shipmentType);
+  setOptionalVal('carrier', shipment.carrier);
+  setOptionalVal('totalFreight', shipment.totalFreight);
+  setOptionalVal('status', shipment.status);
+  setOptionalVal('weight', shipment.weight);
+  setOptionalVal('description', shipment.description);
+  setOptionalVal('currentLocation', shipment.currentLocationName || shipment.currentLocation);
 
-  setVal('shipperCompany', shipment.shipper?.company || '');
-  setVal('shipperName', shipment.shipper?.name || shipment.senderName || '');
-  setVal('shipperPhone', shipment.shipper?.phone || '');
-  setVal('shipperEmail', shipment.shipper?.email || '');
-  setVal('shipperAddress', shipment.shipper?.address || '');
-  setVal('shipperCity', shipment.shipper?.city || '');
-  setVal('shipperState', shipment.shipper?.state || '');
-  setVal('shipperPostalCode', shipment.shipper?.postalCode || '');
-  setVal('shipperCountry', shipment.shipper?.country || '');
+  setOptionalVal('shipperCompany', shipment.shipper?.company);
+  setOptionalVal('shipperName', shipment.shipper?.name || shipment.senderName);
+  setOptionalVal('shipperPhone', shipment.shipper?.phone);
+  setOptionalVal('shipperEmail', shipment.shipper?.email);
+  setOptionalVal('shipperAddress', shipment.shipper?.address);
+  setOptionalVal('shipperCity', shipment.shipper?.city);
+  setOptionalVal('shipperState', shipment.shipper?.state);
+  setOptionalVal('shipperPostalCode', shipment.shipper?.postalCode);
+  setOptionalVal('shipperCountry', shipment.shipper?.country);
 
-  setVal('receiverCompany', shipment.receiver?.company || '');
-  setVal('receiverPhone', shipment.receiver?.phone || '');
-  setVal('receiverEmail', shipment.receiver?.email || '');
-  setVal('receiverAddress', shipment.receiver?.address || '');
-  setVal('receiverCity', shipment.receiver?.city || '');
-  setVal('receiverState', shipment.receiver?.state || '');
-  setVal('receiverPostalCode', shipment.receiver?.postalCode || '');
-  setVal('receiverCountry', shipment.receiver?.country || '');
+  setOptionalVal('receiverCompany', shipment.receiver?.company);
+  setOptionalVal('receiverPhone', shipment.receiver?.phone);
+  setOptionalVal('receiverEmail', shipment.receiver?.email);
+  setOptionalVal('receiverAddress', shipment.receiver?.address);
+  setOptionalVal('receiverCity', shipment.receiver?.city);
+  setOptionalVal('receiverState', shipment.receiver?.state);
+  setOptionalVal('receiverPostalCode', shipment.receiver?.postalCode);
+  setOptionalVal('receiverCountry', shipment.receiver?.country);
 
-  setVal('cargoType', shipment.cargo?.type || '');
-  setVal('cargoDescription', shipment.cargo?.description || '');
-  setVal('cargoPieces', shipment.cargo?.pieces ?? '');
-  setVal('cargoWeight', shipment.cargo?.weight ?? '');
-  setVal('cargoVolume', shipment.cargo?.volume ?? '');
-  setVal('cargoDimensions', shipment.cargo?.dimensions || '');
-  setVal('cargoValue', shipment.cargo?.value ?? '');
-  setVal('cargoIncoterms', shipment.cargo?.incoterms || '');
-  setVal('cargoDangerousGoods', shipment.cargo?.dangerousGoods == null ? '' : String(shipment.cargo.dangerousGoods));
-  setVal('cargoInstructions', shipment.cargo?.specialInstructions || '');
+  setOptionalVal('cargoType', shipment.cargo?.type);
+  setOptionalVal('cargoDescription', shipment.cargo?.description);
+  setOptionalVal('cargoPieces', shipment.cargo?.pieces);
+  setOptionalVal('cargoWeight', shipment.cargo?.weight);
+  setOptionalVal('cargoVolume', shipment.cargo?.volume);
+  setOptionalVal('cargoDimensions', shipment.cargo?.dimensions);
+  setOptionalVal('cargoValue', shipment.cargo?.value);
+  setOptionalVal('cargoIncoterms', shipment.cargo?.incoterms);
+  setOptionalVal('cargoDangerousGoods', shipment.cargo?.dangerousGoods == null ? '' : String(shipment.cargo.dangerousGoods));
+  setOptionalVal('cargoInstructions', shipment.cargo?.specialInstructions);
+
+  setOptionalVal('modeOfShipment', shipment.modeOfShipment);
+  setOptionalVal('packageDescription', shipment.packageDescription || shipment.description);
+  setOptionalVal('packageWeight', shipment.packageWeight);
+  setOptionalVal('currentPackageLocation', shipment.currentPackageLocation);
+  setOptionalVal('departureAirportPort', shipment.departureAirportPort);
+  setOptionalVal('arrivalAirportPort', shipment.arrivalAirportPort);
+  setOptionalVal('quantity', shipment.quantity);
+  setOptionalVal('serviceType', shipment.serviceType);
+  setOptionalVal('paymentStatus', shipment.paymentStatus);
+  setOptionalVal('referenceNumber', shipment.referenceNumber);
+  setOptionalVal('packageDimensions', shipment.packageDimensions);
+  setOptionalVal('insurance', shipment.insurance);
+  setOptionalVal('specialInstructions', shipment.specialInstructions);
 
   if (shipment.coordinates) {
-    setVal('originLat', shipment.coordinates.origin?.lat);
-    setVal('originLng', shipment.coordinates.origin?.lng);
-    setVal('destLat', shipment.coordinates.destination?.lat);
-    setVal('destLng', shipment.coordinates.destination?.lng);
-    setVal('currentLat', shipment.coordinates.currentLocation?.lat);
-    setVal('currentLng', shipment.coordinates.currentLocation?.lng);
-    setVal(
+    setOptionalVal('originLat', shipment.coordinates.origin?.lat);
+    setOptionalVal('originLng', shipment.coordinates.origin?.lng);
+    setOptionalVal('destLat', shipment.coordinates.destination?.lat);
+    setOptionalVal('destLng', shipment.coordinates.destination?.lng);
+    setOptionalVal('currentLat', shipment.coordinates.currentLocation?.lat);
+    setOptionalVal('currentLng', shipment.coordinates.currentLocation?.lng);
+    setOptionalVal(
       'currentLocation',
       shipment.coordinates.currentLocation
         ? `${shipment.coordinates.currentLocation.lat}, ${shipment.coordinates.currentLocation.lng}`
-        : shipment.currentLocationName || shipment.currentLocation || ''
+        : shipment.currentLocationName || shipment.currentLocation
     );
   } else {
-    setVal('currentLocation', shipment.currentLocationName || shipment.currentLocation || '');
+    setOptionalVal('currentLocation', shipment.currentLocationName || shipment.currentLocation);
   }
 
   renderShipmentDetails(shipment);
@@ -249,8 +255,6 @@ function buildShipmentPayload() {
   const cargoValueValue = parseFloat(getVal('cargoValue'));
   const cargoPiecesValue = parseInt(getVal('cargoPieces'), 10);
   const totalFreightValue = parseFloat(getVal('totalFreight'));
-  const packageWeightValue = parseFloat(getVal('packageWeight'));
-  const quantityValue = parseInt(getVal('quantity'), 10);
   const dangerousGoodsValue = getVal('cargoDangerousGoods');
 
   return {
@@ -268,22 +272,22 @@ function buildShipmentPayload() {
     carrier: getVal('carrier'),
     modeOfShipment: getVal('modeOfShipment'),
     packageDescription: getVal('packageDescription'),
-    packageWeight: Number.isFinite(packageWeightValue) ? packageWeightValue : (Number.isFinite(weightValue) ? weightValue : null),
+    packageWeight: Number.isFinite(parseFloat(getVal('packageWeight'))) ? parseFloat(getVal('packageWeight')) : null,
+    currentPackageLocation: getVal('currentPackageLocation'),
+    departureAirportPort: getVal('departureAirportPort'),
+    arrivalAirportPort: getVal('arrivalAirportPort'),
+    quantity: Number.isFinite(parseFloat(getVal('quantity'))) ? parseFloat(getVal('quantity')) : null,
+    serviceType: getVal('serviceType'),
+    paymentStatus: getVal('paymentStatus'),
+    referenceNumber: getVal('referenceNumber'),
+    packageDimensions: getVal('packageDimensions'),
+    insurance: getVal('insurance'),
+    specialInstructions: getVal('specialInstructions'),
     totalFreight: Number.isFinite(totalFreightValue) ? totalFreightValue : null,
     status: getVal('status') || 'In Transit',
     weight: Number.isFinite(weightValue) ? weightValue : null,
     description: getVal('description'),
-    currentLocationName: getVal('currentLocation') || getVal('currentPackageLocation'),
-    currentPackageLocation: getVal('currentPackageLocation') || getVal('currentLocation'),
-    departureAirportPort: getVal('departureAirportPort'),
-    arrivalAirportPort: getVal('arrivalAirportPort'),
-    quantity: Number.isFinite(quantityValue) ? quantityValue : null,
-    serviceType: getVal('serviceType'),
-    paymentStatus: getVal('paymentStatus'),
-    referenceNumber: getVal('referenceNumber'),
-    specialInstructions: getVal('specialInstructions'),
-    packageDimensions: getVal('packageDimensions'),
-    insurance: getVal('insurance'),
+    currentLocationName: getVal('currentLocation'),
     coordinates: {
       origin: getCoords('originLat', 'originLng'),
       destination: getCoords('destLat', 'destLng'),
@@ -433,19 +437,29 @@ function renderShipmentDetails(shipment) {
     ['Status', shipment.status],
     ['Shipment type', shipment.shipmentType],
     ['Carrier', shipment.carrier],
+    ['Mode of shipment', shipment.modeOfShipment],
     ['Total freight', shipment.totalFreight != null ? `$${shipment.totalFreight.toFixed(2)}` : ''],
     ['Weight', shipment.weight != null ? `${shipment.weight} kg` : ''],
+    ['Package weight', shipment.packageWeight != null ? `${shipment.packageWeight} kg` : ''],
     ['Origin', shipment.originName],
     ['Destination', shipment.destinationName],
     ['Origin coordinates', originCoords ? `${originCoords.lat}, ${originCoords.lng}` : ''],
     ['Destination coordinates', destinationCoords ? `${destinationCoords.lat}, ${destinationCoords.lng}` : ''],
     ['Current location', currentLocation ? `${currentLocation.lat}, ${currentLocation.lng}` : shipment.currentLocationName || shipment.currentLocation],
+    ['Current package location', shipment.currentPackageLocation],
     ['Pickup date', shipment.pickupDate],
     ['Pickup time', shipment.pickupTime],
     ['Estimated delivery', shipment.estimatedDelivery],
     ['Expected delivery', shipment.expectedDeliveryTime],
     ['Delivery time', shipment.deliveryTime],
-    ['Description', shipment.description]
+    ['Package description', shipment.packageDescription || shipment.description],
+    ['Quantity', shipment.quantity != null ? String(shipment.quantity) : ''],
+    ['Service type', shipment.serviceType],
+    ['Payment status', shipment.paymentStatus],
+    ['Reference number', shipment.referenceNumber],
+    ['Package dimensions', shipment.packageDimensions],
+    ['Insurance', shipment.insurance],
+    ['Special instructions', shipment.specialInstructions || shipment.cargo?.specialInstructions]
   ]);
 
   const shipperRows = buildRows([
@@ -847,9 +861,9 @@ function getAuthHeaders() {
 function resetShipmentForm() {
   const fields = [
     'shipmentId', 'trackingNumber', 'senderName', 'receiverName',
-    'origin', 'destination', 'estimatedDelivery', 'expectedDeliveryTime', 'pickupDate', 'pickupTime', 'deliveryTime', 'shipmentType', 'carrier', 'modeOfShipment', 'packageDescription', 'packageWeight', 'totalFreight', 'status',
+    'origin', 'destination', 'estimatedDelivery', 'expectedDeliveryTime', 'pickupDate', 'pickupTime', 'deliveryTime', 'shipmentType', 'carrier', 'totalFreight', 'status',
     'originLat', 'originLng', 'destLat', 'destLng',
-    'currentLat', 'currentLng', 'currentLocation', 'currentPackageLocation', 'weight', 'description', 'departureAirportPort', 'arrivalAirportPort', 'quantity', 'serviceType', 'paymentStatus', 'referenceNumber', 'specialInstructions', 'packageDimensions', 'insurance',
+    'currentLat', 'currentLng', 'currentLocation', 'weight', 'description',
     'shipperCompany', 'shipperName', 'shipperPhone', 'shipperEmail', 'shipperAddress', 'shipperCity', 'shipperState', 'shipperPostalCode', 'shipperCountry',
     'receiverCompany', 'receiverPhone', 'receiverEmail', 'receiverAddress', 'receiverCity', 'receiverState', 'receiverPostalCode', 'receiverCountry',
     'cargoType', 'cargoDescription', 'cargoPieces', 'cargoWeight', 'cargoVolume', 'cargoDimensions', 'cargoValue', 'cargoIncoterms', 'cargoDangerousGoods', 'cargoInstructions'
