@@ -109,6 +109,9 @@ async function trackShipment(trackingNumber) {
         `;
       }).join('') : '<li class="timeline-item"><div class="timeline-marker"></div><div class="timeline-content"><p>No timeline entries available.</p></div></li>';
 
+      const pickupDateTime = [shipment.pickupDate, shipment.pickupTime].filter(Boolean).join(' ');
+      const deliveryDateTime = [shipment.deliveryDate, shipment.deliveryTime].filter(Boolean).join(' ');
+
       const summaryRows = [
         ['Tracking Number', shipment.trackingNumber],
         ['Sender', shipment.senderName],
@@ -121,10 +124,8 @@ async function trackShipment(trackingNumber) {
         ['Total Freight', shipment.totalFreight != null ? `$${shipment.totalFreight.toFixed(2)}` : ''],
         ['Estimated Delivery Date', shipment.estimatedDelivery],
         ['Expected Delivery Time', shipment.expectedDeliveryTime],
-        ['Pickup Date', shipment.pickupDate],
-        ['Pickup Time', shipment.pickupTime],
-        ['Delivery Date', shipment.deliveryDate],
-        ['Delivery Time', shipment.deliveryTime],
+        ['Pickup', pickupDateTime],
+        ['Delivery', deliveryDateTime],
         ['Current Package Location', currentLocationText]
       ].map(([label, value]) => buildFieldRow(label, value)).filter(Boolean).join('');
 

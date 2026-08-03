@@ -177,8 +177,6 @@ const adminSchema = new mongoose.Schema({
 }, { timestamps: true });
 const Admin = mongoose.model('Admin', adminSchema, 'admins');
 
-const inMemoryShipments = new Map();
-const inMemoryAdmins = new Map();
 const adminSessions = new Map();
 
 const isMongoAvailable = () => mongoose.connection.readyState === 1;
@@ -214,12 +212,12 @@ const getAuthenticatedAdmin = async (req) => {
   const session = adminSessions.get(token);
   if (!session) return null;
 
-  if (isMongoAvailable()) {
-    const admin = await Admin.findById(session.adminId);
-    return admin || null;
+  if (!isMongoAvailable()) {
+    return null;
   }
 
-  return inMemoryAdmins.get(session.adminEmail) || null;
+  const admin = await Admin.findById(session.adminId);
+  return admin || null;
 };
 
 const authenticateAdmin = async (req, res, next) => {
@@ -236,79 +234,17 @@ const ensureDefaultAdmin = async () => {
   const defaultAdminPassword = DEFAULT_ADMIN_PASSWORD;
   const passwordHash = await bcrypt.hash(defaultAdminPassword, 10);
 
-  if (isMongoAvailable()) {
-    const count = await Admin.countDocuments({}).catch(() => 0);
-    if (count === 0) {
-      await Admin.create({ email: defaultAdminEmail, passwordHash });
-      console.log(`Created default admin account: ${defaultAdminEmail}`);
-    }
-    return;
+  if (!isMongoAvailable()) {
+    throw new Error('Database unavailable while ensuring default admin account');
   }
 
-  if (!inMemoryAdmins.has(defaultAdminEmail)) {
-    inMemoryAdmins.set(defaultAdminEmail, { email: defaultAdminEmail, passwordHash });
-    console.log(`Created fallback in-memory admin account: ${defaultAdminEmail}`);
+  const count = await Admin.countDocuments({}).catch(() => 0);
+  if (count === 0) {
+    await Admin.create({ email: defaultAdminEmail, passwordHash });
+    console.log(`Created default admin account: ${defaultAdminEmail}`);
   }
 };
 
-const lookupShipmentInMemory = (trackingNumber) => {
-  const normalizedTrackingNumber = normalizeTrackingNumber(trackingNumber);
-  if (!normalizedTrackingNumber) return null;
-  return inMemoryShipments.get(normalizedTrackingNumber) || null;
-};
-
-const listShipmentsInMemory = () => Array.from(inMemoryShipments.values());
-
-const saveShipmentToMemory = async (payload) => {
-  const trackingNumber = normalizeTrackingNumber(payload?.trackingNumber);
-  if (!trackingNumber) {
-    throw new Error('Tracking number is required.');
-  }
-
-  if (inMemoryShipments.has(trackingNumber)) {
-    throw new Error('Tracking number already exists.');
-  }
-
-  const shipment = {
-    ...payload,
-    trackingNumber,
-    createdAt: new Date().toISOString()
-  };
-
-  inMemoryShipments.set(trackingNumber, shipment);
-  return shipment;
-};
-
-const updateShipmentInMemory = async (trackingNumber, payload) => {
-  const normalizedTrackingNumber = normalizeTrackingNumber(trackingNumber);
-  if (!normalizedTrackingNumber) {
-    throw new Error('Tracking number is required.');
-  }
-
-  const existingShipment = inMemoryShipments.get(normalizedTrackingNumber);
-  if (!existingShipment) {
-    return null;
-  }
-
-  const updatedShipment = {
-    ...existingShipment,
-    ...payload,
-    trackingNumber: normalizedTrackingNumber,
-    updatedAt: new Date().toISOString()
-  };
-
-  inMemoryShipments.set(normalizedTrackingNumber, updatedShipment);
-  return updatedShipment;
-};
-
-const deleteShipmentInMemory = async (trackingNumber) => {
-  const normalizedTrackingNumber = normalizeTrackingNumber(trackingNumber);
-  if (!normalizedTrackingNumber) {
-    return false;
-  }
-
-  return inMemoryShipments.delete(normalizedTrackingNumber);
-};
 
 const buildTimelineEntry = (payload = {}, existingShipment = null) => ({
   date: payload.date || payload.timelineDate || existingShipment?.timeline?.[0]?.date || new Date().toISOString().split('T')[0],
@@ -388,10 +324,11 @@ app.post('/api/admin/login', async (req, res) => {
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
-    const admin = isMongoAvailable()
-      ? await Admin.findOne({ email: normalizedEmail })
-      : inMemoryAdmins.get(normalizedEmail);
+    if (!isMongoAvailable()) {
+      return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
+    }
 
+    const admin = await Admin.findOne({ email: normalizedEmail });
     if (!admin) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
@@ -444,28 +381,12 @@ app.post('/api/admin/logout', async (req, res) => {
 //  API Route: Get Shipment by Tracking Number
 app.get('/api/shipments/:trackingNumber', async (req, res) => {
   try {
-    const { trackingNumber } = req.params;
-    const shipment = isMongoAvailable()
-      ? await Shipment.findOne({ trackingNumber })
-      : lookupShipmentInMemory(trackingNumber);
-
-    if (!shipment) {
-      return res.status(404).json({ success: false, message: 'Tracking number not found' });
+    if (!isMongoAvailable()) {
+      return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
     }
 
-    res.json({ success: true, data: shipment });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-//  API Route: Get Shipment by Tracking Number
-app.get('/api/shipments/:trackingNumber', async (req, res) => {
-  try {
     const { trackingNumber } = req.params;
-    const shipment = isMongoAvailable()
-      ? await Shipment.findOne({ trackingNumber })
-      : lookupShipmentInMemory(trackingNumber);
+    const shipment = await Shipment.findOne({ trackingNumber });
 
     if (!shipment) {
       return res.status(404).json({ success: false, message: 'Tracking number not found' });
@@ -480,13 +401,11 @@ app.get('/api/shipments/:trackingNumber', async (req, res) => {
 // 4. API Route: Create / Seed a New Shipment (Admin action)
 app.post('/api/shipments', authenticateAdmin, async (req, res) => {
   try {
-    const shipmentPayload = normalizeShipmentPayload(req.body, null, true);
-
     if (!isMongoAvailable()) {
-      const shipment = await saveShipmentToMemory(shipmentPayload);
-      return res.status(201).json({ success: true, data: shipment });
+      return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
     }
 
+    const shipmentPayload = normalizeShipmentPayload(req.body, null, true);
     const shipment = new Shipment(shipmentPayload);
     await shipment.save();
     res.status(201).json({ success: true, data: shipment });
@@ -504,18 +423,17 @@ app.post('/api/shipments', authenticateAdmin, async (req, res) => {
 // ==========================================
 app.put('/api/shipments/:trackingNumber', authenticateAdmin, async (req, res) => {
   try {
-    const existingShipment = isMongoAvailable()
-      ? await Shipment.findOne({ trackingNumber: req.params.trackingNumber })
-      : lookupShipmentInMemory(req.params.trackingNumber);
+    if (!isMongoAvailable()) {
+      return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
+    }
 
+    const existingShipment = await Shipment.findOne({ trackingNumber: req.params.trackingNumber });
     const shipmentPayload = normalizeShipmentPayload(req.body, existingShipment, false);
-    const updatedShipment = isMongoAvailable()
-      ? await Shipment.findOneAndUpdate(
-          { trackingNumber: req.params.trackingNumber },
-          shipmentPayload,
-          { new: true }
-        )
-      : await updateShipmentInMemory(req.params.trackingNumber, shipmentPayload);
+    const updatedShipment = await Shipment.findOneAndUpdate(
+      { trackingNumber: req.params.trackingNumber },
+      shipmentPayload,
+      { new: true }
+    );
 
     if (!updatedShipment) {
       return res.status(404).json({ success: false, message: 'Shipment not found' });
@@ -529,18 +447,11 @@ app.put('/api/shipments/:trackingNumber', authenticateAdmin, async (req, res) =>
 // Get All Shipments (For Admin Dashboard)
 app.get('/api/shipments', authenticateAdmin, async (req, res) => {
   try {
-    console.log('/api/shipments called, mongoose.readyState=', mongoose.connection.readyState);
     if (!isMongoAvailable()) {
-      return res.json({ success: true, data: listShipmentsInMemory() });
+      return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
     }
 
-    // Defensive: use the native DB handle to avoid Mongoose buffering issues
-    const db = mongoose.connection.db;
-    if (!db) {
-      throw new Error('Native DB handle not available');
-    }
-    console.log('Querying native collection via db.collection');
-    const shipments = await db.collection('shipments').find({}).limit(100).toArray();
+    const shipments = await Shipment.find({}).limit(100).lean();
     res.json({ success: true, data: shipments });
   } catch (err) {
     console.error('SHIPMENTS_ERR', err);
@@ -551,10 +462,11 @@ app.get('/api/shipments', authenticateAdmin, async (req, res) => {
 // Delete Shipment by Tracking Number
 app.delete('/api/shipments/:trackingNumber', authenticateAdmin, async (req, res) => {
   try {
-    const deleted = isMongoAvailable()
-      ? await Shipment.deleteOne({ trackingNumber: req.params.trackingNumber })
-      : await deleteShipmentInMemory(req.params.trackingNumber);
+    if (!isMongoAvailable()) {
+      return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
+    }
 
+    const deleted = await Shipment.deleteOne({ trackingNumber: req.params.trackingNumber });
     res.json({ success: true, message: 'Shipment deleted', deleted });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -572,13 +484,8 @@ const startServer = async () => {
     });
   } catch (err) {
     console.error('Failed to start server:', err);
-    console.warn('Falling back to the in-memory shipment store for API requests until MongoDB Atlas is reachable.');
-    await ensureDefaultAdmin();
-    app.get('/_who', (req, res) => res.json({ pid: process.pid }));
-    app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
-      console.log('Process PID:', process.pid);
-    });
+    console.error('MongoDB is required. Exiting startup to avoid running with volatile in-memory fallback.');
+    process.exit(1);
   }
 };
 
