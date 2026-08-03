@@ -21,7 +21,7 @@ async function checkExistingSession() {
     });
     const result = await response.json();
     if (result.success) {
-      window.location.href = 'admin-dashboard.html';
+      window.location.href = '/admin-dashboard';
     } else {
       localStorage.removeItem(SESSION_TOKEN_KEY);
     }
@@ -61,7 +61,7 @@ async function handleAdminLogin() {
       localStorage.setItem(SESSION_TOKEN_KEY, result.token);
       authMessage.textContent = 'Login successful. Redirecting...';
       authMessage.classList.add('success');
-      window.location.href = 'admin-dashboard.html';
+      window.location.href = '/admin-dashboard';
       return;
     }
 

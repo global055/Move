@@ -831,7 +831,7 @@ async function handleLogout() {
 function redirectIfUnauthorized(result) {
   if (result && (result.message === 'Admin authentication required' || result.message === 'Not authenticated')) {
     localStorage.removeItem(SESSION_TOKEN_KEY);
-    window.location.href = 'admin-login.html';
+    window.location.href = '/admin-login';
   }
 }
 
@@ -841,14 +841,14 @@ async function verifyAdminSession() {
     const result = await response.json();
     if (!result.success) {
       localStorage.removeItem(SESSION_TOKEN_KEY);
-      window.location.href = 'admin-login.html';
+      window.location.href = '/admin-login';
       return null;
     }
     return result.data;
   } catch (error) {
     console.error('Admin session verification failed:', error);
     localStorage.removeItem(SESSION_TOKEN_KEY);
-    window.location.href = 'admin-login.html';
+    window.location.href = '/admin-login';
     return null;
   }
 }
