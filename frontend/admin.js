@@ -1,7 +1,7 @@
-﻿const API_BASE_URL = '';
-const API_URL = '/api/shipments';
-const ADMIN_CHECK_URL = '/api/admin/check';
-const ADMIN_LOGOUT_URL = '/api/admin/logout';
+﻿const API_BASE_URL = (window.BACKEND_API_BASE || 'https://move-638e.onrender.com').replace(/\/$/, '');
+const API_URL = `${API_BASE_URL}/api/shipments`;
+const ADMIN_CHECK_URL = `${API_BASE_URL}/api/admin/check`;
+const ADMIN_LOGOUT_URL = `${API_BASE_URL}/api/admin/logout`;
 const SESSION_TOKEN_KEY = 'gm_admin_token';
 
 let shipmentsCache = [];
@@ -100,11 +100,24 @@ function populateShipmentForm(shipment) {
   setVal('deliveryTime', shipment.deliveryTime || '');
   setVal('shipmentType', shipment.shipmentType || 'Land Freight');
   setVal('carrier', shipment.carrier || 'ISC');
+  setVal('modeOfShipment', shipment.modeOfShipment || '');
+  setVal('packageDescription', shipment.packageDescription || shipment.description || '');
+  setVal('packageWeight', shipment.packageWeight ?? shipment.weight ?? '');
   setVal('totalFreight', shipment.totalFreight ?? '');
   setVal('status', shipment.status || 'In Transit');
   setVal('weight', shipment.weight);
   setVal('description', shipment.description);
   setVal('currentLocation', shipment.currentLocationName || shipment.currentLocation || '');
+  setVal('currentPackageLocation', shipment.currentPackageLocation || shipment.currentLocationName || shipment.currentLocation || '');
+  setVal('departureAirportPort', shipment.departureAirportPort || '');
+  setVal('arrivalAirportPort', shipment.arrivalAirportPort || '');
+  setVal('quantity', shipment.quantity ?? '');
+  setVal('serviceType', shipment.serviceType || '');
+  setVal('paymentStatus', shipment.paymentStatus || '');
+  setVal('referenceNumber', shipment.referenceNumber || '');
+  setVal('specialInstructions', shipment.specialInstructions || '');
+  setVal('packageDimensions', shipment.packageDimensions || shipment.cargo?.dimensions || '');
+  setVal('insurance', shipment.insurance || '');
 
   setVal('shipperCompany', shipment.shipper?.company || '');
   setVal('shipperName', shipment.shipper?.name || shipment.senderName || '');
@@ -236,6 +249,8 @@ function buildShipmentPayload() {
   const cargoValueValue = parseFloat(getVal('cargoValue'));
   const cargoPiecesValue = parseInt(getVal('cargoPieces'), 10);
   const totalFreightValue = parseFloat(getVal('totalFreight'));
+  const packageWeightValue = parseFloat(getVal('packageWeight'));
+  const quantityValue = parseInt(getVal('quantity'), 10);
   const dangerousGoodsValue = getVal('cargoDangerousGoods');
 
   return {
@@ -251,11 +266,24 @@ function buildShipmentPayload() {
     deliveryTime: getVal('deliveryTime'),
     shipmentType: getVal('shipmentType'),
     carrier: getVal('carrier'),
+    modeOfShipment: getVal('modeOfShipment'),
+    packageDescription: getVal('packageDescription'),
+    packageWeight: Number.isFinite(packageWeightValue) ? packageWeightValue : (Number.isFinite(weightValue) ? weightValue : null),
     totalFreight: Number.isFinite(totalFreightValue) ? totalFreightValue : null,
     status: getVal('status') || 'In Transit',
     weight: Number.isFinite(weightValue) ? weightValue : null,
     description: getVal('description'),
-    currentLocationName: getVal('currentLocation'),
+    currentLocationName: getVal('currentLocation') || getVal('currentPackageLocation'),
+    currentPackageLocation: getVal('currentPackageLocation') || getVal('currentLocation'),
+    departureAirportPort: getVal('departureAirportPort'),
+    arrivalAirportPort: getVal('arrivalAirportPort'),
+    quantity: Number.isFinite(quantityValue) ? quantityValue : null,
+    serviceType: getVal('serviceType'),
+    paymentStatus: getVal('paymentStatus'),
+    referenceNumber: getVal('referenceNumber'),
+    specialInstructions: getVal('specialInstructions'),
+    packageDimensions: getVal('packageDimensions'),
+    insurance: getVal('insurance'),
     coordinates: {
       origin: getCoords('originLat', 'originLng'),
       destination: getCoords('destLat', 'destLng'),
@@ -819,9 +847,9 @@ function getAuthHeaders() {
 function resetShipmentForm() {
   const fields = [
     'shipmentId', 'trackingNumber', 'senderName', 'receiverName',
-    'origin', 'destination', 'estimatedDelivery', 'expectedDeliveryTime', 'pickupDate', 'pickupTime', 'deliveryTime', 'shipmentType', 'carrier', 'totalFreight', 'status',
+    'origin', 'destination', 'estimatedDelivery', 'expectedDeliveryTime', 'pickupDate', 'pickupTime', 'deliveryTime', 'shipmentType', 'carrier', 'modeOfShipment', 'packageDescription', 'packageWeight', 'totalFreight', 'status',
     'originLat', 'originLng', 'destLat', 'destLng',
-    'currentLat', 'currentLng', 'currentLocation', 'weight', 'description',
+    'currentLat', 'currentLng', 'currentLocation', 'currentPackageLocation', 'weight', 'description', 'departureAirportPort', 'arrivalAirportPort', 'quantity', 'serviceType', 'paymentStatus', 'referenceNumber', 'specialInstructions', 'packageDimensions', 'insurance',
     'shipperCompany', 'shipperName', 'shipperPhone', 'shipperEmail', 'shipperAddress', 'shipperCity', 'shipperState', 'shipperPostalCode', 'shipperCountry',
     'receiverCompany', 'receiverPhone', 'receiverEmail', 'receiverAddress', 'receiverCity', 'receiverState', 'receiverPostalCode', 'receiverCountry',
     'cargoType', 'cargoDescription', 'cargoPieces', 'cargoWeight', 'cargoVolume', 'cargoDimensions', 'cargoValue', 'cargoIncoterms', 'cargoDangerousGoods', 'cargoInstructions'

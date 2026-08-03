@@ -1,4 +1,4 @@
-const API_BASE_URL = (window.BACKEND_API_BASE || '').replace(/\/$/, '');
+const API_BASE_URL = (window.BACKEND_API_BASE || 'https://move-638e.onrender.com').replace(/\/$/, '');
 const ADMIN_API_URL = `${API_BASE_URL}/api/admin`;
 const SESSION_TOKEN_KEY = 'gm_admin_token';
 
