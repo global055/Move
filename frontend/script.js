@@ -1,6 +1,6 @@
-const API_BASE_URL = '';
-const API_URL = '/api/shipments';
-const TRACKING_NUMBERS_URL = '/api/shipments/tracking-numbers';
+const API_BASE_URL = 'https://move-638e.onrender.com';
+const API_URL = `${API_BASE_URL}/api/shipments`;
+const TRACKING_NUMBERS_URL = `${API_BASE_URL}/api/shipments/tracking-numbers`;
 
 let homepageMap = null;
 let homepageRouteLine = null;
