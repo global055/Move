@@ -24,9 +24,12 @@ function renderTrackingDatalist(shipments) {
   const datalist = document.getElementById('trackingNumbers');
   if (!datalist) return;
 
-  datalist.innerHTML = shipments
-    .filter((shipment) => shipment.trackingNumber)
-    .map((shipment) => `<option value="${escapeHtml(shipment.trackingNumber)}"></option>`)
+  const trackingNumbers = (Array.isArray(shipments) ? shipments : [])
+    .map((shipment) => typeof shipment === 'string' ? shipment : shipment?.trackingNumber)
+    .filter(Boolean);
+
+  datalist.innerHTML = trackingNumbers
+    .map((trackingNumber) => `<option value="${escapeHtml(trackingNumber)}"></option>`)
     .join('');
 }
 
