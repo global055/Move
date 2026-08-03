@@ -22,6 +22,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 function initAdminDashboard() {
   hideMapSection();
+  initTheme();
   attachUiHandlers();
   loadShipments();
 }
@@ -37,7 +38,7 @@ function attachUiHandlers() {
 
   document.getElementById('cancelEditBtn')?.addEventListener('click', resetShipmentForm);
   document.getElementById('resetFormBtn')?.addEventListener('click', resetShipmentForm);
-  document.getElementById('seedSampleBtn')?.addEventListener('click', seedSampleShipments);
+  document.getElementById('themeToggleBtn')?.addEventListener('click', toggleTheme);
   document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
 
   const trackingNumberInput = document.getElementById('trackingNumber');
@@ -102,6 +103,7 @@ function populateShipmentForm(shipment) {
   setOptionalVal('expectedDeliveryTime', shipment.expectedDeliveryTime);
   setOptionalVal('pickupDate', shipment.pickupDate);
   setOptionalVal('pickupTime', shipment.pickupTime);
+  setOptionalVal('deliveryDate', shipment.deliveryDate);
   setOptionalVal('deliveryTime', shipment.deliveryTime);
   setOptionalVal('shipmentType', shipment.shipmentType);
   setOptionalVal('carrier', shipment.carrier);
@@ -267,6 +269,7 @@ function buildShipmentPayload() {
     expectedDeliveryTime: getVal('expectedDeliveryTime'),
     pickupDate: getVal('pickupDate'),
     pickupTime: getVal('pickupTime'),
+    deliveryDate: getVal('deliveryDate'),
     deliveryTime: getVal('deliveryTime'),
     shipmentType: getVal('shipmentType'),
     carrier: getVal('carrier'),
@@ -449,6 +452,7 @@ function renderShipmentDetails(shipment) {
     ['Current package location', shipment.currentPackageLocation],
     ['Pickup date', shipment.pickupDate],
     ['Pickup time', shipment.pickupTime],
+    ['Delivery date', shipment.deliveryDate],
     ['Estimated delivery', shipment.estimatedDelivery],
     ['Expected delivery', shipment.expectedDeliveryTime],
     ['Delivery time', shipment.deliveryTime],
@@ -756,63 +760,6 @@ function easeInOutCubic(progress) {
     : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 }
 
-async function seedSampleShipments() {
-  const now = Date.now();
-  const sampleData = [
-    {
-      trackingNumber: `GM-${now}-A`,
-      senderName: 'Novak Logistics',
-      receiverName: 'Urban Supply Co.',
-      originName: 'Los Angeles',
-      destinationName: 'Chicago',
-      estimatedDelivery: '2026-08-05',
-      status: 'In Transit',
-      weight: 12.5,
-      description: 'Electronics shipment',
-      coordinates: {
-        origin: { lat: 34.0522, lng: -118.2437 },
-        destination: { lat: 41.8781, lng: -87.6298 },
-        currentLocation: { lat: 39.0997, lng: -94.5786 }
-      }
-    },
-    {
-      trackingNumber: `GM-${now}-B`,
-      senderName: 'Evergreen Trade',
-      receiverName: 'Pacific Retail',
-      originName: 'Miami',
-      destinationName: 'New York',
-      estimatedDelivery: '2026-08-03',
-      status: 'Arriving Soon',
-      weight: 8.3,
-      description: 'Apparel and accessories',
-      coordinates: {
-        origin: { lat: 25.7617, lng: -80.1918 },
-        destination: { lat: 40.7128, lng: -74.0060 },
-        currentLocation: { lat: 37.7749, lng: -122.4194 }
-      }
-    }
-  ];
-
-  try {
-    const results = await Promise.all(sampleData.map((item) =>
-      fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          ...getAuthHeaders(),
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(item)
-      }).then((res) => res.json())
-    ));
-
-    const successful = results.filter((item) => item.success).length;
-    alert(`${successful} sample shipment(s) seeded successfully.`);
-    loadShipments();
-  } catch (error) {
-    console.error('Seed sample error:', error);
-    alert('Unable to seed sample shipments.');
-  }
-}
 
 async function handleLogout() {
   const token = localStorage.getItem(SESSION_TOKEN_KEY);
@@ -826,6 +773,28 @@ async function handleLogout() {
   }
   localStorage.removeItem(SESSION_TOKEN_KEY);
   window.location.href = '/admin-login';
+}
+
+const THEME_STORAGE_KEY = 'gm_admin_theme';
+
+function initTheme() {
+  const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+  const theme = storedTheme === 'light' ? 'light' : 'dark';
+  applyTheme(theme);
+}
+
+function applyTheme(theme) {
+  document.body.dataset.theme = theme;
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  if (themeToggleBtn) {
+    themeToggleBtn.textContent = theme === 'light' ? 'Dark theme' : 'White theme';
+  }
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+}
+
+function toggleTheme() {
+  const nextTheme = document.body.dataset.theme === 'light' ? 'dark' : 'light';
+  applyTheme(nextTheme);
 }
 
 function redirectIfUnauthorized(result) {

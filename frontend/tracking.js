@@ -120,11 +120,12 @@ async function trackShipment(trackingNumber) {
         ['Package Weight', shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : '')],
         ['Total Freight', shipment.totalFreight != null ? `$${shipment.totalFreight.toFixed(2)}` : ''],
         ['Estimated Delivery Date', shipment.estimatedDelivery],
-        ['Expected Delivery Time', shipment.expectedDeliveryTime || shipment.deliveryTime],
-        ['Current Package Location', currentLocationText],
+        ['Expected Delivery Time', shipment.expectedDeliveryTime],
         ['Pickup Date', shipment.pickupDate],
         ['Pickup Time', shipment.pickupTime],
-        ['Package Description', shipment.packageDescription || shipment.description]
+        ['Delivery Date', shipment.deliveryDate],
+        ['Delivery Time', shipment.deliveryTime],
+        ['Current Package Location', currentLocationText]
       ].map(([label, value]) => buildFieldRow(label, value)).filter(Boolean).join('');
 
       const shipperRows = [
@@ -146,15 +147,35 @@ async function trackShipment(trackingNumber) {
       const shipmentDetailsRows = [
         ['Origin', originName],
         ['Destination', destinationName],
+        ['Origin coordinates', originCoords?.lat != null && originCoords?.lng != null ? `${originCoords.lat.toFixed(4)}, ${originCoords.lng.toFixed(4)}` : ''],
+        ['Destination coordinates', destinationCoords?.lat != null && destinationCoords?.lng != null ? `${destinationCoords.lat.toFixed(4)}, ${destinationCoords.lng.toFixed(4)}` : ''],
         ['Departure Airport/Port', shipment.departureAirportPort],
         ['Arrival Airport/Port', shipment.arrivalAirportPort],
+        ['Pickup Date', shipment.pickupDate],
+        ['Pickup Time', shipment.pickupTime],
+        ['Delivery Date', shipment.deliveryDate],
+        ['Delivery Time', shipment.deliveryTime],
         ['Quantity', shipment.quantity != null ? shipment.quantity : ''],
         ['Service Type', shipment.serviceType],
         ['Payment Status', shipment.paymentStatus],
         ['Reference Number', shipment.referenceNumber],
         ['Package Dimensions', shipment.packageDimensions || shipment.cargo?.dimensions],
         ['Insurance', shipment.insurance],
-        ['Special Instructions', shipment.specialInstructions]
+        ['Weight', shipment.weight != null ? `${shipment.weight} kg` : ''],
+        ['Package Description', shipment.packageDescription || shipment.description],
+        ['Description', shipment.description],
+        ['Current Location', shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation],
+        ['Special Instructions', shipment.specialInstructions],
+        ['Cargo Type', shipment.cargo?.type],
+        ['Cargo Description', shipment.cargo?.description],
+        ['Cargo Pieces', shipment.cargo?.pieces],
+        ['Cargo Weight', shipment.cargo?.weight != null ? `${shipment.cargo.weight} kg` : ''],
+        ['Cargo Volume', shipment.cargo?.volume != null ? `${shipment.cargo.volume}` : ''],
+        ['Cargo Value', shipment.cargo?.value != null ? `$${shipment.cargo.value.toFixed(2)}` : ''],
+        ['Cargo Dimensions', shipment.cargo?.dimensions],
+        ['Incoterms', shipment.cargo?.incoterms],
+        ['Dangerous Goods', shipment.cargo?.dangerousGoods != null ? (shipment.cargo.dangerousGoods ? 'Yes' : 'No') : ''],
+        ['Cargo Special Instructions', shipment.cargo?.specialInstructions]
       ].map(([label, value]) => buildFieldRow(label, value)).filter(Boolean).join('');
 
       const shipmentInfoHtml = `
