@@ -296,7 +296,9 @@ const deleteShipmentInMemory = async (trackingNumber) => {
 // Admin auth routes
 app.post('/api/admin/login', async (req, res) => {
   try {
+    console.log('DEBUG /api/admin/login - req.body:', req.body);
     const { email, password } = req.body || {};
+    console.log('DEBUG /api/admin/login - email:', email, 'passwordLength:', (password || '').length);
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Email and password are required' });
     }

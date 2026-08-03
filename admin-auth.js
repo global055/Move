@@ -1,4 +1,4 @@
-const API_BASE_URL = '';
+const API_BASE_URL = (window.BACKEND_API_BASE || '').replace(/\/$/, '');
 const ADMIN_API_URL = `${API_BASE_URL}/api/admin`;
 const SESSION_TOKEN_KEY = 'gm_admin_token';
 
@@ -50,6 +50,7 @@ async function handleAdminLogin() {
   }
 
   try {
+    console.log('DEBUG handleAdminLogin - sending login request', { email, passwordLength: password.length });
     const response = await fetch(`${ADMIN_API_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
