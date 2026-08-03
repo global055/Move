@@ -97,17 +97,41 @@ mongoose.connection.on('disconnected', () => {
 const shipmentSchema = new mongoose.Schema({
   trackingNumber: { type: String, required: true, unique: true },
   status: { type: String, default: 'In Transit' },
-  senderName: { type: String, default: 'N/A' },
-  senderLocation: { type: String, default: 'N/A' },
-  receiverName: { type: String, default: 'N/A' },
-  receiverLocation: { type: String, default: 'N/A' },
+  senderName: { type: String, default: '' },
+  senderLocation: { type: String, default: '' },
+  receiverName: { type: String, default: '' },
+  receiverLocation: { type: String, default: '' },
   originName: String,
   destinationName: String,
+  origin: String,
+  destination: String,
+  departureAirportPort: String,
+  arrivalAirportPort: String,
   estimatedDelivery: { type: String, default: 'Pending' },
   currentLocationName: String,
+  currentPackageLocation: String,
   weight: Number,
+  packageWeight: Number,
   totalFreight: Number,
   description: String,
+  packageDescription: String,
+  modeOfShipment: String,
+  shipmentType: {
+    type: String,
+    enum: ['Air Freight', 'Sea Freight', 'Land Freight'],
+    default: 'Land Freight'
+  },
+  carrier: {
+    type: String,
+    enum: ['ISC','DHL','USPS','FedEx','WCF','UPS','Royal Mail','International Shipping Agency']
+  },
+  quantity: Number,
+  serviceType: String,
+  paymentStatus: String,
+  referenceNumber: String,
+  specialInstructions: String,
+  packageDimensions: String,
+  insurance: String,
   shipper: {
     company: String,
     name: String,
@@ -130,29 +154,20 @@ const shipmentSchema = new mongoose.Schema({
     postalCode: String,
     country: String
   },
-  // Allow `cargo` to be either an object (new payloads) or legacy string values.
-  // Use a flexible Mixed type to accept both forms without casting errors.
   cargo: {
     type: mongoose.Schema.Types.Mixed,
     default: {}
   },
-  // New scheduling and logistics fields
   pickupDate: { type: String },
   pickupTime: { type: String },
   deliveryTime: { type: String },
   expectedDeliveryTime: { type: String },
-  shipmentType: {
-    type: String,
-    enum: ['Air Freight', 'Sea Freight', 'Land Freight'],
-    default: 'Land Freight'
-  },
-  carrier: {
-    type: String,
-    enum: ['ISC','DHL','USPS','FedEx','WCF','UPS','Royal Mail','International Shipping Agency']
-  },
   timeline: [{
+    date: String,
+    time: String,
     status: String,
     location: String,
+    remarks: String,
     description: String,
     timestamp: { type: Date, default: Date.now },
     updatedBy: String
@@ -311,9 +326,12 @@ const deleteShipmentInMemory = async (trackingNumber) => {
 };
 
 const buildTimelineEntry = (payload = {}, existingShipment = null) => ({
+  date: payload.date || payload.timelineDate || existingShipment?.timeline?.[0]?.date || new Date().toISOString().split('T')[0],
+  time: payload.time || payload.timelineTime || existingShipment?.timeline?.[0]?.time || '',
   status: payload.status || existingShipment?.status || 'In Transit',
-  location: payload.currentLocationName || existingShipment?.currentLocationName || payload.currentLocation || existingShipment?.currentLocation || '',
-  description: payload.description || existingShipment?.description || 'Shipment updated',
+  location: payload.currentLocationName || existingShipment?.currentLocationName || payload.location || payload.currentLocation || '',
+  remarks: payload.remarks || payload.description || existingShipment?.description || 'Shipment updated',
+  description: payload.description || payload.remarks || existingShipment?.description || 'Shipment updated',
   timestamp: new Date(),
   updatedBy: payload.updatedBy || 'admin'
 });
@@ -321,8 +339,13 @@ const buildTimelineEntry = (payload = {}, existingShipment = null) => ({
 const normalizeShipmentPayload = (payload = {}, existingShipment = null, isCreate = false) => {
   const normalizedPayload = {
     ...payload,
+    trackingNumber: normalizeTrackingNumber(payload.trackingNumber || existingShipment?.trackingNumber),
     senderName: payload.senderName || existingShipment?.senderName || payload.shipper?.name || '',
     receiverName: payload.receiverName || existingShipment?.receiverName || payload.receiver?.name || '',
+    originName: payload.originName || payload.origin || existingShipment?.originName || '',
+    destinationName: payload.destinationName || payload.destination || existingShipment?.destinationName || '',
+    currentLocationName: payload.currentLocationName || payload.currentPackageLocation || existingShipment?.currentLocationName || '',
+    currentPackageLocation: payload.currentPackageLocation || payload.currentLocationName || existingShipment?.currentPackageLocation || '',
     shipper: {
       ...(existingShipment?.shipper || {}),
       ...(payload.shipper || {})
@@ -347,16 +370,28 @@ const normalizeShipmentPayload = (payload = {}, existingShipment = null, isCreat
   if (!normalizedPayload.destinationName && existingShipment?.destinationName) {
     normalizedPayload.destinationName = existingShipment.destinationName;
   }
+  if (!normalizedPayload.currentLocationName && existingShipment?.currentLocationName) {
+    normalizedPayload.currentLocationName = existingShipment.currentLocationName;
+  }
+  if (!normalizedPayload.currentPackageLocation && existingShipment?.currentPackageLocation) {
+    normalizedPayload.currentPackageLocation = existingShipment.currentPackageLocation;
+  }
+
+  const existingTimeline = Array.isArray(existingShipment?.timeline) ? existingShipment.timeline : [];
 
   if (isCreate) {
     normalizedPayload.timeline = Array.isArray(payload.timeline) && payload.timeline.length > 0
-      ? payload.timeline
+      ? payload.timeline.map((entry) => ({ ...entry }))
       : [buildTimelineEntry(normalizedPayload, null)];
     return normalizedPayload;
   }
 
-  const existingTimeline = Array.isArray(existingShipment?.timeline) ? existingShipment.timeline : [];
-  const nextTimeline = [...existingTimeline, buildTimelineEntry(normalizedPayload, existingShipment)];
+  if (Array.isArray(payload.timeline) && payload.timeline.length > 0) {
+    normalizedPayload.timeline = payload.timeline.map((entry) => ({ ...entry }));
+    return normalizedPayload;
+  }
+
+  const nextTimeline = [buildTimelineEntry(normalizedPayload, existingShipment), ...existingTimeline];
   normalizedPayload.timeline = nextTimeline;
   return normalizedPayload;
 };
@@ -423,6 +458,23 @@ app.post('/api/admin/logout', async (req, res) => {
   res.json({ success: true });
 });
 
+app.get('/api/shipments/tracking-numbers', async (req, res) => {
+  try {
+    if (isMongoAvailable()) {
+      const shipments = await Shipment.find({}, { trackingNumber: 1, _id: 0 }).limit(500).lean();
+      const trackingNumbers = shipments
+        .map((shipment) => shipment.trackingNumber)
+        .filter(Boolean);
+      return res.json({ success: true, data: trackingNumbers });
+    }
+
+    return res.json({ success: true, data: Array.from(inMemoryShipments.keys()) });
+  } catch (err) {
+    console.error('TRACKING_NUMBERS_ERR', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 //  API Route: Get Shipment by Tracking Number
 app.get('/api/shipments/:trackingNumber', async (req, res) => {
   try {
@@ -437,23 +489,6 @@ app.get('/api/shipments/:trackingNumber', async (req, res) => {
 
     res.json({ success: true, data: shipment });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-app.get('/api/shipments/tracking-numbers', async (req, res) => {
-  try {
-    if (isMongoAvailable()) {
-      const shipments = await Shipment.find({}, { trackingNumber: 1, _id: 0 }).limit(500).lean();
-      const trackingNumbers = shipments
-        .map((shipment) => shipment.trackingNumber)
-        .filter(Boolean);
-      return res.json({ success: true, data: trackingNumbers });
-    }
-
-    return res.json({ success: true, data: Array.from(inMemoryShipments.keys()) });
-  } catch (err) {
-    console.error('TRACKING_NUMBERS_ERR', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });

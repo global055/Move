@@ -1,5 +1,6 @@
 const API_BASE_URL = '';
 const API_URL = '/api/shipments';
+const TRACKING_NUMBERS_URL = '/api/shipments/tracking-numbers';
 
 // Load shipments and populate datalist on page load
 window.addEventListener('DOMContentLoaded', () => {
@@ -8,7 +9,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 async function loadTrackingDatalist() {
   try {
-    const response = await fetch(API_URL);
+    const response = await fetch(TRACKING_NUMBERS_URL);
     const result = await response.json();
 
     if (result.success && Array.isArray(result.data)) {
@@ -49,40 +50,76 @@ async function trackShipment(trackingNumber) {
       const destinationCoords = shipment.coordinates?.destination;
       const currentLocationText = currentLocation?.lat != null && currentLocation?.lng != null
         ? `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`
-        : (shipment.currentLocationName || shipment.currentLocation || 'N/A');
+        : (shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation || 'Not Available');
       const originText = originCoords?.lat != null && originCoords?.lng != null
         ? `${originCoords.lat.toFixed(4)}, ${originCoords.lng.toFixed(4)}`
-        : shipment.originName || 'N/A';
+        : shipment.originName || shipment.origin || 'Not Available';
       const destinationText = destinationCoords?.lat != null && destinationCoords?.lng != null
         ? `${destinationCoords.lat.toFixed(4)}, ${destinationCoords.lng.toFixed(4)}`
-        : shipment.destinationName || 'N/A';
-
+        : shipment.destinationName || shipment.destination || 'Not Available';
+      const originName = shipment.origin || shipment.originName || 'Not Available';
+      const destinationName = shipment.destination || shipment.destinationName || 'Not Available';
+      const currentStatus = shipment.status || 'In Transit';
       const timelineItems = Array.isArray(shipment.timeline) ? [...shipment.timeline].reverse() : [];
       const timelineHtml = timelineItems.length > 0 ? timelineItems.map((item, index) => {
-        const date = item.timestamp ? new Date(item.timestamp) : null;
+        const displayDate = item.date || (item.timestamp ? new Date(item.timestamp).toLocaleDateString() : 'Not Available');
+        const displayTime = item.time || (item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Not Available');
+        const displayRemarks = item.remarks || item.description || 'No remarks provided.';
+        const displayLocation = item.location || item.currentLocationName || 'Not Available';
         const isCurrent = index === 0;
         return `
           <li class="timeline-item ${isCurrent ? 'current-step' : ''}">
             <div class="timeline-marker"></div>
             <div class="timeline-content">
               <div class="timeline-top">
-                <span class="timeline-status">${escapeHtml(item.status || 'Unknown')}</span>
-                <span class="timeline-date">${date ? date.toLocaleDateString() : 'N/A'}</span>
+                <span class="timeline-status">${escapeHtml(item.status || currentStatus)}</span>
+                <span class="timeline-date">${escapeHtml(displayDate)}</span>
               </div>
               <div class="timeline-meta">
-                <span>${escapeHtml(item.location || 'Unknown location')}</span>
-                <span>${date ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
+                <span>${escapeHtml(displayLocation)}</span>
+                <span>${escapeHtml(displayTime)}</span>
               </div>
-              <p>${escapeHtml(item.description || 'No details available.')}</p>
+              <p>${escapeHtml(displayRemarks)}</p>
               ${item.updatedBy ? `<small>Updated by ${escapeHtml(item.updatedBy)}</small>` : ''}
             </div>
           </li>
         `;
       }).join('') : '<li class="timeline-item"><div class="timeline-marker"></div><div class="timeline-content"><p>No timeline entries available.</p></div></li>';
 
-      const originName = shipment.origin || shipment.originName || 'N/A';
-      const destinationName = shipment.destination || shipment.destinationName || 'N/A';
-      const cargoType = shipment.cargoType || shipment.cargo?.type || 'N/A';
+      const detailRows = [
+        ['Tracking Number', shipment.trackingNumber],
+        ['Current Status', currentStatus],
+        ['Shipment Type', shipment.shipmentType],
+        ['Courier/Carrier', shipment.carrier],
+        ['Mode of Shipment', shipment.modeOfShipment || shipment.cargo?.type || 'Not Available'],
+        ['Package Description', shipment.packageDescription || shipment.description || 'Not Available'],
+        ['Package Weight', shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : 'Not Available')],
+        ['Total Freight', shipment.totalFreight != null ? `$${shipment.totalFreight.toFixed(2)}` : 'Not Available'],
+        ['Pickup Date', shipment.pickupDate || 'Not Available'],
+        ['Pickup Time', shipment.pickupTime || 'Not Available'],
+        ['Estimated Delivery Date', shipment.estimatedDelivery || 'Not Available'],
+        ['Expected Delivery Time', shipment.expectedDeliveryTime || shipment.deliveryTime || 'Not Available'],
+        ['Current Package Location', currentLocationText],
+        ['Shipper Name', shipment.shipper?.name || shipment.senderName || 'Not Available'],
+        ['Shipper Phone', shipment.shipper?.phone || 'Not Available'],
+        ['Shipper Email', shipment.shipper?.email || 'Not Available'],
+        ['Shipper Address', [shipment.shipper?.address, shipment.shipper?.city, shipment.shipper?.state, shipment.shipper?.postalCode, shipment.shipper?.country].filter(Boolean).join(', ') || 'Not Available'],
+        ['Receiver Name', shipment.receiver?.name || shipment.receiverName || 'Not Available'],
+        ['Receiver Phone', shipment.receiver?.phone || 'Not Available'],
+        ['Receiver Email', shipment.receiver?.email || 'Not Available'],
+        ['Receiver Address', [shipment.receiver?.address, shipment.receiver?.city, shipment.receiver?.state, shipment.receiver?.postalCode, shipment.receiver?.country].filter(Boolean).join(', ') || 'Not Available'],
+        ['Origin', originName],
+        ['Destination', destinationName],
+        ['Departure Airport/Port', shipment.departureAirportPort || 'Not Available'],
+        ['Arrival Airport/Port', shipment.arrivalAirportPort || 'Not Available'],
+        ['Quantity', shipment.quantity != null ? shipment.quantity : 'Not Available'],
+        ['Service Type', shipment.serviceType || 'Not Available'],
+        ['Payment Status', shipment.paymentStatus || 'Not Available'],
+        ['Reference Number', shipment.referenceNumber || 'Not Available'],
+        ['Special Instructions', shipment.specialInstructions || 'Not Available'],
+        ['Package Dimensions', shipment.packageDimensions || (shipment.cargo?.dimensions || 'Not Available')],
+        ['Insurance', shipment.insurance || 'Not Available']
+      ];
 
       const shipmentInfoHtml = `
         <div class="tracking-results-grid">
@@ -91,73 +128,76 @@ async function trackShipment(trackingNumber) {
               <div>
                 <p class="eyebrow">Shipment summary</p>
                 <h2>${escapeHtml(shipment.trackingNumber || 'Tracking details')}</h2>
+                <p class="tracking-summary-subtitle">${escapeHtml(originName)} → ${escapeHtml(destinationName)}</p>
               </div>
-              <span class="tracking-pill">${escapeHtml(shipment.status || 'Unknown')}</span>
+              <span class="tracking-pill">${escapeHtml(currentStatus)}</span>
             </div>
             <div class="tracking-result-grid">
-              <div><strong>Shipment type</strong><span>${escapeHtml(shipment.shipmentType || 'N/A')}</span></div>
-              <div><strong>Carrier</strong><span>${escapeHtml(shipment.carrier || 'N/A')}</span></div>
-              <div><strong>Total freight</strong><span>${shipment.totalFreight != null ? `$${shipment.totalFreight.toFixed(2)}` : 'N/A'}</span></div>
-              <div><strong>Weight</strong><span>${shipment.weight != null ? `${shipment.weight} kg` : 'N/A'}</span></div>
-              <div><strong>Cargo type</strong><span>${escapeHtml(cargoType)}</span></div>
+              <div><strong>Tracking Number</strong><span>${escapeHtml(shipment.trackingNumber || 'Not Available')}</span></div>
+              <div><strong>Current Status</strong><span>${escapeHtml(currentStatus)}</span></div>
+              <div><strong>Shipment Type</strong><span>${escapeHtml(shipment.shipmentType || 'Not Available')}</span></div>
+              <div><strong>Courier/Carrier</strong><span>${escapeHtml(shipment.carrier || 'Not Available')}</span></div>
+              <div><strong>Mode of Shipment</strong><span>${escapeHtml(shipment.modeOfShipment || 'Not Available')}</span></div>
+              <div><strong>Package Weight</strong><span>${shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : 'Not Available')}</span></div>
+              <div><strong>Total Freight</strong><span>${shipment.totalFreight != null ? `$${shipment.totalFreight.toFixed(2)}` : 'Not Available'}</span></div>
+              <div><strong>Estimated Delivery Date</strong><span>${escapeHtml(shipment.estimatedDelivery || 'Not Available')}</span></div>
+              <div><strong>Expected Delivery Time</strong><span>${escapeHtml(shipment.expectedDeliveryTime || shipment.deliveryTime || 'Not Available')}</span></div>
+              <div><strong>Current Package Location</strong><span>${escapeHtml(currentLocationText)}</span></div>
+              <div><strong>Pickup Date</strong><span>${escapeHtml(shipment.pickupDate || 'Not Available')}</span></div>
+              <div><strong>Pickup Time</strong><span>${escapeHtml(shipment.pickupTime || 'Not Available')}</span></div>
+              <div class="full"><strong>Package Description</strong><span>${escapeHtml(shipment.packageDescription || shipment.description || 'Not Available')}</span></div>
+            </div>
+          </section>
+
+          <section class="tracking-card">
+            <div class="tracking-card-header"><h3>Shipper information</h3></div>
+            <div class="tracking-result-grid">
+              <div><strong>Shipper Name</strong><span>${escapeHtml(shipment.shipper?.name || shipment.senderName || 'Not Available')}</span></div>
+              <div><strong>Shipper Phone</strong><span>${escapeHtml(shipment.shipper?.phone || 'Not Available')}</span></div>
+              <div><strong>Shipper Email</strong><span>${escapeHtml(shipment.shipper?.email || 'Not Available')}</span></div>
+              <div><strong>Shipper Company</strong><span>${escapeHtml(shipment.shipper?.company || 'Not Available')}</span></div>
+              <div class="full"><strong>Shipper Address</strong><span>${escapeHtml([shipment.shipper?.address, shipment.shipper?.city, shipment.shipper?.state, shipment.shipper?.postalCode, shipment.shipper?.country].filter(Boolean).join(', ') || 'Not Available')}</span></div>
+            </div>
+          </section>
+
+          <section class="tracking-card">
+            <div class="tracking-card-header"><h3>Receiver information</h3></div>
+            <div class="tracking-result-grid">
+              <div><strong>Receiver Name</strong><span>${escapeHtml(shipment.receiver?.name || shipment.receiverName || 'Not Available')}</span></div>
+              <div><strong>Receiver Phone</strong><span>${escapeHtml(shipment.receiver?.phone || 'Not Available')}</span></div>
+              <div><strong>Receiver Email</strong><span>${escapeHtml(shipment.receiver?.email || 'Not Available')}</span></div>
+              <div><strong>Receiver Company</strong><span>${escapeHtml(shipment.receiver?.company || 'Not Available')}</span></div>
+              <div class="full"><strong>Receiver Address</strong><span>${escapeHtml([shipment.receiver?.address, shipment.receiver?.city, shipment.receiver?.state, shipment.receiver?.postalCode, shipment.receiver?.country].filter(Boolean).join(', ') || 'Not Available')}</span></div>
+            </div>
+          </section>
+
+          <section class="tracking-card">
+            <div class="tracking-card-header"><h3>Shipment details</h3></div>
+            <div class="tracking-result-grid">
               <div><strong>Origin</strong><span>${escapeHtml(originName)}</span></div>
               <div><strong>Destination</strong><span>${escapeHtml(destinationName)}</span></div>
-              <div><strong>Pickup date</strong><span>${escapeHtml(shipment.pickupDate || 'N/A')}</span></div>
-              <div><strong>Pickup time</strong><span>${escapeHtml(shipment.pickupTime || 'N/A')}</span></div>
-              <div><strong>Expected delivery</strong><span>${escapeHtml(shipment.expectedDeliveryTime || 'N/A')}</span></div>
-              <div><strong>Delivery time</strong><span>${escapeHtml(shipment.deliveryTime || 'N/A')}</span></div>
-              <div><strong>Current location</strong><span>${escapeHtml(currentLocationText)}</span></div>
-              <div><strong>Route</strong><span>${escapeHtml(originName)} → ${escapeHtml(destinationName)}</span></div>
-              <div><strong>Current coordinates</strong><span>${currentLocation?.lat != null && currentLocation?.lng != null ? `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}` : 'N/A'}</span></div>
-              <div><strong>Origin coordinates</strong><span>${originText}</span></div>
-              <div><strong>Destination coordinates</strong><span>${destinationText}</span></div>
-              <div class="full"><strong>Description</strong><span>${escapeHtml(shipment.description || 'N/A')}</span></div>
-            </div>
-          </section>
-
-          <section class="tracking-card">
-            <div class="tracking-card-header"><h3>Sender & receiver</h3></div>
-            <div class="tracking-result-grid">
-              <div><strong>Sender</strong><span>${escapeHtml(shipment.senderName || 'N/A')}</span></div>
-              <div><strong>Receiver</strong><span>${escapeHtml(shipment.receiverName || 'N/A')}</span></div>
-              <div><strong>Shipper company</strong><span>${escapeHtml(shipment.shipper?.company || 'N/A')}</span></div>
-              <div><strong>Receiver company</strong><span>${escapeHtml(shipment.receiver?.company || 'N/A')}</span></div>
-              <div><strong>Shipper phone</strong><span>${escapeHtml(shipment.shipper?.phone || 'N/A')}</span></div>
-              <div><strong>Receiver phone</strong><span>${escapeHtml(shipment.receiver?.phone || 'N/A')}</span></div>
-              <div><strong>Shipper email</strong><span>${escapeHtml(shipment.shipper?.email || 'N/A')}</span></div>
-              <div><strong>Receiver email</strong><span>${escapeHtml(shipment.receiver?.email || 'N/A')}</span></div>
-              <div class="full"><strong>Shipper address</strong><span>${escapeHtml(shipment.shipper?.address || 'N/A')}</span></div>
-              <div class="full"><strong>Receiver address</strong><span>${escapeHtml(shipment.receiver?.address || 'N/A')}</span></div>
-              <div><strong>Shipper city</strong><span>${escapeHtml(shipment.shipper?.city || 'N/A')}</span></div>
-              <div><strong>Receiver city</strong><span>${escapeHtml(shipment.receiver?.city || 'N/A')}</span></div>
-              <div><strong>Shipper state</strong><span>${escapeHtml(shipment.shipper?.state || 'N/A')}</span></div>
-              <div><strong>Receiver state</strong><span>${escapeHtml(shipment.receiver?.state || 'N/A')}</span></div>
-              <div><strong>Shipper postal code</strong><span>${escapeHtml(shipment.shipper?.postalCode || 'N/A')}</span></div>
-              <div><strong>Receiver postal code</strong><span>${escapeHtml(shipment.receiver?.postalCode || 'N/A')}</span></div>
-              <div><strong>Shipper country</strong><span>${escapeHtml(shipment.shipper?.country || 'N/A')}</span></div>
-              <div><strong>Receiver country</strong><span>${escapeHtml(shipment.receiver?.country || 'N/A')}</span></div>
-            </div>
-          </section>
-
-          <section class="tracking-card">
-            <div class="tracking-card-header"><h3>Cargo details</h3></div>
-            <div class="tracking-result-grid">
-              <div><strong>Cargo type</strong><span>${escapeHtml(typeof shipment.cargo === 'string' ? shipment.cargo : shipment.cargo?.type || 'N/A')}</span></div>
-              <div><strong>Pieces</strong><span>${shipment.cargo?.pieces != null ? escapeHtml(String(shipment.cargo.pieces)) : 'N/A'}</span></div>
-              <div><strong>Cargo weight</strong><span>${shipment.cargo?.weight != null ? `${shipment.cargo.weight} kg` : 'N/A'}</span></div>
-              <div><strong>Volume</strong><span>${shipment.cargo?.volume != null ? `${escapeHtml(String(shipment.cargo.volume))} m³` : 'N/A'}</span></div>
-              <div><strong>Dimensions</strong><span>${escapeHtml(shipment.cargo?.dimensions || 'N/A')}</span></div>
-              <div><strong>Declared value</strong><span>${shipment.cargo?.value != null ? `$${shipment.cargo.value}` : 'N/A'}</span></div>
-              <div><strong>Incoterms</strong><span>${escapeHtml(shipment.cargo?.incoterms || 'N/A')}</span></div>
-              <div><strong>Dangerous goods</strong><span>${shipment.cargo?.dangerousGoods != null ? (shipment.cargo.dangerousGoods ? 'Yes' : 'No') : 'N/A'}</span></div>
-              <div class="full"><strong>Cargo description</strong><span>${escapeHtml(shipment.cargo?.description || 'N/A')}</span></div>
-              <div class="full"><strong>Special instructions</strong><span>${escapeHtml(shipment.cargo?.specialInstructions || 'N/A')}</span></div>
+              <div><strong>Departure Airport/Port</strong><span>${escapeHtml(shipment.departureAirportPort || 'Not Available')}</span></div>
+              <div><strong>Arrival Airport/Port</strong><span>${escapeHtml(shipment.arrivalAirportPort || 'Not Available')}</span></div>
+              <div><strong>Quantity</strong><span>${escapeHtml(shipment.quantity != null ? String(shipment.quantity) : 'Not Available')}</span></div>
+              <div><strong>Service Type</strong><span>${escapeHtml(shipment.serviceType || 'Not Available')}</span></div>
+              <div><strong>Payment Status</strong><span>${escapeHtml(shipment.paymentStatus || 'Not Available')}</span></div>
+              <div><strong>Reference Number</strong><span>${escapeHtml(shipment.referenceNumber || 'Not Available')}</span></div>
+              <div><strong>Package Dimensions</strong><span>${escapeHtml(shipment.packageDimensions || shipment.cargo?.dimensions || 'Not Available')}</span></div>
+              <div><strong>Insurance</strong><span>${escapeHtml(shipment.insurance || 'Not Available')}</span></div>
+              <div class="full"><strong>Special Instructions</strong><span>${escapeHtml(shipment.specialInstructions || 'Not Available')}</span></div>
             </div>
           </section>
 
           <section class="tracking-card timeline-card">
-            <div class="tracking-card-header"><h3>Timeline</h3></div>
+            <div class="tracking-card-header"><h3>Shipment timeline</h3></div>
             <ul class="timeline-list">${timelineHtml}</ul>
+          </section>
+
+          <section class="tracking-card">
+            <div class="tracking-card-header"><h3>Live package map</h3></div>
+            <div class="tracking-map-placeholder">
+              <p>${escapeHtml(currentLocationText)}</p>
+            </div>
           </section>
         </div>
       `;
