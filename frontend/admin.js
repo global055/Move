@@ -825,7 +825,7 @@ async function handleLogout() {
     console.warn('Logout request failed:', error);
   }
   localStorage.removeItem(SESSION_TOKEN_KEY);
-  window.location.href = 'admin-login.html';
+  window.location.href = '/admin-login';
 }
 
 function redirectIfUnauthorized(result) {
