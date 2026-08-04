@@ -500,7 +500,7 @@ app.get('/api/shipments', authenticateAdmin, async (req, res) => {
       return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
     }
 
-    const shipments = await Shipment.find({}).limit(100).lean();
+    const shipments = await Shipment.find({}).sort({ createdAt: -1 }).lean();
     res.json({ success: true, data: shipments });
   } catch (err) {
     console.error('SHIPMENTS_ERR', err);
