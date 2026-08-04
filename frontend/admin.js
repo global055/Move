@@ -50,7 +50,7 @@ function attachUiHandlers() {
 
 async function loadShipments() {
   try {
-    const response = await fetch(API_URL, { headers: getAuthHeaders() });
+    const response = await fetch(API_URL, { headers: getAuthHeaders(), credentials: 'same-origin', cache: 'no-store' });
     const result = await response.json();
 
     if (result.success && Array.isArray(result.data)) {
@@ -238,7 +238,7 @@ function renderTable(shipments) {
 
 async function editShipment(trackingNumber) {
   try {
-    const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`, { headers: getAuthHeaders() });
+    const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`, { headers: getAuthHeaders(), credentials: 'same-origin', cache: 'no-store' });
     const result = await response.json();
 
     if (result.success) {
@@ -359,6 +359,8 @@ async function saveShipment() {
         ...getAuthHeaders(),
         'Content-Type': 'application/json'
       },
+      credentials: 'same-origin',
+      cache: 'no-store',
       body: JSON.stringify(payload)
     });
     const result = await response.json();
@@ -384,7 +386,7 @@ async function deleteShipment(trackingNumber) {
   if (!confirm(`Are you sure you want to delete shipment ${trackingNumber}?`)) return;
 
   try {
-    const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`, { method: 'DELETE', headers: getAuthHeaders() });
+    const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`, { method: 'DELETE', headers: getAuthHeaders(), credentials: 'same-origin', cache: 'no-store' });
     const result = await response.json();
 
     if (result.success) {
@@ -766,7 +768,9 @@ async function handleLogout() {
   try {
     await fetch(ADMIN_LOGOUT_URL, {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {}
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: 'same-origin',
+      cache: 'no-store'
     });
   } catch (error) {
     console.warn('Logout request failed:', error);
@@ -806,7 +810,7 @@ function redirectIfUnauthorized(result) {
 
 async function verifyAdminSession() {
   try {
-    const response = await fetch(ADMIN_CHECK_URL, { headers: getAuthHeaders() });
+    const response = await fetch(ADMIN_CHECK_URL, { headers: getAuthHeaders(), credentials: 'same-origin', cache: 'no-store' });
     const result = await response.json();
     if (!result.success) {
       localStorage.removeItem(SESSION_TOKEN_KEY);

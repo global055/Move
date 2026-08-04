@@ -19,6 +19,11 @@ const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Global100';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const setNoStoreHeaders = (res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
+};
 const allowedOrigins = [
   'https://move-2.onrender.com',
   'http://localhost:3000',
@@ -318,6 +323,7 @@ const normalizeShipmentPayload = (payload = {}, existingShipment = null, isCreat
 // Admin auth routes
 app.post('/api/admin/login', async (req, res) => {
   try {
+    setNoStoreHeaders(res);
     const { email, password } = req.body || {};
     if (!email || !password) {
       return res.status(400).json({ success: false, message: 'Email and password are required' });
@@ -353,6 +359,7 @@ app.post('/api/admin/login', async (req, res) => {
 
 app.get('/api/admin/check', async (req, res) => {
   try {
+    setNoStoreHeaders(res);
     const admin = await getAuthenticatedAdmin(req);
     if (!admin) {
       return res.status(401).json({ success: false, message: 'Not authenticated' });
@@ -364,6 +371,7 @@ app.get('/api/admin/check', async (req, res) => {
 });
 
 app.post('/api/admin/logout', async (req, res) => {
+  setNoStoreHeaders(res);
   const cookies = parseCookies(req.headers.cookie || '');
   const token = cookies.gm_session;
   if (token) {
@@ -381,6 +389,7 @@ app.post('/api/admin/logout', async (req, res) => {
 //  API Route: Get Shipment by Tracking Number
 app.get('/api/shipments/:trackingNumber', async (req, res) => {
   try {
+    setNoStoreHeaders(res);
     if (!isMongoAvailable()) {
       return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
     }
@@ -401,6 +410,7 @@ app.get('/api/shipments/:trackingNumber', async (req, res) => {
 // 4. API Route: Create / Seed a New Shipment (Admin action)
 app.post('/api/shipments', authenticateAdmin, async (req, res) => {
   try {
+    setNoStoreHeaders(res);
     if (!isMongoAvailable()) {
       return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
     }
@@ -423,6 +433,7 @@ app.post('/api/shipments', authenticateAdmin, async (req, res) => {
 // ==========================================
 app.put('/api/shipments/:trackingNumber', authenticateAdmin, async (req, res) => {
   try {
+    setNoStoreHeaders(res);
     if (!isMongoAvailable()) {
       return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
     }
@@ -447,6 +458,7 @@ app.put('/api/shipments/:trackingNumber', authenticateAdmin, async (req, res) =>
 // Get All Shipments (For Admin Dashboard)
 app.get('/api/shipments', authenticateAdmin, async (req, res) => {
   try {
+    setNoStoreHeaders(res);
     if (!isMongoAvailable()) {
       return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
     }
@@ -462,6 +474,7 @@ app.get('/api/shipments', authenticateAdmin, async (req, res) => {
 // Delete Shipment by Tracking Number
 app.delete('/api/shipments/:trackingNumber', authenticateAdmin, async (req, res) => {
   try {
+    setNoStoreHeaders(res);
     if (!isMongoAvailable()) {
       return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
     }

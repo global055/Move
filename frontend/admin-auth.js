@@ -1,4 +1,4 @@
-const API_BASE_URL = (window.BACKEND_API_BASE || 'https://move-638e.onrender.com').replace(/\/$/, '');
+const API_BASE_URL = (window.BACKEND_API_BASE || '').replace(/\/$/, '');
 const ADMIN_API_URL = `${API_BASE_URL}/api/admin`;
 const SESSION_TOKEN_KEY = 'gm_admin_token';
 
@@ -17,7 +17,9 @@ async function checkExistingSession() {
 
   try {
     const response = await fetch(`${ADMIN_API_URL}/check`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
+      credentials: 'same-origin',
+      cache: 'no-store'
     });
     const result = await response.json();
     if (result.success) {
@@ -53,6 +55,8 @@ async function handleAdminLogin() {
     const response = await fetch(`${ADMIN_API_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      cache: 'no-store',
       body: JSON.stringify({ email, password })
     });
 
