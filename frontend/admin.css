@@ -124,6 +124,7 @@ body[data-theme='light'] .sidebar {
 .sidebar-nav a.active, .sidebar-nav a:hover { background: rgba(31,123,255,0.16); color: white; }
 .dashboard-main { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
 .dashboard-topbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
 .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
 .stat-card { padding: 18px; }
 .stat-card p { margin: 0 0 8px; color: var(--muted); }

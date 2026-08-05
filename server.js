@@ -3,10 +3,13 @@ const path = require('path');
 const dns = require('dns');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
-require('dotenv').config();
+const dotenv = require('dotenv');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+dotenv.config({ path: path.resolve(__dirname, '.env.local'), override: true });
 
 const FRONTEND_DIR = path.join(__dirname, 'frontend');
 const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
@@ -188,7 +191,15 @@ const adminSchema = new mongoose.Schema({
 }, { timestamps: true });
 const Admin = mongoose.model('Admin', adminSchema, 'admins');
 
-const adminSessions = new Map();
+const adminSessionSchema = new mongoose.Schema({
+  token: { type: String, required: true, unique: true },
+  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
+  adminEmail: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  expiresAt: { type: Date, default: () => new Date(Date.now() + 24 * 60 * 60 * 1000) }
+});
+adminSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+const AdminSession = mongoose.model('AdminSession', adminSessionSchema, 'admin_sessions');
 
 const isMongoAvailable = () => mongoose.connection.readyState === 1;
 
@@ -207,12 +218,14 @@ const getRequestToken = (req) => {
   return cookies.gm_session || bearer || null;
 };
 
-const createAdminSession = (admin) => {
+const createAdminSession = async (admin) => {
   const token = crypto.randomBytes(32).toString('hex');
-  adminSessions.set(token, {
-    adminId: admin._id ? admin._id.toString() : admin.email,
+  await AdminSession.create({
+    token,
+    adminId: admin._id,
     adminEmail: admin.email,
-    createdAt: new Date()
+    createdAt: new Date(),
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
   });
   return token;
 };
@@ -220,10 +233,14 @@ const createAdminSession = (admin) => {
 const getAuthenticatedAdmin = async (req) => {
   const token = getRequestToken(req);
   if (!token) return null;
-  const session = adminSessions.get(token);
-  if (!session) return null;
-
   if (!isMongoAvailable()) {
+    return null;
+  }
+
+  const session = await AdminSession.findOne({ token }).lean();
+  if (!session) return null;
+  if (session.expiresAt && session.expiresAt < new Date()) {
+    await AdminSession.deleteOne({ token }).catch(() => {});
     return null;
   }
 
@@ -363,7 +380,7 @@ app.post('/api/admin/login', async (req, res) => {
     }
 
     setNoStoreHeaders(res);
-    const token = createAdminSession(admin);
+    const token = await createAdminSession(admin);
     res.cookie('gm_session', token, {
       httpOnly: true,
       sameSite: 'lax',
@@ -394,7 +411,7 @@ app.post('/api/admin/logout', async (req, res) => {
   const cookies = parseCookies(req.headers.cookie || '');
   const token = cookies.gm_session;
   if (token) {
-    adminSessions.delete(token);
+    await AdminSession.deleteOne({ token }).catch(() => {});
   }
   res.cookie('gm_session', '', {
     httpOnly: true,
