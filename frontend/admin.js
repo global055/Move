@@ -50,7 +50,7 @@ function attachUiHandlers() {
 
 async function loadShipments() {
   try {
-    const response = await fetch(API_URL, { credentials: 'same-origin', cache: 'no-store' });
+    const response = await fetch(API_URL, { credentials: 'include', cache: 'no-store' });
     const result = await response.json();
 
     if (result.success && Array.isArray(result.data)) {
@@ -238,7 +238,7 @@ function renderTable(shipments) {
 
 async function editShipment(trackingNumber) {
   try {
-    const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`, { credentials: 'same-origin', cache: 'no-store' });
+    const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`, { credentials: 'include', cache: 'no-store' });
     const result = await response.json();
 
     if (result.success) {
@@ -385,7 +385,7 @@ async function deleteShipment(trackingNumber) {
   if (!confirm(`Are you sure you want to delete shipment ${trackingNumber}?`)) return;
 
   try {
-    const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`, { method: 'DELETE', credentials: 'same-origin', cache: 'no-store' });
+    const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`, { method: 'DELETE', credentials: 'include', cache: 'no-store' });
     const result = await response.json();
 
     if (result.success) {

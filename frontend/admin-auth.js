@@ -13,7 +13,7 @@ window.addEventListener('DOMContentLoaded', () => {
 async function checkExistingSession() {
   try {
     const response = await fetch(`${ADMIN_API_URL}/check`, {
-      credentials: 'same-origin',
+      credentials: 'include',
       cache: 'no-store'
     });
     const result = await response.json();
@@ -48,7 +48,7 @@ async function handleAdminLogin() {
     const response = await fetch(`${ADMIN_API_URL}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
+      credentials: 'include',
       cache: 'no-store',
       body: JSON.stringify({ email, password })
     });

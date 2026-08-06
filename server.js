@@ -383,8 +383,8 @@ app.post('/api/admin/login', async (req, res) => {
     const token = await createAdminSession(admin);
     res.cookie('gm_session', token, {
       httpOnly: true,
-      sameSite: 'lax',
-      secure: false,
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 24 * 60 * 60 * 1000
     });
     return res.json({ success: true, data: { email: admin.email }, token });
@@ -415,8 +415,8 @@ app.post('/api/admin/logout', async (req, res) => {
   }
   res.cookie('gm_session', '', {
     httpOnly: true,
-    sameSite: 'lax',
-    secure: false,
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: process.env.NODE_ENV === 'production',
     expires: new Date(0)
   });
   res.json({ success: true });
