@@ -289,7 +289,8 @@ const ensureDefaultAdmin = async () => {
   const passwordHash = await bcrypt.hash(defaultAdminPassword, 10);
 
   if (!isMongoAvailable()) {
-    throw new Error('Database unavailable while ensuring default admin account');
+    console.warn('Skipping default admin creation because MongoDB is unavailable at startup.');
+    return;
   }
 
   const count = await Admin.countDocuments({}).catch(() => 0);
