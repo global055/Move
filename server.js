@@ -149,7 +149,7 @@ const connectToDatabase = async () => {
     if (err?.reason?.servers) {
       console.error('Atlas network check: your current IP may not be whitelisted. Add the current IP, or allow 0.0.0.0/0 for development, in Atlas Network Access.');
     }
-    throw err;
+    console.warn('Continuing startup without MongoDB. The app will run, but API routes requiring the database will return 503.');
   }
 };
 
