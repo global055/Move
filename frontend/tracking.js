@@ -1,6 +1,6 @@
 const API_BASE_URL = '';
-const API_URL = `${API_BASE_URL}/api/shipments`;
-const TRACKING_NUMBERS_URL = `${API_BASE_URL}/api/shipments/tracking-numbers`;
+const API_URL = `${API_BASE_URL}/api/public/shipments`;
+const TRACKING_NUMBERS_URL = `${API_BASE_URL}/api/public/shipments/tracking-numbers`;
 
 // Load shipments and populate datalist on page load
 window.addEventListener('DOMContentLoaded', () => {

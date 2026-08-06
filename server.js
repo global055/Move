@@ -1,18 +1,19 @@
 const fs = require('fs');
 const path = require('path');
 const dns = require('dns');
-const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
 const express = require('express');
 const cors = require('cors');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const mongoose = require('mongoose');
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 dotenv.config({ path: path.resolve(__dirname, '.env.local'), override: true });
 
 const FRONTEND_DIR = path.join(__dirname, 'frontend');
-const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
+let mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI;
 const dbName = process.env.MONGO_DB_NAME || process.env.DB_NAME || 'globalmovement';
 const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'globalmovement05@gmail.com';
 const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Global100';
@@ -28,6 +29,8 @@ if (mongoUri && mongoUri.startsWith('mongodb+srv://')) {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const MEMORY_MONGO_ENABLED = process.env.USE_MEMORY_MONGO === 'true' || process.env.NODE_ENV === 'test';
+const MEMORY_MONGO_VERSION = process.env.MONGOMS_VERSION || '7.0.14';
 
 mongoose.set('bufferCommands', false);
 app.set('trust proxy', true);
@@ -57,10 +60,76 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-secret-in-production';
+const isProduction = process.env.NODE_ENV === 'production';
+if (isProduction && !process.env.SESSION_SECRET) {
+  console.error('SESSION_SECRET is required in production. Set SESSION_SECRET in your environment.');
+  process.exit(1);
+}
+if (!isProduction && !process.env.SESSION_SECRET) {
+  console.warn('Warning: SESSION_SECRET is not set. Using fallback secret. Set SESSION_SECRET in production.');
+}
+
+// Choose a session store: prefer Mongo if configured, otherwise fall back to MemoryStore for local tests
+let sessionStore;
+if (mongoUri) {
+  try {
+    sessionStore = MongoStore.create({
+      mongoUrl: mongoUri,
+      dbName,
+      collectionName: 'sessions',
+      mongoOptions: { useNewUrlParser: true, useUnifiedTopology: true },
+      ttl: 24 * 60 * 60
+    });
+  } catch (e) {
+    console.warn('connect-mongo init failed, falling back to MemoryStore:', e.message);
+    sessionStore = new session.MemoryStore();
+  }
+} else {
+  sessionStore = new session.MemoryStore();
+}
+
+app.use(session({
+  name: 'gm_session',
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  store: sessionStore,
+  cookie: {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000
+  }
+}));
+
+
 app.use(express.static(FRONTEND_DIR, { index: 'index.html' }));
 
 const connectToDatabase = async () => {
+  // If requested, start an in-memory MongoDB for tests or local runs.
+  if (MEMORY_MONGO_ENABLED) {
+    try {
+      const { MongoMemoryServer } = require('mongodb-memory-server');
+      const memServer = await MongoMemoryServer.create({
+        binary: { version: MEMORY_MONGO_VERSION },
+        instance: { dbName }
+      });
+      const memUri = memServer.getUri();
+      console.log(`Using in-memory MongoDB for testing (version ${MEMORY_MONGO_VERSION}).`);
+      mongoUri = memUri;
+    } catch (err) {
+      console.warn('Failed to start in-memory MongoDB:', err.message);
+    }
+  }
+
   if (!mongoUri) {
+    if (process.env.MONGODB_URI || process.env.MONGO_URI || process.env.MONGODB_URL) {
+      console.warn('MongoDB URI was not available at startup; using the configured environment value.');
+    } else if (!MEMORY_MONGO_ENABLED) {
+      console.warn('No MongoDB URI configured. Set MONGODB_URI or MONGO_URI to connect to a local/remote MongoDB instance.');
+    }
     console.error('MongoDB connection failed: no MONGO_URI or MONGODB_URI was provided.');
     return;
   }
@@ -191,68 +260,24 @@ const adminSchema = new mongoose.Schema({
 }, { timestamps: true });
 const Admin = mongoose.model('Admin', adminSchema, 'admins');
 
-const adminSessionSchema = new mongoose.Schema({
-  token: { type: String, required: true, unique: true },
-  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
-  adminEmail: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-  expiresAt: { type: Date, default: () => new Date(Date.now() + 24 * 60 * 60 * 1000) }
-});
-adminSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-const AdminSession = mongoose.model('AdminSession', adminSessionSchema, 'admin_sessions');
-
 const isMongoAvailable = () => mongoose.connection.readyState === 1;
 
 const normalizeTrackingNumber = (trackingNumber) => String(trackingNumber || '').trim();
 
-const parseCookies = (cookieHeader = '') =>
-  cookieHeader.split(';').filter(Boolean).reduce((acc, cookie) => {
-    const [name, ...rest] = cookie.split('=');
-    acc[name.trim()] = decodeURIComponent(rest.join('=').trim());
-    return acc;
-  }, {});
-
-const getRequestToken = (req) => {
-  const cookies = parseCookies(req.headers.cookie || '');
-  const bearer = (req.headers.authorization || '').split(' ')[1];
-  return cookies.gm_session || bearer || null;
-};
-
-const createAdminSession = async (admin) => {
-  const token = crypto.randomBytes(32).toString('hex');
-  await AdminSession.create({
-    token,
-    adminId: admin._id,
-    adminEmail: admin.email,
-    createdAt: new Date(),
-    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
-  });
-  return token;
-};
-
-const getAuthenticatedAdmin = async (req) => {
-  const token = getRequestToken(req);
-  if (!token) return null;
-  if (!isMongoAvailable()) {
-    return null;
-  }
-
-  const session = await AdminSession.findOne({ token }).lean();
-  if (!session) return null;
-  if (session.expiresAt && session.expiresAt < new Date()) {
-    await AdminSession.deleteOne({ token }).catch(() => {});
-    return null;
-  }
-
-  const admin = await Admin.findById(session.adminId);
-  return admin || null;
-};
-
 const authenticateAdmin = async (req, res, next) => {
-  const admin = await getAuthenticatedAdmin(req);
+  if (!req.session?.adminId) {
+    return res.status(401).json({ success: false, message: 'Admin authentication required' });
+  }
+
+  if (!isMongoAvailable()) {
+    return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
+  }
+
+  const admin = await Admin.findById(req.session.adminId);
   if (!admin) {
     return res.status(401).json({ success: false, message: 'Admin authentication required' });
   }
+
   req.adminUser = admin;
   next();
 };
@@ -379,15 +404,10 @@ app.post('/api/admin/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
+    req.session.adminId = admin._id.toString();
+    req.session.adminEmail = admin.email;
     setNoStoreHeaders(res);
-    const token = await createAdminSession(admin);
-    res.cookie('gm_session', token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: false,
-      maxAge: 24 * 60 * 60 * 1000
-    });
-    return res.json({ success: true, data: { email: admin.email }, token });
+    return res.json({ success: true, data: { email: admin.email } });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
@@ -396,10 +416,15 @@ app.post('/api/admin/login', async (req, res) => {
 app.get('/api/admin/check', async (req, res) => {
   try {
     setNoStoreHeaders(res);
-    const admin = await getAuthenticatedAdmin(req);
+    if (!req.session?.adminId) {
+      return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+
+    const admin = await Admin.findById(req.session.adminId);
     if (!admin) {
       return res.status(401).json({ success: false, message: 'Not authenticated' });
     }
+
     return res.json({ success: true, data: { email: admin.email } });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
@@ -408,21 +433,58 @@ app.get('/api/admin/check', async (req, res) => {
 
 app.post('/api/admin/logout', async (req, res) => {
   setNoStoreHeaders(res);
-  const cookies = parseCookies(req.headers.cookie || '');
-  const token = cookies.gm_session;
-  if (token) {
-    await AdminSession.deleteOne({ token }).catch(() => {});
-  }
-  res.cookie('gm_session', '', {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: false,
-    expires: new Date(0)
+  req.session.destroy((destroyErr) => {
+    if (destroyErr) {
+      console.error('Session destroy failed:', destroyErr);
+    }
+    res.clearCookie('gm_session', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isProduction
+    });
+    return res.json({ success: true });
   });
-  res.json({ success: true });
 });
 
-app.get('/api/shipments/tracking-numbers', async (req, res) => {
+app.get('/api/public/shipments/tracking-numbers', async (req, res) => {
+  try {
+    setNoStoreHeaders(res);
+    if (!isMongoAvailable()) {
+      return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
+    }
+
+    const shipments = await Shipment.find({}, { trackingNumber: 1, _id: 0 }).limit(500).lean();
+    const trackingNumbers = shipments
+      .map((shipment) => shipment.trackingNumber)
+      .filter(Boolean);
+    return res.json({ success: true, data: trackingNumbers });
+  } catch (err) {
+    console.error('PUBLIC_TRACKING_NUMBERS_ERR', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/public/shipments/:trackingNumber', async (req, res) => {
+  try {
+    setNoStoreHeaders(res);
+    if (!isMongoAvailable()) {
+      return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
+    }
+
+    const trackingNumber = normalizeTrackingNumber(req.params.trackingNumber);
+    const shipment = await Shipment.findOne({ trackingNumber });
+
+    if (!shipment) {
+      return res.status(404).json({ success: false, message: 'Tracking number not found' });
+    }
+
+    res.json({ success: true, data: shipment });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+app.get('/api/shipments/tracking-numbers', authenticateAdmin, async (req, res) => {
   try {
     setNoStoreHeaders(res);
     if (!isMongoAvailable()) {
@@ -441,14 +503,14 @@ app.get('/api/shipments/tracking-numbers', async (req, res) => {
 });
 
 //  API Route: Get Shipment by Tracking Number
-app.get('/api/shipments/:trackingNumber', async (req, res) => {
+app.get('/api/shipments/:trackingNumber', authenticateAdmin, async (req, res) => {
   try {
     setNoStoreHeaders(res);
     if (!isMongoAvailable()) {
       return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
     }
 
-    const { trackingNumber } = req.params;
+    const trackingNumber = normalizeTrackingNumber(req.params.trackingNumber);
     const shipment = await Shipment.findOne({ trackingNumber });
 
     if (!shipment) {
