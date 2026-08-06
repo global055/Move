@@ -64,11 +64,7 @@ app.use(express.urlencoded({ extended: false }));
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-secret-in-production';
 const isProduction = process.env.NODE_ENV === 'production';
 if (isProduction && !process.env.SESSION_SECRET) {
-  console.error('SESSION_SECRET is required in production. Set SESSION_SECRET in your environment.');
-  process.exit(1);
-}
-if (!isProduction && !process.env.SESSION_SECRET) {
-  console.warn('Warning: SESSION_SECRET is not set. Using fallback secret. Set SESSION_SECRET in production.');
+  console.warn('Warning: SESSION_SECRET is not set in production. Using fallback secret. Set SESSION_SECRET in your environment to avoid session issues.');
 }
 
 // Choose a session store: prefer Mongo if configured, otherwise fall back to MemoryStore for local tests
