@@ -2,7 +2,6 @@
 const API_URL = '/api/shipments';
 const ADMIN_CHECK_URL = '/api/admin/check';
 const ADMIN_LOGOUT_URL = '/api/admin/logout';
-const SESSION_TOKEN_KEY = 'gm_admin_token';
 
 let shipmentsCache = [];
 let shipmentMap = null;
@@ -50,7 +49,7 @@ function attachUiHandlers() {
 
 async function loadShipments() {
   try {
-    const response = await fetch(API_URL, { headers: getAuthHeaders(), credentials: 'same-origin', cache: 'no-store' });
+    const response = await fetch(API_URL, { credentials: 'same-origin', cache: 'no-store' });
     const result = await response.json();
 
     if (result.success && Array.isArray(result.data)) {
@@ -238,7 +237,7 @@ function renderTable(shipments) {
 
 async function editShipment(trackingNumber) {
   try {
-    const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`, { headers: getAuthHeaders(), credentials: 'same-origin', cache: 'no-store' });
+    const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`, { credentials: 'same-origin', cache: 'no-store' });
     const result = await response.json();
 
     if (result.success) {
@@ -356,7 +355,6 @@ async function saveShipment() {
     const response = await fetch(endpoint, {
       method,
       headers: {
-        ...getAuthHeaders(),
         'Content-Type': 'application/json'
       },
       credentials: 'same-origin',
@@ -386,7 +384,7 @@ async function deleteShipment(trackingNumber) {
   if (!confirm(`Are you sure you want to delete shipment ${trackingNumber}?`)) return;
 
   try {
-    const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`, { method: 'DELETE', headers: getAuthHeaders(), credentials: 'same-origin', cache: 'no-store' });
+    const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`, { method: 'DELETE', credentials: 'same-origin', cache: 'no-store' });
     const result = await response.json();
 
     if (result.success) {
@@ -764,18 +762,15 @@ function easeInOutCubic(progress) {
 
 
 async function handleLogout() {
-  const token = localStorage.getItem(SESSION_TOKEN_KEY);
   try {
     await fetch(ADMIN_LOGOUT_URL, {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
       credentials: 'same-origin',
       cache: 'no-store'
     });
   } catch (error) {
     console.warn('Logout request failed:', error);
   }
-  localStorage.removeItem(SESSION_TOKEN_KEY);
   window.location.href = '/admin-login';
 }
 
@@ -803,32 +798,24 @@ function toggleTheme() {
 
 function redirectIfUnauthorized(result) {
   if (result && (result.message === 'Admin authentication required' || result.message === 'Not authenticated')) {
-    localStorage.removeItem(SESSION_TOKEN_KEY);
     window.location.href = '/admin-login';
   }
 }
 
 async function verifyAdminSession() {
   try {
-    const response = await fetch(ADMIN_CHECK_URL, { headers: getAuthHeaders(), credentials: 'same-origin', cache: 'no-store' });
+    const response = await fetch(ADMIN_CHECK_URL, { credentials: 'same-origin', cache: 'no-store' });
     const result = await response.json();
     if (!result.success) {
-      localStorage.removeItem(SESSION_TOKEN_KEY);
       window.location.href = '/admin-login';
       return null;
     }
     return result.data;
   } catch (error) {
     console.error('Admin session verification failed:', error);
-    localStorage.removeItem(SESSION_TOKEN_KEY);
     window.location.href = '/admin-login';
     return null;
   }
-}
-
-function getAuthHeaders() {
-  const token = localStorage.getItem(SESSION_TOKEN_KEY);
-  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 function resetShipmentForm() {

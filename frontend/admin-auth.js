@@ -1,6 +1,5 @@
 const API_BASE_URL = (window.BACKEND_API_BASE || '').replace(/\/$/, '');
 const ADMIN_API_URL = `${API_BASE_URL}/api/admin`;
-const SESSION_TOKEN_KEY = 'gm_admin_token';
 
 window.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('adminLoginForm');
@@ -12,20 +11,14 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 async function checkExistingSession() {
-  const token = localStorage.getItem(SESSION_TOKEN_KEY);
-  if (!token) return;
-
   try {
     const response = await fetch(`${ADMIN_API_URL}/check`, {
-      headers: { Authorization: `Bearer ${token}` },
       credentials: 'same-origin',
       cache: 'no-store'
     });
     const result = await response.json();
     if (result.success) {
       window.location.href = '/admin-dashboard';
-    } else {
-      localStorage.removeItem(SESSION_TOKEN_KEY);
     }
   } catch (error) {
     // ignore; not signed in yet
@@ -62,7 +55,6 @@ async function handleAdminLogin() {
 
     const result = await response.json();
     if (result.success) {
-      localStorage.setItem(SESSION_TOKEN_KEY, result.token);
       authMessage.textContent = 'Login successful. Redirecting...';
       authMessage.classList.add('success');
       window.location.href = '/admin-dashboard';
