@@ -37,7 +37,8 @@ function attachUiHandlers() {
 
   document.getElementById('cancelEditBtn')?.addEventListener('click', resetShipmentForm);
   document.getElementById('resetFormBtn')?.addEventListener('click', resetShipmentForm);
-  document.getElementById('themeToggleBtn')?.addEventListener('click', toggleTheme);
+  // Attach theme toggle to all theme buttons (page contains two theme buttons)
+  Array.from(document.querySelectorAll('#themeToggleBtn, .btn-theme')).forEach((el) => el.addEventListener('click', toggleTheme));
   document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
 
   const trackingNumberInput = document.getElementById('trackingNumber');
@@ -784,10 +785,14 @@ function initTheme() {
 
 function applyTheme(theme) {
   document.body.dataset.theme = theme;
-  const themeToggleBtn = document.getElementById('themeToggleBtn');
-  if (themeToggleBtn) {
-    themeToggleBtn.textContent = theme === 'light' ? 'Dark theme' : 'White theme';
-  }
+  // Update all theme toggle buttons so both header and sidebar stay in sync
+  Array.from(document.querySelectorAll('#themeToggleBtn, .btn-theme')).forEach((btn) => {
+    try {
+      btn.textContent = theme === 'light' ? 'Dark theme' : 'White theme';
+    } catch (e) {
+      // ignore read-only nodes
+    }
+  });
   localStorage.setItem(THEME_STORAGE_KEY, theme);
 }
 

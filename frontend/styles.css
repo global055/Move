@@ -701,6 +701,12 @@ main {
   object-fit: contain;
 }
 
+/* Mirror the package indicator horizontally so it faces right */
+.package-indicator-img {
+  transform: scaleX(-1);
+  transform-origin: center;
+}
+
 .package-map-marker {
   position: relative;
   width: 72px;
