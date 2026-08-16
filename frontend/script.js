@@ -21,10 +21,41 @@ function initNavigation() {
   });
 
   nav.querySelectorAll('a').forEach((link) => {
-    link.addEventListener('click', () => {
+    link.addEventListener('click', (ev) => {
+      // Close mobile nav
       nav.classList.remove('is-open');
       toggle.classList.remove('is-active');
       toggle.setAttribute('aria-expanded', 'false');
+
+      // Smooth scroll behavior for in-page anchors
+      try {
+        const href = link.getAttribute('href') || '';
+        if (href.startsWith('#') && href.length > 1) {
+          ev.preventDefault();
+          const target = document.querySelector(href);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Update URL without reloading
+            history.replaceState(null, '', href);
+          }
+        }
+      } catch (err) {
+        // ignore
+      }
+    });
+  });
+
+  // Also enable smooth scrolling for any anchor links elsewhere on the page
+  document.querySelectorAll('a[href^="#"]').forEach((a) => {
+    a.addEventListener('click', (ev) => {
+      const href = a.getAttribute('href') || '';
+      if (href === '#' || href === '') return;
+      const target = document.querySelector(href);
+      if (target) {
+        ev.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        history.replaceState(null, '', href);
+      }
     });
   });
 }

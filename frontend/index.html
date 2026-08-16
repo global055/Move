@@ -22,9 +22,9 @@
       </button>
       <nav class="nav-links" id="siteNav">
         <a href="index.html">Home</a>
-        <a href="services.html">Services</a>
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
+              <a href="#services">Services</a>
+              <a href="#about">About</a>
+              <a href="#contact">Contact</a>
         <a class="nav-cta" href="#tracking">Track Shipment</a>
       </nav>
     </header>
@@ -37,7 +37,7 @@
           <p>Reliable freight forwarding, air cargo, sea freight, and package tracking worldwide — all delivered with precision and care.</p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="#tracking">Track Shipment</a>
-            <a class="btn btn-secondary" href="contact.html">Get a Quote</a>
+            <a class="btn btn-secondary" href="#contact">Get a Quote</a>
           </div>
           <div class="hero-badges">
             <span>24/7 Operations</span>
@@ -64,6 +64,46 @@
         <strong>Express delivery</strong>
       </section>
 
+      <!-- Tracking section moved below About -->
+      <!-- ABOUT SECTION (integrated from about.html) -->
+      <section id="about" class="about-section">
+        <div class="section-heading reveal">
+          <p class="eyebrow">About us</p>
+          <h2>Trusted by businesses that value reliability, clarity, and precision.</h2>
+          <p>We build dependable logistics partnerships through clear communication, disciplined execution, and thoughtful support at every stage of the journey.</p>
+        </div>
+        <div class="about-grid">
+          <article class="about-card reveal">
+            <img src="imges/van-professional.png" alt="Workers preparing packages in warehouse" loading="lazy" />
+            <h3>Our approach</h3>
+            <p>We combine smart planning with local expertise to keep cargo moving smoothly across borders while protecting your timelines and commitments.</p>
+          </article>
+
+          <article class="about-card reveal">
+            <img src="imges/package indicator.png" alt="Packages being prepared for delivery" loading="lazy" />
+            <h3>Our values</h3>
+            <ul class="page-list">
+              <li>Transparent communication at every stage</li>
+              <li>Reliable coordination for time-sensitive cargo</li>
+              <li>Consistent service standards across every route</li>
+            </ul>
+          </article>
+
+          <article class="about-card reveal">
+            <img src="imges/ocean-freight.png" alt="Ocean freight containers being loaded" loading="lazy" />
+            <h3>Technology-led visibility</h3>
+            <p>Our tracking and support tools help customers stay informed throughout the transit journey with confidence and clarity.</p>
+          </article>
+
+          <article class="about-card reveal">
+            <img src="imges/Our Truck And Aircraft.jpeg" alt="Cargo truck and aircraft representing multimodal logistics" loading="lazy" />
+            <h3>Experienced specialists</h3>
+            <p>Our operations and logistics experience help us deliver calm, capable support throughout each shipment lifecycle.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- TRACKING: moved here per requested ordering -->
       <section id="tracking" class="tracking-section">
         <div class="section-heading reveal">
           <p class="eyebrow">Live tracking</p>
@@ -85,12 +125,7 @@
             </div>
           </div>
           <div class="tracking-info-card reveal">
-            <h3>What you can expect</h3>
-            <ul>
-              <li>Real-time milestone updates with end-to-end transparency</li>
-              <li>Dedicated support for urgent and time-sensitive freight</li>
-              <li>Trusted delivery estimates and proactive communication</li>
-            </ul>
+
           </div>
         </div>
         <div id="homepage-map" class="homepage-map hidden" aria-hidden="true"></div>
@@ -239,10 +274,35 @@
         </div>
         <div class="cta-actions">
           <a class="btn btn-primary" href="track.html">Track Package</a>
-          <a class="btn btn-secondary" href="contact.html">Contact Us</a>
+            <a class="btn btn-secondary" href="#contact">Contact Us</a>
         </div>
       </section>
     </main>
+
+    <!-- CONTACT SECTION (integrated from contact.html) -->
+    <section id="contact" class="contact-section">
+      <div class="section-heading reveal">
+        <p class="eyebrow">Contact us</p>
+        <h2>Let’s plan your next shipment with confidence.</h2>
+        <p>Reach out for quotes, route planning, or support for urgent logistics needs and receive attentive guidance from our experienced team.</p>
+      </div>
+      <div class="contact-grid reveal">
+        <div class="contact-card">
+          <h3>Get in touch</h3>
+          <p>Email: hello glogalmovement05@gmail.com</p>
+          <p>Phone: +1 (202)4951-141</p>
+          <p>Address: 1200 W Jackson Blvd, Chicago, IL 60607, USA</p>
+        </div>
+        <div class="contact-card">
+          <h3>Support hours</h3>
+          <ul class="page-list">
+            <li>24/7 customer support for active shipments</li>
+            <li>Priority assistance for urgent dispatches and critical movements</li>
+            <li>Fast response for quote requests, planning, and coordination</li>
+          </ul>
+        </div>
+      </div>
+    </section>
 
     <footer class="footer">
       <div class="footer-brand">
@@ -256,9 +316,9 @@
         <div>
           <h4>Quick Links</h4>
           <a href="index.html">Home</a>
-          <a href="services.html">Services</a>
-          <a href="about.html">About</a>
-          <a href="contact.html">Contact</a>
+          <a href="#services">Services</a>
+          <a href="#about">About</a>
+          <a href="#contact">Contact</a>
         </div>
         <div>
           <h4>Services</h4>
@@ -279,7 +339,7 @@
       </div>
     </footer>
 
-    <a class="whatsapp-float" href="https://wa.me/1(213)9739195?text=Hello%20Global%20Movement" target="_blank" rel="noopener" aria-label="Contact us on WhatsApp">
+    <a class="whatsapp-float" href="https://wa.me/12139739195?text=Hello%20Global%20Movement" target="_blank" rel="noopener" aria-label="Contact us on WhatsApp">
       <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M16.9 15.2c-.3-.2-1.7-.8-1.9-.9-.2-.1-.4-.1-.6.1-.2.2-.7.9-.9 1.1-.1.2-.3.2-.5.1-.8-.3-1.7-.7-2.4-1.2-.7-.5-1.4-1.2-1.9-1.9-.2-.3-.2-.4 0-.6.1-.2.2-.4.4-.6.2-.2.3-.3.5-.5.2-.2.2-.4.1-.6-.1-.2-.9-2.1-1.2-2.8-.1-.3-.2-.5-.4-.6-.2-.1-.4-.2-.6-.2-.2 0-.4 0-.6 0-.2 0-.5.1-.7.2-.2.2-.8.8-.8 2 0 1.2.8 2.3 1 2.5.2.2 2.3 3.6 5.6 4.9 3.3 1.3 3.3 0.8 3.9 0.7.6-.1 1.9-1 2.2-1.9.3-.9.3-1.6.2-1.8-.1-.2-.2-.3-.4-.4zM12.1 2C6.6 2 2.2 6.4 2.2 11.9c0 2.1.6 4.1 1.7 5.8L2 22l4.6-1.2c1.7.9 3.6 1.4 5.6 1.4 5.5 0 9.9-4.4 9.9-9.9S17.6 2 12.1 2z"/>
       </svg>
