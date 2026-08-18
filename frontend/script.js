@@ -293,7 +293,7 @@ function createHomepageCircleMarker(coords, options) {
 
 function buildHomepagePackageMarkerHtml(status) {
   const statusClass = status === 'Delivered' ? 'is-delivered' : status === 'In Transit' ? 'is-active' : 'is-pending';
-  const imgSrc = 'imges/package indicator.png';
+  const imgSrc = 'imges/package-indicator.jpeg';
   return `
     <div class="package-map-marker ${statusClass} is-current-location">
       <img src="${imgSrc}" class="package-indicator-img" alt="Package Indicator" />

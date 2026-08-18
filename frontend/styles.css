@@ -1246,7 +1246,7 @@ main {
   }
 
   .tracking-result-grid {
-    gap: 12px;
+    gap: 15px;
   }
   }
 
@@ -1254,4 +1254,4 @@ main {
     width: auto;
     flex: 1;
   }
-}
+
