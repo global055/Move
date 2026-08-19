@@ -174,8 +174,8 @@ th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border)
   display: grid;
   place-items: center;
   border-radius: 18px;
-  background: linear-gradient(135deg, #ff5f6d, #ff2d55);
-  box-shadow: 0 0 24px rgba(255, 45, 85, 0.38);
+  background: transparent;
+  box-shadow: none;
   transform: translate3d(0, 0, 0);
 }
 .package-map-marker::before {
@@ -183,20 +183,20 @@ th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border)
   position: absolute;
   inset: -8px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 45, 85, 0.25);
+  border: 0;
   opacity: 0;
-  transform: scale(0.75);
-  transition: transform 0.25s ease, opacity 0.25s ease;
+  transform: scale(0);
+  transition: none;
 }
 .package-map-marker.is-active::before {
-  animation: package-glow 1.2s ease-in-out infinite;
+  animation: none;
 }
 .package-map-marker.is-delivered {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  box-shadow: 0 0 18px rgba(34, 197, 94, 0.32);
+  background: transparent;
+  box-shadow: none;
 }
 .package-map-marker.is-delivered::before {
-  border-color: rgba(34, 197, 94, 0.25);
+  border-color: transparent;
 }
 .package-map-marker__body {
   position: absolute;
