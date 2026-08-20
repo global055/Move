@@ -53,6 +53,28 @@ function buildAddressRow(label, values) {
   return `<div class="full"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(displayValues.map((value) => typeof value === 'string' ? value.trim() : value).join(', '))}</span></div>`;
 }
 
+function getStatusMeta(status) {
+  const normalized = String(status || 'In Transit').trim().toLowerCase();
+  if (normalized.includes('delivered')) {
+    return { className: 'status-delivered', label: 'Delivered', icon: '🟢' };
+  }
+  if (normalized.includes('arriving soon')) {
+    return { className: 'status-arriving', label: 'Arriving Soon', icon: '🟠' };
+  }
+  if (normalized.includes('delayed')) {
+    return { className: 'status-delayed', label: 'Delayed', icon: '🔴' };
+  }
+  if (normalized.includes('pending') || normalized.includes('order received') || normalized.includes('processing')) {
+    return { className: 'status-pending', label: 'Pending', icon: '⚪' };
+  }
+  return { className: 'status-in-transit', label: 'In Transit', icon: '🔵' };
+}
+
+function renderStatusPill(status) {
+  const meta = getStatusMeta(status);
+  return `<span class="tracking-pill ${meta.className}">${meta.icon} ${escapeHtml(meta.label)}</span>`;
+}
+
 // Function to handle tracking lookup
 async function trackShipment(trackingNumber) {
   try {
@@ -111,6 +133,38 @@ async function trackShipment(trackingNumber) {
 
       const pickupDateTime = [shipment.pickupDate, shipment.pickupTime].filter(Boolean).join(' ');
       const deliveryDateTime = [shipment.deliveryDate, shipment.deliveryTime].filter(Boolean).join(' ');
+      const packageWeight = shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : 'Not available');
+      const estimatedDelivery = shipment.estimatedDelivery || 'Not available';
+      const description = shipment.packageDescription || shipment.description || 'No description provided.';
+
+      const summaryCards = `
+        <div class="tracking-overview">
+          <div class="tracking-highlight">
+            <span class="tracking-highlight__label">Package Weight</span>
+            <strong class="tracking-highlight__value">${escapeHtml(packageWeight)}</strong>
+          </div>
+          <div class="tracking-highlight">
+            <span class="tracking-highlight__label">Estimated Delivery</span>
+            <strong class="tracking-highlight__value">${escapeHtml(estimatedDelivery)}</strong>
+          </div>
+          <div class="tracking-highlight tracking-highlight--wide">
+            <span class="tracking-highlight__label">Description</span>
+            <strong class="tracking-highlight__value">${escapeHtml(description)}</strong>
+          </div>
+          <div class="tracking-highlight">
+            <span class="tracking-highlight__label">Shipment Status</span>
+            <strong class="tracking-highlight__value">${renderStatusPill(currentStatus)}</strong>
+          </div>
+          <div class="tracking-highlight">
+            <span class="tracking-highlight__label">Current Location</span>
+            <strong class="tracking-highlight__value">${escapeHtml(currentLocationText || 'Not available')}</strong>
+          </div>
+          <div class="tracking-highlight">
+            <span class="tracking-highlight__label">Tracking Number</span>
+            <strong class="tracking-highlight__value">${escapeHtml(shipment.trackingNumber || trackingNumber)}</strong>
+          </div>
+        </div>
+      `;
 
       const summaryRows = [
         ['Tracking Number', shipment.trackingNumber],
@@ -120,7 +174,7 @@ async function trackShipment(trackingNumber) {
         ['Shipment Type', shipment.shipmentType],
         ['Courier/Carrier', shipment.carrier],
         ['Mode of Shipment', shipment.modeOfShipment || shipment.cargo?.type],
-        ['Package Weight', shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : '')],
+        ['Package Weight', packageWeight],
         ['Total Freight', shipment.totalFreight != null ? `$${shipment.totalFreight.toFixed(2)}` : ''],
         ['Estimated Delivery Date', shipment.estimatedDelivery],
         ['Expected Delivery Time', shipment.expectedDeliveryTime],
@@ -188,12 +242,13 @@ async function trackShipment(trackingNumber) {
                 <h2>${escapeHtml(shipment.trackingNumber || 'Tracking details')}</h2>
                 <p class="tracking-summary-subtitle">${escapeHtml(originName)} → ${escapeHtml(destinationName)}</p>
               </div>
-              ${currentStatus ? `<span class="tracking-pill">${escapeHtml(currentStatus)}</span>` : ''}
+              ${currentStatus ? renderStatusPill(currentStatus) : ''}
             </div>
+            ${summaryCards}
+            <div class="tracking-confirmation">Tracking confirmed for ${escapeHtml(shipment.trackingNumber || trackingNumber)}</div>
             <div class="tracking-result-grid">
               ${summaryRows}
             </div>
-            <div style="margin-top: 12px; color: #0b7a3b; font-weight: 700;">Tracking confirmed for ${escapeHtml(shipment.trackingNumber || trackingNumber)}</div>
           </section>
 
           ${shipperRows ? `

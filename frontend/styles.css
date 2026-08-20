@@ -5,9 +5,15 @@
   --text: #071120;
   --muted: #5d6b83;
   --accent: #0b3d91;
+  --accent-strong: #0d5ad9;
   --accent-2: #ff8c00;
   --border: rgba(7, 17, 32, 0.08);
   --shadow: 0 20px 45px rgba(7, 17, 32, 0.08);
+  --success: #1a9a46;
+  --info: #1d6fe6;
+  --warning: #d77800;
+  --danger: #dd473b;
+  --neutral: #8996a8;
 }
 
 * {
@@ -451,6 +457,80 @@ main {
   color: var(--accent);
   font-weight: 700;
   white-space: nowrap;
+}
+
+.tracking-pill.status-delivered {
+  background: rgba(26, 154, 70, 0.12);
+  color: var(--success);
+}
+
+.tracking-pill.status-in-transit {
+  background: rgba(29, 111, 230, 0.12);
+  color: var(--info);
+}
+
+.tracking-pill.status-arriving {
+  background: rgba(215, 120, 0, 0.12);
+  color: var(--warning);
+}
+
+.tracking-pill.status-delayed {
+  background: rgba(221, 71, 59, 0.12);
+  color: var(--danger);
+}
+
+.tracking-pill.status-pending {
+  background: rgba(137, 150, 168, 0.12);
+  color: var(--neutral);
+}
+
+.tracking-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  margin: 22px 0 20px;
+}
+
+.tracking-highlight {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 20px;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f9ff 100%);
+  border: 1px solid rgba(11, 61, 145, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 8px 20px rgba(11, 61, 145, 0.04);
+}
+
+.tracking-highlight--wide {
+  grid-column: span 2;
+}
+
+.tracking-highlight__label {
+  display: block;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.tracking-highlight__value {
+  font-size: 1.02rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+.tracking-highlight__value .tracking-pill {
+  width: fit-content;
+  padding: 8px 12px;
+  font-size: 0.82rem;
+}
+
+.tracking-confirmation {
+  margin: 18px 0 20px;
+  color: var(--success);
+  font-weight: 700;
 }
 
 .tracking-result-grid {
@@ -1064,11 +1144,87 @@ main {
 .map-shell {
   width: min(1080px, calc(100% - 32px));
   margin: 0 auto 24px;
-  height: 460px;
+  height: 420px;
   border-radius: 24px;
   overflow: hidden;
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow);
+  border: 1px solid rgba(11, 61, 145, 0.12);
+  box-shadow: 0 18px 36px rgba(11, 61, 145, 0.08);
+}
+
+.leaflet-container {
+  background: #edf4ff;
+  border-radius: 24px;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 18px;
+  padding: 0;
+  box-shadow: 0 20px 32px rgba(7, 17, 32, 0.18);
+}
+
+.leaflet-popup-content {
+  margin: 0;
+}
+
+.shipment-map-popup {
+  min-width: 220px;
+  padding: 16px 16px 14px;
+  color: var(--text);
+}
+
+.shipment-map-popup__title {
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.shipment-map-popup__status {
+  display: inline-flex;
+  margin: 10px 0 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(29, 111, 230, 0.12);
+  color: var(--info);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.shipment-map-popup__label {
+  margin-top: 8px;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.shipment-map-popup__value {
+  margin-top: 4px;
+  font-size: 0.96rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.package-tracking-icon {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  filter: drop-shadow(0 8px 14px rgba(211, 39, 39, 0.2));
+}
+
+.package-tracking-icon.is-moving {
+  animation: package-float 2.2s ease-in-out infinite;
+}
+
+.package-tracking-icon.is-paused {
+  opacity: 0.9;
+}
+
+@keyframes package-float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
 }
 
 .reveal {
@@ -1248,13 +1404,27 @@ main {
     padding: 16px;
   }
 
+  .tracking-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .tracking-highlight--wide {
+    grid-column: span 1;
+  }
+
   .tracking-result-grid {
     gap: 15px;
   }
+
+  .map-shell {
+    height: 300px;
+    max-height: 52vh;
+    border-radius: 20px;
   }
 
   .cta-actions .btn {
     width: auto;
     flex: 1;
   }
+}
 

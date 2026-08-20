@@ -64,20 +64,14 @@
   }
 
   function createPackageIcon(status) {
-    const statusClass = isShipmentMovingStatus(status) ? 'is-active' : 'is-paused';
-    return window.L.divIcon({
-      html: `
-        <div class="package-map-marker ${statusClass} is-current-location">
-          <div class="package-map-marker__body"></div>
-          <div class="package-map-marker__wheel wheel-left"></div>
-          <div class="package-map-marker__wheel wheel-right"></div>
-          <div class="package-map-marker__tick"></div>
-        </div>
-      `,
-      className: 'package-marker-wrapper',
-      iconSize: [64, 64],
-      iconAnchor: [32, 32],
-      popupAnchor: [0, -20]
+    const isMoving = isShipmentMovingStatus(status);
+    return window.L.icon({
+      iconUrl: 'imges/package%20indicator.png',
+      iconRetinaUrl: 'imges/package%20indicator.png',
+      className: `package-tracking-icon ${isMoving ? 'is-moving' : 'is-paused'}`,
+      iconSize: [52, 52],
+      iconAnchor: [26, 26],
+      popupAnchor: [0, -14]
     });
   }
 
@@ -146,8 +140,8 @@
     if (destination?.lat != null && destination?.lng != null) {
       destinationMarker = createCircleMarker(destination, {
         radius: 8,
-        color: '#d9534f',
-        fillColor: '#d9534f',
+        color: '#d74d4d',
+        fillColor: '#d74d4d',
         fillOpacity: 0.9,
         weight: 2
       }).bindPopup('<strong>Destination Location</strong>');
@@ -159,10 +153,10 @@
         [origin.lat, origin.lng],
         [destination.lat, destination.lng]
       ], {
-        color: '#2a9df4',
-        weight: 4,
-        opacity: 0.85,
-        dashArray: '8,6'
+        color: '#2b70d9',
+        weight: 3,
+        opacity: 0.9,
+        smoothFactor: 1.2
       }).addTo(map);
       bounds.extend([origin.lat, origin.lng]);
       bounds.extend([destination.lat, destination.lng]);
@@ -170,7 +164,20 @@
 
     if (current?.lat != null && current?.lng != null) {
       const currentCoords = { lat: current.lat, lng: current.lng };
-      const popupText = `<strong>Package Location</strong><br>Status: ${shipment.status || 'Unknown'}`;
+      const lastUpdated = shipment.timeline && shipment.timeline.length
+        ? (shipment.timeline[shipment.timeline.length - 1].time || shipment.timeline[shipment.timeline.length - 1].date || 'Recently updated')
+        : 'Recently updated';
+      const currentLocationName = shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation || 'Current location unavailable';
+      const popupText = `
+        <div class="shipment-map-popup">
+          <div class="shipment-map-popup__title">Package Location</div>
+          <div class="shipment-map-popup__status">${shipment.status || 'In Transit'}</div>
+          <div class="shipment-map-popup__label">Current Location</div>
+          <div class="shipment-map-popup__value">${currentLocationName}</div>
+          <div class="shipment-map-popup__label">Last Updated</div>
+          <div class="shipment-map-popup__value">${lastUpdated}</div>
+        </div>
+      `;
       const moving = isShipmentMovingStatus(shipment.status);
 
       if (packageMarker && lastPackageLatLng) {
