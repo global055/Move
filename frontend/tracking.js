@@ -186,7 +186,7 @@ async function trackShipment(trackingNumber) {
             <div class="timeline-marker"></div>
             <div class="timeline-content">
               <div class="timeline-top">
-                <span class="timeline-status">${escapeHtml(item.status || currentStatus)}</span>
+                <span class="timeline-status">${escapeHtml(item.title || item.status || currentStatus)}</span>
                 <span class="timeline-date">${escapeHtml(displayDate)}</span>
               </div>
               <div class="timeline-meta">
@@ -194,6 +194,7 @@ async function trackShipment(trackingNumber) {
                 <span>${escapeHtml(displayTime)}</span>
               </div>
               <p>${escapeHtml(displayRemarks)}</p>
+              ${item.title && item.status ? `<small>${escapeHtml(item.status)}</small>` : ''}
               ${item.updatedBy ? `<small>Updated by ${escapeHtml(item.updatedBy)}</small>` : ''}
             </div>
           </li>
@@ -308,6 +309,10 @@ async function trackShipment(trackingNumber) {
         ['Cargo Special Instructions', shipment.cargo?.specialInstructions]
       ].map(([label, value]) => buildFieldRow(label, value)).filter(Boolean).join('');
 
+      const recentHistoryHtml = timelineItems.length
+        ? `<ul class="timeline-list">${timelineHtml}</ul>`
+        : '<div class="tracking-empty-history">No tracking history is available yet.</div>';
+
       const shipmentInfoHtml = `
         <div class="tracking-results-grid">
           <section class="tracking-card tracking-summary-card">
@@ -355,12 +360,10 @@ async function trackShipment(trackingNumber) {
             </section>
           ` : ''}
 
-          ${timelineItems.length > 0 ? `
-            <section class="tracking-card timeline-card">
-              <div class="tracking-card-header"><h3>Shipment timeline</h3></div>
-              <ul class="timeline-list">${timelineHtml}</ul>
-            </section>
-          ` : ''}
+          <section class="tracking-card timeline-card">
+            <div class="tracking-card-header"><h3>Recent Tracking Events</h3></div>
+            ${recentHistoryHtml}
+          </section>
 
           ${hasDisplayValue(currentLocationText) ? `
             <section class="tracking-card">

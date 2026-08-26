@@ -173,8 +173,11 @@ const shipmentSchema = new mongoose.Schema({
   pickupTime: { type: String },
   deliveryDate: { type: String },
   deliveryTime: { type: String },
+  deliveryMethod: String,
+  deliveryDescription: String,
   expectedDeliveryTime: { type: String },
   timeline: [{
+    title: String,
     date: String,
     time: String,
     status: String,

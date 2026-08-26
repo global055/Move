@@ -19,11 +19,17 @@
           <button id="themeToggleBtn" class="btn btn-theme" type="button">White theme</button>
         </div>
 
-        <nav class="sidebar-nav">
-          <a class="active" href="#overview">Overview</a>
-          <a href="#shipments">Shipments</a>
-          <a href="#mapSection">Map</a>
-          <a href="#history">Tracking History</a>
+        <button id="adminMenuToggle" class="admin-menu-toggle" type="button" aria-expanded="false">☰ Menu</button>
+        <nav class="sidebar-nav" id="adminSectionNav" aria-label="Shipment sections">
+          <a class="active" href="#overview" data-admin-section="overview">Overview</a>
+          <a href="#shipment-information" data-admin-section="shipment-information">Shipment Information</a>
+          <a href="#shipper" data-admin-section="shipper">Shipper</a>
+          <a href="#recipient" data-admin-section="recipient">Recipient</a>
+          <a href="#delivery" data-admin-section="delivery">Delivery</a>
+          <a href="#status" data-admin-section="status">Current Status</a>
+          <a href="#latest-update" data-admin-section="latest-update">Latest Update</a>
+          <a href="#tracking-history" data-admin-section="tracking-history">Tracking History</a>
+          <a href="#preview" data-admin-section="preview">Preview</a>
         </nav>
 
         <button id="logoutBtn" class="btn btn-secondary">Logout</button>
@@ -33,14 +39,14 @@
         <header class="dashboard-topbar">
           <div>
             <p class="eyebrow">Admin Control Center</p>
-            <h1>Shipment management dashboard</h1>
+            <h1 id="adminSectionTitle">Shipment overview</h1>
           </div>
           <div class="topbar-actions">
             <div id="adminUserBadge" class="user-badge">Loading...</div>
           </div>
         </header>
 
-        <section id="overview" class="cards-grid">
+        <section id="overview" class="cards-grid admin-view-section" data-admin-view="overview">
           <article class="card stat-card">
             <p>Total shipments</p>
             <h3 id="totalShipments">0</h3>
@@ -63,7 +69,7 @@
           </article>
         </section>
 
-        <section id="shipments" class="card panel-card">
+        <section id="shipments" class="card panel-card admin-view-section" data-admin-view="form">
           <div class="panel-header">
             <div>
               <p class="eyebrow">Operations</p>
@@ -76,7 +82,7 @@
 
           <form id="shipmentForm" class="shipment-form">
             <input type="hidden" id="shipmentId" />
-            <div class="form-grid">
+            <div class="form-grid admin-field-grid" data-admin-section="shipment-information">
               <label>Tracking number
                 <div class="tracking-number-wrapper">
                   <input id="trackingNumber" type="text" placeholder="Select existing or create new" list="trackingNumbers" />
@@ -94,6 +100,8 @@
               <label>Delivery date<input id="deliveryDate" name="deliveryDate" type="date" /></label>
               <label>Delivery time<input id="deliveryTime" name="deliveryTime" type="time" /></label>
               <label>Delivery location<input id="deliveryLocation" name="deliveryLocation" type="text" /></label>
+              <label>Delivery method<input id="deliveryMethod" name="deliveryMethod" type="text" /></label>
+              <label>Delivery description<textarea id="deliveryDescription" name="deliveryDescription" rows="2"></textarea></label>
               <label>Shipment type<select id="shipmentType" name="shipmentType">
                 <option>Air Freight</option>
                 <option>Sea Freight</option>
@@ -148,7 +156,7 @@
               <label>Description<textarea id="description" name="description" rows="2" style="font-family: inherit;"></textarea></label>
             </div>
 
-            <div class="form-section">
+            <div class="form-section admin-field-section" data-admin-view="shipper">
               <h3 class="form-section-title">Shipper information</h3>
               <div class="form-grid">
                 <label>Shipper company<input id="shipperCompany" name="shipperCompany" type="text" /></label>
@@ -163,7 +171,7 @@
               </div>
             </div>
 
-            <div class="form-section">
+            <div class="form-section admin-field-section" data-admin-view="latest-update">
               <h3 class="form-section-title">Latest update</h3>
               <div class="form-grid">
                 <label>Update title<input id="latestUpdateTitle" type="text" /></label>
@@ -174,13 +182,14 @@
               </div>
             </div>
 
-            <div class="form-section">
+            <div class="form-section admin-field-section" data-admin-view="tracking-history">
               <h3 class="form-section-title">Tracking events</h3>
               <div id="eventEditorList" class="event-editor-list"></div>
               <div class="form-grid event-entry-form">
                 <label>Event status<select id="eventStatus">
                   <option>Label Created</option><option>Shipment Accepted</option><option>In Transit</option><option>Arrived at Facility</option><option>Out for Delivery</option><option>Delivered</option><option>On Hold</option><option>Exception</option><option>Returned</option><option>Cancelled</option>
                 </select></label>
+                <label>Event title<input id="eventTitle" type="text" /></label>
                 <label>Event location<input id="eventLocation" type="text" /></label>
                 <label>Event date<input id="eventDate" type="date" /></label>
                 <label>Event time<input id="eventTime" type="time" /></label>
@@ -190,7 +199,7 @@
               <div class="form-actions"><button type="button" id="addEventBtn" class="btn btn-secondary">Add event</button><button type="button" id="clearEventsBtn" class="btn btn-secondary">Clear events</button></div>
             </div>
 
-            <div class="form-section">
+            <div class="form-section admin-field-section" data-admin-view="recipient">
               <h3 class="form-section-title">Receiver information</h3>
               <div class="form-grid">
                 <label>Receiver company<input id="receiverCompany" name="receiverCompany" type="text" /></label>
@@ -204,7 +213,7 @@
               </div>
             </div>
 
-            <div class="form-section">
+            <div class="form-section admin-field-section" data-admin-view="shipment-information">
               <h3 class="form-section-title">Cargo details</h3>
               <div class="form-grid">
                 <label>Cargo type<input id="cargoType" name="cargoType" type="text" /></label>
@@ -230,11 +239,16 @@
           </form>
         </section>
 
-        <section class="card panel-card">
+        <section class="card panel-card admin-view-section" data-admin-view="overview">
           <div class="panel-header">
             <div>
               <p class="eyebrow">Search & filter</p>
               <h2>Shipment list</h2>
+            <div id="previewPanel" class="form-section admin-field-section" data-admin-view="preview">
+              <h3 class="form-section-title">Preview tracking page</h3>
+              <p class="preview-copy">Open the public tracking page using the selected tracking number.</p>
+              <button type="button" id="previewTrackingBtn" class="btn btn-primary">Preview Tracking Page</button>
+            </div>
             </div>
           </div>
           <div class="toolbar">
@@ -266,7 +280,7 @@
           </div>
         </section>
 
-        <section id="mapSection" class="card panel-card hidden">
+        <section id="mapSection" class="card panel-card hidden admin-view-section" data-admin-view="overview">
           <div class="panel-header">
             <div>
               <p class="eyebrow">Map view</p>
@@ -276,7 +290,7 @@
           <div id="shipmentMap" class="shipment-map"></div>
         </section>
 
-        <section id="history" class="card panel-card">
+        <section id="history" class="card panel-card admin-view-section" data-admin-view="overview">
           <div class="panel-header">
             <div>
               <p class="eyebrow">Timeline</p>

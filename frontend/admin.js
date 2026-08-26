@@ -9,6 +9,7 @@ let mapLayerGroup = null;
 let selectedMarker = null;
 let activePackageAnimationFrame = null;
 let editingTimeline = [];
+let activeAdminSection = 'overview';
 
 window.addEventListener('DOMContentLoaded', async () => {
   const admin = await verifyAdminSession();
@@ -23,6 +24,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 function initAdminDashboard() {
   hideMapSection();
   initTheme();
+  classifyAdminFields();
   attachUiHandlers();
   loadShipments();
 }
@@ -52,6 +54,69 @@ function attachUiHandlers() {
     editingTimeline = [];
     renderTimelineEditor();
   });
+  document.getElementById('previewTrackingBtn')?.addEventListener('click', previewTrackingPage);
+  document.getElementById('adminMenuToggle')?.addEventListener('click', toggleAdminMenu);
+  document.querySelectorAll('#adminSectionNav [data-admin-section]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      setAdminSection(link.dataset.adminSection);
+    });
+  });
+  setAdminSection('overview');
+}
+
+function toggleAdminMenu() {
+  const nav = document.getElementById('adminSectionNav');
+  const toggle = document.getElementById('adminMenuToggle');
+  const isOpen = nav?.classList.toggle('is-open') || false;
+  toggle?.setAttribute('aria-expanded', String(isOpen));
+}
+
+function setAdminSection(section) {
+  activeAdminSection = section;
+  const titles = {
+    overview: 'Shipment overview', 'shipment-information': 'Shipment information', shipper: 'Shipper details',
+    recipient: 'Recipient details', delivery: 'Delivery details', status: 'Current status',
+    'latest-update': 'Latest update', 'tracking-history': 'Tracking history', preview: 'Tracking page preview'
+  };
+  const title = document.getElementById('adminSectionTitle');
+  if (title) title.textContent = titles[section] || 'Shipment management';
+  document.querySelectorAll('#adminSectionNav [data-admin-section]').forEach((link) => link.classList.toggle('active', link.dataset.adminSection === section));
+  document.querySelectorAll('.admin-view-section').forEach((view) => {
+    view.classList.toggle('is-active', section === 'overview' ? view.dataset.adminView === 'overview' : view.dataset.adminView === 'form');
+  });
+  document.querySelectorAll('.admin-field-section').forEach((view) => view.classList.toggle('is-active', view.dataset.adminView === section));
+  document.querySelectorAll('.admin-field-grid > label').forEach((label) => label.classList.toggle('is-active', label.dataset.adminSection === section));
+  document.getElementById('adminSectionNav')?.classList.remove('is-open');
+  document.getElementById('adminMenuToggle')?.setAttribute('aria-expanded', 'false');
+}
+
+function classifyAdminFields() {
+  const sectionByField = {
+    trackingNumber: 'shipment-information', carrier: 'shipment-information', shipmentType: 'shipment-information', serviceType: 'shipment-information',
+    pickupDate: 'shipment-information', pickupTime: 'shipment-information', origin: 'shipment-information', destination: 'shipment-information',
+    packageDescription: 'shipment-information', packageWeight: 'shipment-information', quantity: 'shipment-information', referenceNumber: 'shipment-information',
+    modeOfShipment: 'shipment-information', totalFreight: 'shipment-information', departureAirportPort: 'shipment-information', arrivalAirportPort: 'shipment-information',
+    weight: 'shipment-information', description: 'shipment-information', currentPackageLocation: 'shipment-information', paymentStatus: 'shipment-information', packageDimensions: 'shipment-information', insurance: 'shipment-information',
+    deliveryDate: 'delivery', deliveryTime: 'delivery', deliveryLocation: 'delivery', deliveryMethod: 'delivery', deliveryDescription: 'delivery', expectedDeliveryTime: 'delivery',
+    status: 'status', currentLocation: 'status', currentLat: 'status', currentLng: 'status', originLat: 'shipment-information', originLng: 'shipment-information', destLat: 'shipment-information', destLng: 'shipment-information',
+    latestUpdateTitle: 'latest-update', latestUpdateDescription: 'latest-update', latestUpdateLocation: 'latest-update', latestUpdateDate: 'latest-update', latestUpdateTime: 'latest-update',
+    shipperCompany: 'shipper', shipperName: 'shipper', shipperPhone: 'shipper', shipperEmail: 'shipper', shipperAddress: 'shipper', shipperCity: 'shipper', shipperState: 'shipper', shipperPostalCode: 'shipper', shipperCountry: 'shipper',
+    receiverCompany: 'recipient', receiverName: 'recipient', receiverPhone: 'recipient', receiverEmail: 'recipient', receiverAddress: 'recipient', receiverCity: 'recipient', receiverState: 'recipient', receiverPostalCode: 'recipient', receiverCountry: 'recipient'
+  };
+  document.querySelectorAll('.admin-field-grid > label').forEach((label) => {
+    const field = label.querySelector('input, select, textarea');
+    if (field && sectionByField[field.id]) label.dataset.adminSection = sectionByField[field.id];
+  });
+}
+
+function previewTrackingPage() {
+  const trackingNumber = getVal('trackingNumber');
+  if (!trackingNumber) {
+    alert('Select or enter a tracking number before previewing.');
+    return;
+  }
+  window.open(`/track.html?tracking=${encodeURIComponent(trackingNumber)}`, '_blank', 'noopener');
 }
 
 async function loadShipments() {
@@ -112,6 +177,8 @@ function populateShipmentForm(shipment) {
   setOptionalVal('deliveryDate', shipment.deliveryDate);
   setOptionalVal('deliveryTime', shipment.deliveryTime);
   setOptionalVal('deliveryLocation', shipment.deliveryLocation);
+  setOptionalVal('deliveryMethod', shipment.deliveryMethod);
+  setOptionalVal('deliveryDescription', shipment.deliveryDescription);
   setOptionalVal('shipmentType', shipment.shipmentType);
   setOptionalVal('carrier', shipment.carrier);
   setOptionalVal('totalFreight', shipment.totalFreight);
@@ -287,6 +354,8 @@ function buildShipmentPayload() {
     deliveryDate: getVal('deliveryDate'),
     deliveryTime: getVal('deliveryTime'),
     deliveryLocation: getVal('deliveryLocation'),
+    deliveryMethod: getVal('deliveryMethod'),
+    deliveryDescription: getVal('deliveryDescription'),
     shipmentType: getVal('shipmentType'),
     carrier: getVal('carrier'),
     modeOfShipment: getVal('modeOfShipment'),
@@ -565,6 +634,7 @@ function addTimelineEvent() {
   const description = getVal('eventDescription');
   const event = {
     status: getVal('eventStatus') || getVal('status') || 'In Transit',
+    title: getVal('eventTitle'),
     description,
     remarks: description,
     location: getVal('eventLocation'),
@@ -577,7 +647,7 @@ function addTimelineEvent() {
     alert('Add an event description, location, or date before saving the event.');
     return;
   }
-  editingTimeline.unshift(event);
+    editingTimeline.unshift(event);
   if (document.getElementById('eventIsCurrent')?.checked) {
     setVal('status', event.status);
     setVal('latestUpdateTitle', event.status);
@@ -586,6 +656,7 @@ function addTimelineEvent() {
     setVal('latestUpdateDate', event.date);
     setVal('latestUpdateTime', event.time);
   }
+  setVal('eventTitle', '');
   setVal('eventDescription', '');
   setVal('eventLocation', '');
   setVal('eventDate', '');
@@ -602,6 +673,7 @@ function editTimelineEvent(index) {
   const event = editingTimeline[index];
   if (!event) return;
   setVal('eventStatus', event.status || getVal('status'));
+  setVal('eventTitle', event.title);
   setVal('eventLocation', event.location);
   setVal('eventDate', event.date);
   setVal('eventTime', event.time);
@@ -616,7 +688,7 @@ function renderTimelineEditor() {
   if (!editor) return;
   editor.innerHTML = editingTimeline.length ? editingTimeline.map((event, index) => `
     <div class="event-editor-item">
-      <div><strong>${escapeHtml(event.status || 'Update')}</strong><span>${escapeHtml(event.description || event.remarks || 'No description')}</span><small>${escapeHtml([event.location, event.date, event.time].filter(Boolean).join(' · '))}</small></div>
+        <div><strong>${escapeHtml(event.title || event.status || 'Update')}</strong><span>${escapeHtml(event.description || event.remarks || 'No description')}</span><small>${escapeHtml([event.status, event.location, event.date, event.time].filter(Boolean).join(' · '))}</small></div>
       <div class="event-editor-actions"><button type="button" class="btn btn-secondary" onclick="editTimelineEvent(${index})">Edit</button><button type="button" class="btn btn-secondary" onclick="removeTimelineEvent(${index})">Remove</button></div>
     </div>
   `).join('') : '<p class="event-editor-empty">No tracking events added yet.</p>';
@@ -911,13 +983,13 @@ async function verifyAdminSession() {
 function resetShipmentForm() {
   const fields = [
     'shipmentId', 'trackingNumber', 'senderName', 'receiverName',
-    'origin', 'destination', 'estimatedDelivery', 'expectedDeliveryTime', 'pickupDate', 'pickupTime', 'deliveryDate', 'deliveryTime', 'deliveryLocation', 'shipmentType', 'carrier', 'totalFreight', 'status',
+    'origin', 'destination', 'estimatedDelivery', 'expectedDeliveryTime', 'pickupDate', 'pickupTime', 'deliveryDate', 'deliveryTime', 'deliveryLocation', 'deliveryMethod', 'deliveryDescription', 'shipmentType', 'carrier', 'totalFreight', 'status',
     'originLat', 'originLng', 'destLat', 'destLng',
     'currentLat', 'currentLng', 'currentLocation', 'weight', 'description',
     'shipperCompany', 'shipperName', 'shipperPhone', 'shipperEmail', 'shipperAddress', 'shipperCity', 'shipperState', 'shipperPostalCode', 'shipperCountry',
     'receiverCompany', 'receiverPhone', 'receiverEmail', 'receiverAddress', 'receiverCity', 'receiverState', 'receiverPostalCode', 'receiverCountry',
     'cargoType', 'cargoDescription', 'cargoPieces', 'cargoWeight', 'cargoVolume', 'cargoDimensions', 'cargoValue', 'cargoIncoterms', 'cargoDangerousGoods', 'cargoInstructions',
-    'latestUpdateTitle', 'latestUpdateDescription', 'latestUpdateLocation', 'latestUpdateDate', 'latestUpdateTime', 'eventStatus', 'eventLocation', 'eventDate', 'eventTime', 'eventDescription'
+    'latestUpdateTitle', 'latestUpdateDescription', 'latestUpdateLocation', 'latestUpdateDate', 'latestUpdateTime', 'eventStatus', 'eventTitle', 'eventLocation', 'eventDate', 'eventTime', 'eventDescription'
   ];
   fields.forEach((id) => setVal(id, ''));
   setVal('status', 'Order Received');

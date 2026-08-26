@@ -651,6 +651,15 @@ main {
   gap: 16px;
 }
 
+.tracking-empty-history {
+  padding: 20px;
+  border: 1px dashed rgba(11, 61, 145, 0.18);
+  border-radius: 14px;
+  background: #f7faff;
+  color: var(--muted);
+  text-align: center;
+}
+
 .timeline-item {
   display: grid;
   grid-template-columns: auto 1fr;
