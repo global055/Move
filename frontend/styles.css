@@ -605,6 +605,26 @@ main {
   font-weight: 700;
 }
 
+.more-details-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0 0 22px;
+  padding: 11px 16px;
+  border-radius: 999px;
+  background: var(--accent-strong);
+  color: white;
+  font-weight: 800;
+  box-shadow: 0 10px 20px rgba(13, 90, 217, 0.16);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.more-details-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 24px rgba(13, 90, 217, 0.22);
+}
+
 .tracking-result-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
