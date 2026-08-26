@@ -111,6 +111,14 @@ const shipmentSchema = new mongoose.Schema({
   departureAirportPort: String,
   arrivalAirportPort: String,
   estimatedDelivery: { type: String, default: 'Pending' },
+  deliveryLocation: String,
+  latestUpdate: {
+    title: String,
+    description: String,
+    location: String,
+    date: String,
+    time: String
+  },
   currentLocationName: String,
   currentPackageLocation: String,
   weight: Number,
@@ -204,6 +212,7 @@ const AdminSession = mongoose.model('AdminSession', adminSessionSchema, 'admin_s
 const isMongoAvailable = () => mongoose.connection.readyState === 1;
 
 const normalizeTrackingNumber = (trackingNumber) => String(trackingNumber || '').trim();
+const isValidTrackingNumber = (trackingNumber) => /^[A-Za-z0-9][A-Za-z0-9#._/-]{0,127}$/.test(trackingNumber);
 
 const parseCookies = (cookieHeader = '') =>
   cookieHeader.split(';').filter(Boolean).reduce((acc, cookie) => {
@@ -298,6 +307,7 @@ const normalizeShipmentPayload = (payload = {}, existingShipment = null, isCreat
     receiverName: payload.receiverName || existingShipment?.receiverName || payload.receiver?.name || '',
     originName: payload.originName || payload.origin || existingShipment?.originName || '',
     destinationName: payload.destinationName || payload.destination || existingShipment?.destinationName || '',
+    deliveryLocation: payload.deliveryLocation || existingShipment?.deliveryLocation || '',
     currentLocationName: payload.currentLocationName || payload.currentPackageLocation || existingShipment?.currentLocationName || '',
     currentPackageLocation: payload.currentPackageLocation || payload.currentLocationName || existingShipment?.currentPackageLocation || '',
     shipper: {
@@ -315,6 +325,10 @@ const normalizeShipmentPayload = (payload = {}, existingShipment = null, isCreat
     coordinates: {
       ...(existingShipment?.coordinates || {}),
       ...(payload.coordinates || {})
+    },
+    latestUpdate: {
+      ...(existingShipment?.latestUpdate || {}),
+      ...(payload.latestUpdate || {})
     }
   };
 
@@ -340,7 +354,7 @@ const normalizeShipmentPayload = (payload = {}, existingShipment = null, isCreat
     return normalizedPayload;
   }
 
-  if (Array.isArray(payload.timeline) && payload.timeline.length > 0) {
+  if (Array.isArray(payload.timeline)) {
     normalizedPayload.timeline = payload.timeline.map((entry) => ({ ...entry }));
     return normalizedPayload;
   }
@@ -448,7 +462,10 @@ app.get('/api/public/shipments/:trackingNumber', async (req, res) => {
       return res.status(503).json({ success: false, message: 'Database unavailable. Try again later.' });
     }
 
-    const { trackingNumber } = req.params;
+    const trackingNumber = normalizeTrackingNumber(req.params.trackingNumber);
+    if (!isValidTrackingNumber(trackingNumber)) {
+      return res.status(400).json({ success: false, message: 'Invalid tracking number' });
+    }
     const shipment = await Shipment.findOne({ trackingNumber });
 
     if (!shipment) {
@@ -470,6 +487,9 @@ app.post('/api/shipments', authenticateAdmin, async (req, res) => {
     }
 
     const shipmentPayload = normalizeShipmentPayload(req.body, null, true);
+    if (!isValidTrackingNumber(shipmentPayload.trackingNumber)) {
+      return res.status(400).json({ success: false, message: 'Invalid tracking number' });
+    }
     const shipment = new Shipment(shipmentPayload);
     await shipment.save();
     res.status(201).json({ success: true, data: shipment });
@@ -494,6 +514,9 @@ app.put('/api/shipments/:trackingNumber', authenticateAdmin, async (req, res) =>
 
     const existingShipment = await Shipment.findOne({ trackingNumber: req.params.trackingNumber });
     const shipmentPayload = normalizeShipmentPayload(req.body, existingShipment, false);
+    if (!isValidTrackingNumber(shipmentPayload.trackingNumber)) {
+      return res.status(400).json({ success: false, message: 'Invalid tracking number' });
+    }
     const updatedShipment = await Shipment.findOneAndUpdate(
       { trackingNumber: req.params.trackingNumber },
       shipmentPayload,

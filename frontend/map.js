@@ -63,6 +63,15 @@
     return movingKeywords.some((keyword) => normalized.includes(keyword));
   }
 
+  function escapeMapHtml(value) {
+    return String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function createPackageIcon(status) {
     const isMoving = isShipmentMovingStatus(status);
     return window.L.icon({
@@ -167,15 +176,15 @@
       const lastUpdated = shipment.timeline && shipment.timeline.length
         ? (shipment.timeline[shipment.timeline.length - 1].time || shipment.timeline[shipment.timeline.length - 1].date || 'Recently updated')
         : 'Recently updated';
-      const currentLocationName = shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation || 'Current location unavailable';
+      const currentLocationName = shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation || `${current.lat.toFixed(4)}, ${current.lng.toFixed(4)}`;
       const popupText = `
         <div class="shipment-map-popup">
           <div class="shipment-map-popup__title">Package Location</div>
-          <div class="shipment-map-popup__status">${shipment.status || 'In Transit'}</div>
+          <div class="shipment-map-popup__status">${escapeMapHtml(shipment.status || 'In Transit')}</div>
           <div class="shipment-map-popup__label">Current Location</div>
-          <div class="shipment-map-popup__value">${currentLocationName}</div>
+          <div class="shipment-map-popup__value">${escapeMapHtml(currentLocationName)}</div>
           <div class="shipment-map-popup__label">Last Updated</div>
-          <div class="shipment-map-popup__value">${lastUpdated}</div>
+          <div class="shipment-map-popup__value">${escapeMapHtml(lastUpdated)}</div>
         </div>
       `;
       const moving = isShipmentMovingStatus(shipment.status);

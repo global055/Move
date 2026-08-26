@@ -8,6 +8,7 @@ let shipmentMap = null;
 let mapLayerGroup = null;
 let selectedMarker = null;
 let activePackageAnimationFrame = null;
+let editingTimeline = [];
 
 window.addEventListener('DOMContentLoaded', async () => {
   const admin = await verifyAdminSession();
@@ -46,6 +47,11 @@ function attachUiHandlers() {
 
   document.getElementById('searchInput')?.addEventListener('input', applyFilters);
   document.getElementById('statusFilter')?.addEventListener('change', applyFilters);
+  document.getElementById('addEventBtn')?.addEventListener('click', addTimelineEvent);
+  document.getElementById('clearEventsBtn')?.addEventListener('click', () => {
+    editingTimeline = [];
+    renderTimelineEditor();
+  });
 }
 
 async function loadShipments() {
@@ -105,6 +111,7 @@ function populateShipmentForm(shipment) {
   setOptionalVal('pickupTime', shipment.pickupTime);
   setOptionalVal('deliveryDate', shipment.deliveryDate);
   setOptionalVal('deliveryTime', shipment.deliveryTime);
+  setOptionalVal('deliveryLocation', shipment.deliveryLocation);
   setOptionalVal('shipmentType', shipment.shipmentType);
   setOptionalVal('carrier', shipment.carrier);
   setOptionalVal('totalFreight', shipment.totalFreight);
@@ -156,6 +163,14 @@ function populateShipmentForm(shipment) {
   setOptionalVal('packageDimensions', shipment.packageDimensions);
   setOptionalVal('insurance', shipment.insurance);
   setOptionalVal('specialInstructions', shipment.specialInstructions);
+
+  setOptionalVal('latestUpdateTitle', shipment.latestUpdate?.title);
+  setOptionalVal('latestUpdateDescription', shipment.latestUpdate?.description);
+  setOptionalVal('latestUpdateLocation', shipment.latestUpdate?.location);
+  setOptionalVal('latestUpdateDate', shipment.latestUpdate?.date);
+  setOptionalVal('latestUpdateTime', shipment.latestUpdate?.time);
+  editingTimeline = Array.isArray(shipment.timeline) ? shipment.timeline.map((event) => ({ ...event })) : [];
+  renderTimelineEditor();
 
   if (shipment.coordinates) {
     setOptionalVal('originLat', shipment.coordinates.origin?.lat);
@@ -271,6 +286,7 @@ function buildShipmentPayload() {
     pickupTime: getVal('pickupTime'),
     deliveryDate: getVal('deliveryDate'),
     deliveryTime: getVal('deliveryTime'),
+    deliveryLocation: getVal('deliveryLocation'),
     shipmentType: getVal('shipmentType'),
     carrier: getVal('carrier'),
     modeOfShipment: getVal('modeOfShipment'),
@@ -290,6 +306,14 @@ function buildShipmentPayload() {
     status: getVal('status') || 'In Transit',
     weight: Number.isFinite(weightValue) ? weightValue : null,
     description: getVal('description'),
+    latestUpdate: {
+      title: getVal('latestUpdateTitle'),
+      description: getVal('latestUpdateDescription'),
+      location: getVal('latestUpdateLocation'),
+      date: getVal('latestUpdateDate'),
+      time: getVal('latestUpdateTime')
+    },
+    timeline: editingTimeline,
     currentLocationName: getVal('currentLocation'),
     coordinates: {
       origin: getCoords('originLat', 'originLng'),
@@ -505,7 +529,7 @@ function renderShipmentDetails(shipment) {
   ]);
 
   const timeline = Array.isArray(shipment.timeline) && shipment.timeline.length
-    ? shipment.timeline.map((entry) => `
+    ? [...shipment.timeline].sort((a, b) => new Date(b.timestamp || `${b.date || ''}T${b.time || '00:00'}`) - new Date(a.timestamp || `${a.date || ''}T${a.time || '00:00'}`)).map((entry) => `
         <div class="details-row timeline-entry"><strong>${escapeHtml(entry.status || 'Update')}</strong>
           <span>${escapeHtml(entry.description || 'No details')}</span>
           <small>${escapeHtml(entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '')}</small>
@@ -535,6 +559,67 @@ function renderShipmentDetails(shipment) {
       <div class="details-grid timeline-grid">${timeline}</div>
     </div>
   `;
+}
+
+function addTimelineEvent() {
+  const description = getVal('eventDescription');
+  const event = {
+    status: getVal('eventStatus') || getVal('status') || 'In Transit',
+    description,
+    remarks: description,
+    location: getVal('eventLocation'),
+    date: getVal('eventDate'),
+    time: getVal('eventTime'),
+    timestamp: new Date().toISOString(),
+    updatedBy: 'admin'
+  };
+  if (!event.description && !event.location && !event.date && !event.time) {
+    alert('Add an event description, location, or date before saving the event.');
+    return;
+  }
+  editingTimeline.unshift(event);
+  if (document.getElementById('eventIsCurrent')?.checked) {
+    setVal('status', event.status);
+    setVal('latestUpdateTitle', event.status);
+    setVal('latestUpdateDescription', event.description || event.remarks);
+    setVal('latestUpdateLocation', event.location);
+    setVal('latestUpdateDate', event.date);
+    setVal('latestUpdateTime', event.time);
+  }
+  setVal('eventDescription', '');
+  setVal('eventLocation', '');
+  setVal('eventDate', '');
+  setVal('eventTime', '');
+  renderTimelineEditor();
+}
+
+function removeTimelineEvent(index) {
+  editingTimeline.splice(index, 1);
+  renderTimelineEditor();
+}
+
+function editTimelineEvent(index) {
+  const event = editingTimeline[index];
+  if (!event) return;
+  setVal('eventStatus', event.status || getVal('status'));
+  setVal('eventLocation', event.location);
+  setVal('eventDate', event.date);
+  setVal('eventTime', event.time);
+  setVal('eventDescription', event.description || event.remarks);
+  editingTimeline.splice(index, 1);
+  renderTimelineEditor();
+  document.getElementById('eventDescription')?.focus();
+}
+
+function renderTimelineEditor() {
+  const editor = document.getElementById('eventEditorList');
+  if (!editor) return;
+  editor.innerHTML = editingTimeline.length ? editingTimeline.map((event, index) => `
+    <div class="event-editor-item">
+      <div><strong>${escapeHtml(event.status || 'Update')}</strong><span>${escapeHtml(event.description || event.remarks || 'No description')}</span><small>${escapeHtml([event.location, event.date, event.time].filter(Boolean).join(' · '))}</small></div>
+      <div class="event-editor-actions"><button type="button" class="btn btn-secondary" onclick="editTimelineEvent(${index})">Edit</button><button type="button" class="btn btn-secondary" onclick="removeTimelineEvent(${index})">Remove</button></div>
+    </div>
+  `).join('') : '<p class="event-editor-empty">No tracking events added yet.</p>';
 }
 
 function applyFilters() {
@@ -826,17 +911,20 @@ async function verifyAdminSession() {
 function resetShipmentForm() {
   const fields = [
     'shipmentId', 'trackingNumber', 'senderName', 'receiverName',
-    'origin', 'destination', 'estimatedDelivery', 'expectedDeliveryTime', 'pickupDate', 'pickupTime', 'deliveryTime', 'shipmentType', 'carrier', 'totalFreight', 'status',
+    'origin', 'destination', 'estimatedDelivery', 'expectedDeliveryTime', 'pickupDate', 'pickupTime', 'deliveryDate', 'deliveryTime', 'deliveryLocation', 'shipmentType', 'carrier', 'totalFreight', 'status',
     'originLat', 'originLng', 'destLat', 'destLng',
     'currentLat', 'currentLng', 'currentLocation', 'weight', 'description',
     'shipperCompany', 'shipperName', 'shipperPhone', 'shipperEmail', 'shipperAddress', 'shipperCity', 'shipperState', 'shipperPostalCode', 'shipperCountry',
     'receiverCompany', 'receiverPhone', 'receiverEmail', 'receiverAddress', 'receiverCity', 'receiverState', 'receiverPostalCode', 'receiverCountry',
-    'cargoType', 'cargoDescription', 'cargoPieces', 'cargoWeight', 'cargoVolume', 'cargoDimensions', 'cargoValue', 'cargoIncoterms', 'cargoDangerousGoods', 'cargoInstructions'
+    'cargoType', 'cargoDescription', 'cargoPieces', 'cargoWeight', 'cargoVolume', 'cargoDimensions', 'cargoValue', 'cargoIncoterms', 'cargoDangerousGoods', 'cargoInstructions',
+    'latestUpdateTitle', 'latestUpdateDescription', 'latestUpdateLocation', 'latestUpdateDate', 'latestUpdateTime', 'eventStatus', 'eventLocation', 'eventDate', 'eventTime', 'eventDescription'
   ];
   fields.forEach((id) => setVal(id, ''));
   setVal('status', 'Order Received');
   setVal('shipmentType', 'Land Freight');
   setVal('carrier', 'ISC');
+  editingTimeline = [];
+  renderTimelineEditor();
   hideMapSection();
   if (selectedMarker && shipmentMap) {
     shipmentMap.removeLayer(selectedMarker);

@@ -61,11 +61,23 @@ function getStatusMeta(status) {
   if (normalized.includes('arriving soon')) {
     return { className: 'status-arriving', label: 'Arriving Soon', icon: '🟠' };
   }
+  if (normalized.includes('out for delivery')) {
+    return { className: 'status-arriving', label: 'Out for Delivery', icon: '🟠' };
+  }
   if (normalized.includes('delayed')) {
     return { className: 'status-delayed', label: 'Delayed', icon: '🔴' };
   }
   if (normalized.includes('pending') || normalized.includes('order received') || normalized.includes('processing')) {
     return { className: 'status-pending', label: 'Pending', icon: '⚪' };
+  }
+  if (normalized.includes('label')) {
+    return { className: 'status-pending', label: 'Label Created', icon: '⚪' };
+  }
+  if (normalized.includes('hold')) {
+    return { className: 'status-delayed', label: 'On Hold', icon: '🔴' };
+  }
+  if (normalized.includes('exception')) {
+    return { className: 'status-delayed', label: 'Exception', icon: '🔴' };
   }
   return { className: 'status-in-transit', label: 'In Transit', icon: '🔵' };
 }
@@ -78,7 +90,7 @@ function renderStatusPill(status) {
 // Function to handle tracking lookup
 async function trackShipment(trackingNumber) {
   try {
-    const response = await fetch(`${API_URL}/${trackingNumber}`);
+    const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`);
     const result = await response.json();
 
     if (!result.success) {
@@ -105,7 +117,9 @@ async function trackShipment(trackingNumber) {
       const originName = shipment.origin || shipment.originName || 'Not Available';
       const destinationName = shipment.destination || shipment.destinationName || 'Not Available';
       const currentStatus = shipment.status || 'In Transit';
-      const timelineItems = Array.isArray(shipment.timeline) ? [...shipment.timeline].reverse() : [];
+      const timelineItems = Array.isArray(shipment.timeline)
+        ? [...shipment.timeline].sort((a, b) => new Date(b.timestamp || `${b.date || ''}T${b.time || '00:00'}`) - new Date(a.timestamp || `${a.date || ''}T${a.time || '00:00'}`))
+        : [];
       const timelineHtml = timelineItems.length > 0 ? timelineItems.map((item, index) => {
         const displayDate = item.date || (item.timestamp ? new Date(item.timestamp).toLocaleDateString() : 'Not Available');
         const displayTime = item.time || (item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Not Available');
@@ -136,6 +150,7 @@ async function trackShipment(trackingNumber) {
       const packageWeight = shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : 'Not available');
       const estimatedDelivery = shipment.estimatedDelivery || 'Not available';
       const description = shipment.packageDescription || shipment.description || 'No description provided.';
+      const latestUpdate = shipment.latestUpdate || timelineItems[0] || {};
 
       const summaryCards = `
         <div class="tracking-overview">
@@ -150,6 +165,11 @@ async function trackShipment(trackingNumber) {
           <div class="tracking-highlight tracking-highlight--wide">
             <span class="tracking-highlight__label">Description</span>
             <strong class="tracking-highlight__value">${escapeHtml(description)}</strong>
+          </div>
+          <div class="tracking-highlight tracking-highlight--wide">
+            <span class="tracking-highlight__label">Latest Update</span>
+            <strong class="tracking-highlight__value">${escapeHtml(latestUpdate.title || latestUpdate.status || 'No latest update available')}</strong>
+            <span>${escapeHtml([latestUpdate.location, latestUpdate.date, latestUpdate.time].filter(Boolean).join(' · '))}</span>
           </div>
           <div class="tracking-highlight">
             <span class="tracking-highlight__label">Shipment Status</span>
@@ -244,6 +264,7 @@ async function trackShipment(trackingNumber) {
               </div>
               ${currentStatus ? renderStatusPill(currentStatus) : ''}
             </div>
+            <a class="tracking-details-link" href="tracking-details.html?tracking=${encodeURIComponent(shipment.trackingNumber || trackingNumber)}">See All Tracking Details <span aria-hidden="true">→</span></a>
             ${summaryCards}
             <div class="tracking-confirmation">Tracking confirmed for ${escapeHtml(shipment.trackingNumber || trackingNumber)}</div>
             <div class="tracking-result-grid">
@@ -323,6 +344,15 @@ document.getElementById('trackingForm')?.addEventListener('submit', (e) => {
   e.preventDefault();
   const inputVal = document.getElementById('trackingInput')?.value.trim();
   if (inputVal) trackShipment(inputVal);
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const tracking = new URLSearchParams(window.location.search).get('tracking')?.trim();
+  const input = document.getElementById('trackingInput');
+  if (tracking && input) {
+    input.value = tracking;
+    trackShipment(tracking);
+  }
 });
 
 function escapeHtml(value) {

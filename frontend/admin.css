@@ -77,6 +77,15 @@ body[data-theme='light'] .panel-card {
 label { display: flex; flex-direction: column; gap: 6px; font-size: 0.95rem; color: var(--muted); }
 .form-section { display: flex; flex-direction: column; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: rgba(255,255,255,0.03); }
 .form-section-title { margin: 0; font-size: 1rem; color: var(--text); }
+.event-editor-list { display: grid; gap: 8px; }
+.event-editor-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--border); }
+.event-editor-item div { display: grid; gap: 3px; min-width: 0; }
+.event-editor-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.event-editor-item strong { color: var(--text); }
+.event-editor-item span, .event-editor-item small, .event-editor-empty { color: var(--muted); overflow-wrap: anywhere; }
+.event-editor-empty { margin: 0; }
+.checkbox-label { flex-direction: row; align-items: center; gap: 8px; }
+.checkbox-label input { width: 18px; height: 18px; }
 input, select, button, textarea {
   font: inherit;
 }

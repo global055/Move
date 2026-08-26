@@ -93,6 +93,7 @@
               <label>Pickup time<input id="pickupTime" name="pickupTime" type="time" /></label>
               <label>Delivery date<input id="deliveryDate" name="deliveryDate" type="date" /></label>
               <label>Delivery time<input id="deliveryTime" name="deliveryTime" type="time" /></label>
+              <label>Delivery location<input id="deliveryLocation" name="deliveryLocation" type="text" /></label>
               <label>Shipment type<select id="shipmentType" name="shipmentType">
                 <option>Air Freight</option>
                 <option>Sea Freight</option>
@@ -122,6 +123,8 @@
               <label>Package dimensions<input id="packageDimensions" name="packageDimensions" type="text" /></label>
               <label>Insurance<input id="insurance" name="insurance" type="text" /></label>
               <label>Status<select id="status" name="status">
+                <option>Label Created</option>
+                <option>Shipment Accepted</option>
                 <option>Pending</option>
                 <option>Picked Up</option>
                 <option>On Hold</option>
@@ -130,9 +133,9 @@
                 <option>Enroute</option>
                 <option>Cancelled</option>
                 <option>Delivered</option>
+                <option>Arrived at Facility</option>
+                <option>Exception</option>
                 <option>Returned</option>
-                <option>Land</option>
-                <option>Arrival Pending</option>
               </select></label>
               <label>Origin latitude<input id="originLat" name="originLat" type="number" step="0.0001" /></label>
               <label>Origin longitude<input id="originLng" name="originLng" type="number" step="0.0001" /></label>
@@ -158,6 +161,33 @@
                 <label>Shipper postal code<input id="shipperPostalCode" name="shipperPostalCode" type="text" /></label>
                 <label>Shipper country<input id="shipperCountry" name="shipperCountry" type="text" /></label>
               </div>
+            </div>
+
+            <div class="form-section">
+              <h3 class="form-section-title">Latest update</h3>
+              <div class="form-grid">
+                <label>Update title<input id="latestUpdateTitle" type="text" /></label>
+                <label>Update location<input id="latestUpdateLocation" type="text" /></label>
+                <label>Update date<input id="latestUpdateDate" type="date" /></label>
+                <label>Update time<input id="latestUpdateTime" type="time" /></label>
+                <label>Update description<textarea id="latestUpdateDescription" rows="2"></textarea></label>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <h3 class="form-section-title">Tracking events</h3>
+              <div id="eventEditorList" class="event-editor-list"></div>
+              <div class="form-grid event-entry-form">
+                <label>Event status<select id="eventStatus">
+                  <option>Label Created</option><option>Shipment Accepted</option><option>In Transit</option><option>Arrived at Facility</option><option>Out for Delivery</option><option>Delivered</option><option>On Hold</option><option>Exception</option><option>Returned</option><option>Cancelled</option>
+                </select></label>
+                <label>Event location<input id="eventLocation" type="text" /></label>
+                <label>Event date<input id="eventDate" type="date" /></label>
+                <label>Event time<input id="eventTime" type="time" /></label>
+                <label>Event description<textarea id="eventDescription" rows="2"></textarea></label>
+                <label class="checkbox-label"><input id="eventIsCurrent" type="checkbox" checked /> Make this the current update</label>
+              </div>
+              <div class="form-actions"><button type="button" id="addEventBtn" class="btn btn-secondary">Add event</button><button type="button" id="clearEventsBtn" class="btn btn-secondary">Clear events</button></div>
             </div>
 
             <div class="form-section">
