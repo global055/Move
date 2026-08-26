@@ -31,9 +31,14 @@ const statusContext = (status, shipment, latest) => {
 const getEvents = (shipment) => (Array.isArray(shipment.timeline) ? shipment.timeline : [])
   .map((event, index) => ({ ...event, _index: index }))
   .sort((a, b) => {
-    const dateDiff = new Date(b.timestamp || `${b.date || ''}T${b.time || '00:00'}`) - new Date(a.timestamp || `${a.date || ''}T${a.time || '00:00'}`);
-    return Number.isNaN(dateDiff) || dateDiff === 0 ? b._index - a._index : dateDiff;
+    const dateDiff = timelineSortValue(b) - timelineSortValue(a);
+    return dateDiff === 0 ? b._index - a._index : dateDiff;
   });
+
+const timelineSortValue = (event) => {
+  const value = new Date(event.timestamp || `${event.date || ''}T${event.time || '00:00'}`).getTime();
+  return Number.isFinite(value) ? value : 0;
+};
 
 const resolveLatestUpdate = (shipment, events) => {
   const storedUpdate = shipment.latestUpdate;

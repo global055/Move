@@ -142,6 +142,11 @@ function resolveLatestUpdate(shipment, timelineItems) {
   return hasStoredUpdate ? storedUpdate : (timelineItems[0] || {});
 }
 
+function timelineSortValue(event) {
+  const value = new Date(event.timestamp || `${event.date || ''}T${event.time || '00:00'}`).getTime();
+  return Number.isFinite(value) ? value : 0;
+}
+
 // Function to handle tracking lookup
 async function trackShipment(trackingNumber) {
   try {
@@ -173,7 +178,7 @@ async function trackShipment(trackingNumber) {
       const destinationName = shipment.destination || shipment.destinationName || 'Not Available';
       const currentStatus = shipment.status || 'In Transit';
       const timelineItems = Array.isArray(shipment.timeline)
-        ? [...shipment.timeline].sort((a, b) => new Date(b.timestamp || `${b.date || ''}T${b.time || '00:00'}`) - new Date(a.timestamp || `${a.date || ''}T${a.time || '00:00'}`))
+        ? [...shipment.timeline].sort((a, b) => timelineSortValue(b) - timelineSortValue(a))
         : [];
       const timelineHtml = timelineItems.length > 0 ? timelineItems.map((item, index) => {
         const displayDate = item.date || (item.timestamp ? new Date(item.timestamp).toLocaleDateString() : 'Not Available');
