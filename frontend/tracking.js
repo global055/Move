@@ -333,7 +333,6 @@ async function trackShipment(trackingNumber) {
             ${renderStatusContext(currentStatus, shipment, latestUpdate)}
             ${summaryCards}
             <div class="tracking-confirmation">Tracking confirmed for ${escapeHtml(shipment.trackingNumber || trackingNumber)}</div>
-            <a class="more-details-button" href="tracking-details.html?tracking=${encodeURIComponent(shipment.trackingNumber || trackingNumber)}">More Details <span aria-hidden="true">→</span></a>
             <div class="tracking-result-grid">
               ${summaryRows}
             </div>

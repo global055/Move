@@ -206,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${summaryRows}
             </div>
             ${shipment.description ? `<div class="tracking-result-description"><strong>Description:</strong> ${escapeHtml(shipment.description)}</div>` : ''}
+            <a class="more-details-button" href="tracking-details.html?tracking=${encodeURIComponent(shipment.trackingNumber || trackingNumber)}">More Details <span aria-hidden="true">→</span></a>
           </div>
         `;
 
