@@ -64,6 +64,12 @@ function getStatusMeta(status) {
   if (normalized.includes('out for delivery')) {
     return { className: 'status-arriving', label: 'Out for Delivery', icon: '🟠' };
   }
+  if (normalized.includes('arrived at facility')) {
+    return { className: 'status-in-transit', label: 'Arrived at Facility', icon: '🔵' };
+  }
+  if (normalized.includes('shipment accepted')) {
+    return { className: 'status-in-transit', label: 'Shipment Accepted', icon: '🔵' };
+  }
   if (normalized.includes('delayed')) {
     return { className: 'status-delayed', label: 'Delayed', icon: '🔴' };
   }
@@ -79,6 +85,12 @@ function getStatusMeta(status) {
   if (normalized.includes('exception')) {
     return { className: 'status-delayed', label: 'Exception', icon: '🔴' };
   }
+  if (normalized.includes('returned')) {
+    return { className: 'status-delayed', label: 'Returned', icon: '🔴' };
+  }
+  if (normalized.includes('cancel')) {
+    return { className: 'status-delayed', label: 'Cancelled', icon: '🔴' };
+  }
   return { className: 'status-in-transit', label: 'In Transit', icon: '🔵' };
 }
 
@@ -87,14 +99,57 @@ function renderStatusPill(status) {
   return `<span class="tracking-pill ${meta.className}">${meta.icon} ${escapeHtml(meta.label)}</span>`;
 }
 
+function renderTrackingError(message) {
+  const statusBox = document.getElementById('statusBox');
+  if (!statusBox) return;
+  statusBox.classList.remove('is-loading');
+  statusBox.classList.add('tracking-results-card-wrapper');
+  statusBox.innerHTML = `<div class="tracking-state tracking-state--error"><strong>Unable to display shipment</strong><p>${escapeHtml(message)}</p></div>`;
+}
+
+async function copyTrackingNumber(trackingNumber, button) {
+  try {
+    await navigator.clipboard.writeText(trackingNumber);
+    if (button) {
+      button.textContent = 'Copied';
+      window.setTimeout(() => { button.textContent = 'Copy'; }, 1400);
+    }
+  } catch (error) {
+    console.warn('Copy unavailable', error);
+  }
+}
+
+function renderStatusContext(status, shipment, latestUpdate) {
+  const normalized = String(status || '').toLowerCase();
+  const location = latestUpdate.location || shipment.deliveryLocation || shipment.currentLocationName || shipment.currentPackageLocation || '';
+  const description = latestUpdate.description || latestUpdate.remarks || '';
+  let title = 'Shipment in progress';
+  if (normalized.includes('delivered')) title = 'Delivery confirmed';
+  else if (normalized.includes('out for delivery')) title = 'Out for delivery';
+  else if (normalized.includes('arriving soon')) title = 'Shipment arriving soon';
+  else if (normalized.includes('hold')) title = 'Shipment on hold';
+  else if (normalized.includes('exception')) title = 'Shipment exception';
+  else if (normalized.includes('label')) title = 'Shipping label created';
+  else if (normalized.includes('accepted')) title = 'Shipment accepted';
+  else if (normalized.includes('returned')) title = 'Shipment returned';
+  else if (normalized.includes('cancel')) title = 'Shipment cancelled';
+  return `<div class="tracking-status-context"><div><span class="tracking-highlight__label">Latest Update</span><strong>${escapeHtml(latestUpdate.title || title)}</strong><p>${escapeHtml(description || 'No latest update is available yet.')}</p></div>${location ? `<div><span class="tracking-highlight__label">Location</span><strong>${escapeHtml(location)}</strong></div>` : ''}${latestUpdate.date || latestUpdate.time ? `<time>${escapeHtml([latestUpdate.date, latestUpdate.time].filter(Boolean).join(' · '))}</time>` : ''}</div>`;
+}
+
+function resolveLatestUpdate(shipment, timelineItems) {
+  const storedUpdate = shipment.latestUpdate;
+  const hasStoredUpdate = storedUpdate && Object.values(storedUpdate).some((value) => hasDisplayValue(value));
+  return hasStoredUpdate ? storedUpdate : (timelineItems[0] || {});
+}
+
 // Function to handle tracking lookup
 async function trackShipment(trackingNumber) {
   try {
     const response = await fetch(`${API_URL}/${encodeURIComponent(trackingNumber)}`);
     const result = await response.json();
 
-    if (!result.success) {
-      alert(result.message || 'Shipment not found!');
+    if (!result.success || !result.data) {
+      renderTrackingError(result.message || 'Tracking number not found.');
       return;
     }
 
@@ -150,7 +205,7 @@ async function trackShipment(trackingNumber) {
       const packageWeight = shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : 'Not available');
       const estimatedDelivery = shipment.estimatedDelivery || 'Not available';
       const description = shipment.packageDescription || shipment.description || 'No description provided.';
-      const latestUpdate = shipment.latestUpdate || timelineItems[0] || {};
+      const latestUpdate = resolveLatestUpdate(shipment, timelineItems);
 
       const summaryCards = `
         <div class="tracking-overview">
@@ -259,12 +314,13 @@ async function trackShipment(trackingNumber) {
             <div class="tracking-card-header">
               <div>
                 <p class="eyebrow">Shipment summary</p>
-                <h2>${escapeHtml(shipment.trackingNumber || 'Tracking details')}</h2>
+                <h2 class="tracking-number-heading">${escapeHtml(shipment.trackingNumber || 'Tracking details')}</h2>
                 <p class="tracking-summary-subtitle">${escapeHtml(originName)} → ${escapeHtml(destinationName)}</p>
               </div>
-              ${currentStatus ? renderStatusPill(currentStatus) : ''}
+              <div class="tracking-summary-actions">${currentStatus ? renderStatusPill(currentStatus) : ''}<button type="button" class="copy-button" data-copy-tracking>Copy</button></div>
             </div>
             <a class="tracking-details-link" href="tracking-details.html?tracking=${encodeURIComponent(shipment.trackingNumber || trackingNumber)}">See All Tracking Details <span aria-hidden="true">→</span></a>
+            ${renderStatusContext(currentStatus, shipment, latestUpdate)}
             ${summaryCards}
             <div class="tracking-confirmation">Tracking confirmed for ${escapeHtml(shipment.trackingNumber || trackingNumber)}</div>
             <div class="tracking-result-grid">
@@ -318,6 +374,7 @@ async function trackShipment(trackingNumber) {
       `;
       statusBox.innerHTML = shipmentInfoHtml;
       statusBox.classList.add('tracking-results-card-wrapper');
+      statusBox.querySelector('[data-copy-tracking]')?.addEventListener('click', (event) => copyTrackingNumber(shipment.trackingNumber || trackingNumber, event.currentTarget));
     }
 
     if (window.GM && typeof window.GM.updateMapFromShipment === 'function') {
@@ -335,7 +392,7 @@ async function trackShipment(trackingNumber) {
 
   } catch (error) {
     console.error('Error fetching shipment data:', error);
-    alert('Unable to connect to the backend server.');
+    renderTrackingError('The tracking service is unavailable. Please try again later.');
   }
 }
 
@@ -344,6 +401,7 @@ document.getElementById('trackingForm')?.addEventListener('submit', (e) => {
   e.preventDefault();
   const inputVal = document.getElementById('trackingInput')?.value.trim();
   if (inputVal) trackShipment(inputVal);
+  else renderTrackingError('Enter a tracking number to search for a shipment.');
 });
 
 document.addEventListener('DOMContentLoaded', () => {
