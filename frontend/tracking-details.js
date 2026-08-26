@@ -35,6 +35,12 @@ const getEvents = (shipment) => (Array.isArray(shipment.timeline) ? shipment.tim
     return Number.isNaN(dateDiff) || dateDiff === 0 ? b._index - a._index : dateDiff;
   });
 
+const resolveLatestUpdate = (shipment, events) => {
+  const storedUpdate = shipment.latestUpdate;
+  const hasStoredUpdate = storedUpdate && Object.values(storedUpdate).some((value) => String(value ?? '').trim() !== '');
+  return hasStoredUpdate ? storedUpdate : (events[0] || {});
+};
+
 const formatDate = (event) => event.date || (event.timestamp ? new Date(event.timestamp).toLocaleDateString() : '');
 const formatTime = (event) => event.time || (event.timestamp ? new Date(event.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
 const copyTracking = async (tracking) => {
@@ -46,7 +52,7 @@ const copyTracking = async (tracking) => {
 function renderDetails(shipment) {
   const status = statusMeta(shipment.status);
   const events = getEvents(shipment);
-  const latest = shipment.latestUpdate || events[0] || {};
+  const latest = resolveLatestUpdate(shipment, events);
   const currentLocation = shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation || '';
   const context = statusContext(shipment.status, shipment, latest);
   const rows = [

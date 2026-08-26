@@ -484,6 +484,78 @@ main {
   color: var(--neutral);
 }
 
+.tracking-summary-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.tracking-number-heading {
+  overflow-wrap: anywhere;
+}
+
+.tracking-details-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 18px;
+  color: var(--accent-strong);
+  font-weight: 800;
+}
+
+.tracking-status-context {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 0.8fr) auto;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 18px;
+  border-left: 4px solid var(--accent-strong);
+  border-radius: 14px;
+  background: #f4f8ff;
+}
+
+.tracking-status-context > div {
+  display: grid;
+  gap: 4px;
+}
+
+.tracking-status-context strong {
+  color: var(--text);
+}
+
+.tracking-status-context p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.tracking-status-context time {
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.tracking-state {
+  padding: 28px 10px;
+  text-align: center;
+}
+
+.tracking-state strong {
+  color: var(--text);
+  font-size: 1.1rem;
+}
+
+.tracking-state p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.tracking-state--error strong {
+  color: var(--danger);
+}
+
 .tracking-overview {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1502,6 +1574,18 @@ main {
   .tracking-pill {
     justify-self: flex-start;
     padding: 8px 12px;
+  }
+
+  .tracking-summary-actions {
+    justify-content: flex-start;
+  }
+
+  .tracking-status-context {
+    grid-template-columns: 1fr;
+  }
+
+  .tracking-status-context time {
+    text-align: left;
   }
 
   .details-hero {
