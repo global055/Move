@@ -260,36 +260,6 @@ function populateShipmentForm(shipment) {
   showShipmentOnMap(shipment);
 }
 
-function validateShipmentPayload(payload) {
-  if (!payload.trackingNumber) return 'Tracking number is required.';
-  if (!payload.senderName) return 'Sender name is required.';
-  if (!payload.receiverName) return 'Receiver name is required.';
-  if (!payload.originName) return 'Origin is required.';
-  if (!payload.destinationName) return 'Destination is required.';
-  if (!payload.estimatedDelivery) return 'Estimated delivery date is required.';
-  if (!payload.status) return 'Status is required.';
-
-  const originLat = getVal('originLat');
-  const originLng = getVal('originLng');
-  if ((originLat && !originLng) || (!originLat && originLng)) {
-    return 'Origin latitude and longitude must both be provided or both left blank.';
-  }
-
-  const destLat = getVal('destLat');
-  const destLng = getVal('destLng');
-  if ((destLat && !destLng) || (!destLat && destLng)) {
-    return 'Destination latitude and longitude must both be provided or both left blank.';
-  }
-
-  const currentLat = getVal('currentLat');
-  const currentLng = getVal('currentLng');
-  if ((currentLat && !currentLng) || (!currentLat && currentLng)) {
-    return 'Current latitude and longitude must both be provided or both left blank.';
-  }
-
-  return null;
-}
-
 function renderTable(shipments) {
   const tableBody = document.getElementById('shipmentsTableBody');
   if (!tableBody) return;
@@ -438,12 +408,6 @@ async function saveShipment() {
 
   const payload = buildShipmentPayload();
   payload.trackingNumber = trackingNumber;
-
-  const validationError = validateShipmentPayload(payload);
-  if (validationError) {
-    alert(validationError);
-    return;
-  }
 
   try {
     const response = await fetch(endpoint, {
