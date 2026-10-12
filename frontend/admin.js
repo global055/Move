@@ -166,7 +166,7 @@ function setOptionalVal(fieldId, value) {
 function populateShipmentForm(shipment) {
   setOptionalVal('shipmentId', shipment._id);
   setOptionalVal('trackingNumber', shipment.trackingNumber);
-  setOptionalVal('senderName', shipment.shipper?.name || shipment.senderName);
+  setOptionalVal('senderName', shipment.senderName || shipment.shipper?.name);
   setOptionalVal('receiverName', shipment.receiverName || shipment.receiver?.name);
   setOptionalVal('origin', shipment.originName);
   setOptionalVal('destination', shipment.destinationName);
@@ -276,7 +276,7 @@ function renderTable(shipments) {
   tableBody.innerHTML = shipments.map((s) => `
     <tr onclick="selectShipment('${escapeHtml(s.trackingNumber)}')" style="cursor:pointer;">
       <td><strong>${escapeHtml(s.trackingNumber || 'N/A')}</strong></td>
-      <td>${escapeHtml(s.shipper?.name || s.senderName || 'N/A')}</td>
+      <td>${escapeHtml(s.senderName || 'N/A')}</td>
       <td>${escapeHtml(s.originName || 'N/A')} → ${escapeHtml(s.destinationName || 'N/A')}</td>
       <td><span style="color: #28a745; font-weight: bold;">${escapeHtml(s.status || 'In Transit')}</span></td>
       <td>${escapeHtml(s.estimatedDelivery || 'N/A')}</td>
@@ -313,7 +313,7 @@ function buildShipmentPayload() {
 
   return {
     trackingNumber: getVal('trackingNumber'),
-    senderName: getVal('shipperName') || getVal('senderName'),
+    senderName: getVal('senderName'),
     receiverName: getVal('receiverName'),
     originName: getVal('origin'),
     destinationName: getVal('destination'),
