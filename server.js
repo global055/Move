@@ -306,7 +306,7 @@ const normalizeShipmentPayload = (payload = {}, existingShipment = null, isCreat
   const normalizedPayload = {
     ...payload,
     trackingNumber: normalizeTrackingNumber(payload.trackingNumber || existingShipment?.trackingNumber),
-    senderName: payload.senderName || existingShipment?.senderName || payload.shipper?.name || '',
+    senderName: payload.shipper?.name || payload.senderName || existingShipment?.shipper?.name || existingShipment?.senderName || '',
     receiverName: payload.receiverName || existingShipment?.receiverName || payload.receiver?.name || '',
     originName: payload.originName || payload.origin || existingShipment?.originName || '',
     destinationName: payload.destinationName || payload.destination || existingShipment?.destinationName || '',
@@ -475,7 +475,9 @@ app.get('/api/public/shipments/:trackingNumber', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Tracking number not found' });
     }
 
-    res.json({ success: true, data: shipment });
+    const shipmentData = shipment.toObject();
+    shipmentData.senderName = shipment.shipper?.name || shipment.senderName;
+    res.json({ success: true, data: shipmentData });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
