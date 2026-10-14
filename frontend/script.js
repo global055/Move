@@ -294,21 +294,16 @@ function createHomepageCircleMarker(coords, options) {
 
 function buildHomepagePackageMarkerHtml(status) {
   const statusClass = status === 'Delivered' ? 'is-delivered' : status === 'In Transit' ? 'is-active' : 'is-pending';
-  const imgSrc = 'imges/package-indicator.jpeg';
-  return `
-    <div class="package-map-marker ${statusClass} is-current-location">
-      <img src="${imgSrc}" class="package-indicator-img" alt="Package Indicator" />
-    </div>
-  `;
+  return `<div class="package-map-marker ${statusClass} is-current-location" aria-label="Package location"></div>`;
 }
 
 function createHomepagePackageIcon(status) {
   return window.L.divIcon({
     className: 'package-marker-wrapper',
     html: buildHomepagePackageMarkerHtml(status),
-    iconSize: [48, 48],
-    iconAnchor: [24, 24],
-    popupAnchor: [0, -16]
+    iconSize: [18, 18],
+    iconAnchor: [9, 9],
+    popupAnchor: [0, -12]
   });
 }
 

@@ -82,15 +82,15 @@
 
           <form id="shipmentForm" class="shipment-form">
             <input type="hidden" id="shipmentId" />
-            <div class="form-grid admin-field-grid" data-admin-section="shipment-information">
+            <details class="form-section admin-field-section" data-admin-view="field-groups">
+              <summary class="form-section-title">Shipment fields</summary>
+              <div class="form-grid admin-field-grid" data-admin-section="shipment-information">
               <label>Tracking number
                 <div class="tracking-number-wrapper">
                   <input id="trackingNumber" type="text" placeholder="Select existing or create new" list="trackingNumbers" />
                   <datalist id="trackingNumbers"></datalist>
                 </div>
               </label>
-              <label>Sender<input id="senderName" name="senderName" type="text" /></label>
-              <label>Receiver<input id="receiverName" name="receiverName" type="text" /></label>
               <label>Origin<input id="origin" name="origin" type="text" /></label>
               <label>Destination<input id="destination" name="destination" type="text" /></label>
               <label>Estimated delivery<input id="estimatedDelivery" name="estimatedDelivery" type="date" /></label>
@@ -154,12 +154,14 @@
               <label>Current location<input id="currentLocation" name="currentLocation" type="text" /></label>
               <label>Weight (kg)<input id="weight" name="weight" type="number" step="0.01" /></label>
               <label>Description<textarea id="description" name="description" rows="2" style="font-family: inherit;"></textarea></label>
-            </div>
+              </div>
+            </details>
 
-            <div class="form-section admin-field-section" data-admin-view="shipper">
-              <h3 class="form-section-title">Shipper information</h3>
+            <details class="form-section admin-field-section" data-admin-view="shipper">
+              <summary class="form-section-title">Shipper information</summary>
               <div class="form-grid">
                 <label>Shipper company<input id="shipperCompany" name="shipperCompany" type="text" /></label>
+                <label>Sender name<input id="senderName" name="senderName" type="text" /></label>
                 <label>Shipper name<input id="shipperName" name="shipperName" type="text" /></label>
                 <label>Shipper phone<input id="shipperPhone" name="shipperPhone" type="text" /></label>
                 <label>Shipper email<input id="shipperEmail" name="shipperEmail" type="email" /></label>
@@ -169,10 +171,10 @@
                 <label>Shipper postal code<input id="shipperPostalCode" name="shipperPostalCode" type="text" /></label>
                 <label>Shipper country<input id="shipperCountry" name="shipperCountry" type="text" /></label>
               </div>
-            </div>
+            </details>
 
-            <div class="form-section admin-field-section" data-admin-view="latest-update">
-              <h3 class="form-section-title">Latest update</h3>
+            <details class="form-section admin-field-section" data-admin-view="latest-update">
+              <summary class="form-section-title">Latest update</summary>
               <div class="form-grid">
                 <label>Update title<input id="latestUpdateTitle" type="text" /></label>
                 <label>Update location<input id="latestUpdateLocation" type="text" /></label>
@@ -180,10 +182,10 @@
                 <label>Update time<input id="latestUpdateTime" type="time" /></label>
                 <label>Update description<textarea id="latestUpdateDescription" rows="2"></textarea></label>
               </div>
-            </div>
+            </details>
 
-            <div class="form-section admin-field-section" data-admin-view="tracking-history">
-              <h3 class="form-section-title">Tracking events</h3>
+            <details class="form-section admin-field-section" data-admin-view="tracking-history">
+              <summary class="form-section-title">Tracking events</summary>
               <div id="eventEditorList" class="event-editor-list"></div>
               <div class="form-grid event-entry-form">
                 <label>Event status<select id="eventStatus">
@@ -197,11 +199,12 @@
                 <label class="checkbox-label"><input id="eventIsCurrent" type="checkbox" checked /> Make this the current update</label>
               </div>
               <div class="form-actions"><button type="button" id="addEventBtn" class="btn btn-secondary">Add event</button><button type="button" id="clearEventsBtn" class="btn btn-secondary">Clear events</button></div>
-            </div>
+            </details>
 
-            <div class="form-section admin-field-section" data-admin-view="recipient">
-              <h3 class="form-section-title">Receiver information</h3>
+            <details class="form-section admin-field-section" data-admin-view="recipient">
+              <summary class="form-section-title">Receiver information</summary>
               <div class="form-grid">
+                <label>Receiver name<input id="receiverName" name="receiverName" type="text" /></label>
                 <label>Receiver company<input id="receiverCompany" name="receiverCompany" type="text" /></label>
                 <label>Receiver phone<input id="receiverPhone" name="receiverPhone" type="text" /></label>
                 <label>Receiver email<input id="receiverEmail" name="receiverEmail" type="email" /></label>
@@ -211,10 +214,10 @@
                 <label>Receiver postal code<input id="receiverPostalCode" name="receiverPostalCode" type="text" /></label>
                 <label>Receiver country<input id="receiverCountry" name="receiverCountry" type="text" /></label>
               </div>
-            </div>
+            </details>
 
-            <div class="form-section admin-field-section" data-admin-view="shipment-information">
-              <h3 class="form-section-title">Cargo details</h3>
+            <details class="form-section admin-field-section" data-admin-view="shipment-information">
+              <summary class="form-section-title">Cargo details</summary>
               <div class="form-grid">
                 <label>Cargo type<input id="cargoType" name="cargoType" type="text" /></label>
                 <label>Cargo description<input id="cargoDescription" name="cargoDescription" type="text" /></label>
@@ -231,7 +234,7 @@
                 </select></label>
                 <label>Special instructions<textarea id="specialInstructions" name="specialInstructions" rows="2" style="font-family: inherit;"></textarea></label>
               </div>
-            </div>
+            </details>
             <div class="form-actions">
               <button type="submit" class="btn btn-primary">Save shipment</button>
               <button type="button" id="cancelEditBtn" class="btn btn-secondary">Cancel</button>
@@ -244,11 +247,11 @@
             <div>
               <p class="eyebrow">Search & filter</p>
               <h2>Shipment list</h2>
-            <div id="previewPanel" class="form-section admin-field-section" data-admin-view="preview">
-              <h3 class="form-section-title">Preview tracking page</h3>
+            <details id="previewPanel" class="form-section admin-field-section" data-admin-view="preview">
+              <summary class="form-section-title">Preview tracking page</summary>
               <p class="preview-copy">Open the public tracking page using the selected tracking number.</p>
               <button type="button" id="previewTrackingBtn" class="btn btn-primary">Preview Tracking Page</button>
-            </div>
+            </details>
             </div>
           </div>
           <div class="toolbar">

@@ -85,15 +85,19 @@ function setAdminSection(section) {
   document.querySelectorAll('.admin-view-section').forEach((view) => {
     view.classList.toggle('is-active', section === 'overview' ? view.dataset.adminView === 'overview' : view.dataset.adminView === 'form');
   });
-  document.querySelectorAll('.admin-field-section').forEach((view) => view.classList.toggle('is-active', view.dataset.adminView === section));
-  document.querySelectorAll('.admin-field-grid > label').forEach((label) => label.classList.toggle('is-active', label.dataset.adminSection === section));
+  document.querySelectorAll('.admin-field-section').forEach((view) => {
+    const isFieldGroup = view.dataset.adminView === 'field-groups' && ['shipment-information', 'delivery', 'status'].includes(section);
+    view.classList.toggle('is-active', view.dataset.adminView === section || isFieldGroup);
+  });
+  document.querySelectorAll('.admin-field-grid label').forEach((label) => label.classList.toggle('is-active', label.dataset.adminSection === section));
   document.getElementById('adminSectionNav')?.classList.remove('is-open');
   document.getElementById('adminMenuToggle')?.setAttribute('aria-expanded', 'false');
 }
 
 function classifyAdminFields() {
   const sectionByField = {
-    trackingNumber: 'shipment-information', carrier: 'shipment-information', shipmentType: 'shipment-information', serviceType: 'shipment-information',
+    trackingNumber: 'shipment-information', estimatedDelivery: 'shipment-information',
+    carrier: 'shipment-information', shipmentType: 'shipment-information', serviceType: 'shipment-information',
     pickupDate: 'shipment-information', pickupTime: 'shipment-information', origin: 'shipment-information', destination: 'shipment-information',
     packageDescription: 'shipment-information', packageWeight: 'shipment-information', quantity: 'shipment-information', referenceNumber: 'shipment-information',
     modeOfShipment: 'shipment-information', totalFreight: 'shipment-information', departureAirportPort: 'shipment-information', arrivalAirportPort: 'shipment-information',
@@ -104,7 +108,7 @@ function classifyAdminFields() {
     shipperCompany: 'shipper', shipperName: 'shipper', shipperPhone: 'shipper', shipperEmail: 'shipper', shipperAddress: 'shipper', shipperCity: 'shipper', shipperState: 'shipper', shipperPostalCode: 'shipper', shipperCountry: 'shipper',
     receiverCompany: 'recipient', receiverName: 'recipient', receiverPhone: 'recipient', receiverEmail: 'recipient', receiverAddress: 'recipient', receiverCity: 'recipient', receiverState: 'recipient', receiverPostalCode: 'recipient', receiverCountry: 'recipient'
   };
-  document.querySelectorAll('.admin-field-grid > label').forEach((label) => {
+  document.querySelectorAll('.admin-field-grid label').forEach((label) => {
     const field = label.querySelector('input, select, textarea');
     if (field && sectionByField[field.id]) label.dataset.adminSection = sectionByField[field.id];
   });
@@ -802,8 +806,8 @@ function showShipmentOnMap(shipment) {
     const icon = window.L.divIcon({
       html: buildPackageMarkerHtml(shipment.status, true),
       className: 'package-marker-wrapper',
-      iconSize: [48, 48],
-      iconAnchor: [24, 24]
+      iconSize: [18, 18],
+      iconAnchor: [9, 9]
     });
 
     selectedMarker = window.L.marker([current.lat, current.lng], { icon }).addTo(mapLayerGroup);
@@ -848,14 +852,7 @@ function isShipmentMovingStatus(status) {
 
 function buildPackageMarkerHtml(status) {
   const statusClass = isShipmentMovingStatus(status) ? 'is-active' : 'is-paused';
-  return `
-    <div class="package-map-marker ${statusClass} is-current-location">
-      <div class="package-map-marker__body"></div>
-      <div class="package-map-marker__wheel wheel-left"></div>
-      <div class="package-map-marker__wheel wheel-right"></div>
-      <div class="package-map-marker__tick"></div>
-    </div>
-  `;
+  return `<div class="package-map-marker ${statusClass} is-current-location" aria-label="Package location"></div>`;
 }
 
 function animatePackageMarker(marker, homePoint, status) {
