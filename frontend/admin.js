@@ -265,32 +265,33 @@ function populateShipmentForm(shipment) {
 }
 
 function renderTable(shipments) {
-  const tableBody = document.getElementById('shipmentsTableBody');
-  if (!tableBody) return;
+  const shipmentList = document.getElementById('shipmentsTableBody');
+  if (!shipmentList) return;
 
   if (!shipments.length) {
-    tableBody.innerHTML = `
-      <tr class="empty-shipment-row">
-        <td colspan="6" style="text-align:center; padding: 24px; color: #666;">No shipments found.</td>
-      </tr>
-    `;
+    shipmentList.innerHTML = '<p class="shipment-list-empty">No shipments found.</p>';
     return;
   }
 
-  tableBody.innerHTML = shipments.map((s) => `
-    <tr onclick="selectShipment('${escapeHtml(s.trackingNumber)}')" style="cursor:pointer;">
-      <td data-label="Tracking"><strong>${escapeHtml(s.trackingNumber || 'N/A')}</strong></td>
-      <td data-label="Customer">${escapeHtml(s.shipper?.name || s.senderName || 'N/A')}</td>
-      <td data-label="Route">${escapeHtml(s.originName || 'N/A')} → ${escapeHtml(s.destinationName || 'N/A')}</td>
-      <td data-label="Status"><span style="color: #28a745; font-weight: bold;">${escapeHtml(s.status || 'In Transit')}</span></td>
-      <td data-label="ETA">${escapeHtml(s.estimatedDelivery || 'N/A')}</td>
-      <td data-label="Actions">
+  shipmentList.innerHTML = shipments.map((s) => `
+    <article class="shipment-list-item" onclick="selectShipment('${escapeHtml(s.trackingNumber)}')">
+      <div class="shipment-list-heading">
+        <strong>${escapeHtml(s.trackingNumber || 'N/A')}</strong>
+      </div>
+      <details class="shipment-list-details" onclick="event.stopPropagation();">
+        <summary>Other details</summary>
+        <dl class="shipment-list-fields">
+          <div><dt>Customer</dt><dd>${escapeHtml(s.shipper?.name || s.senderName || 'N/A')}</dd></div>
+          <div><dt>Route</dt><dd>${escapeHtml(s.originName || 'N/A')} → ${escapeHtml(s.destinationName || 'N/A')}</dd></div>
+          <div><dt>Status</dt><dd>${escapeHtml(s.status || 'In Transit')}</dd></div>
+          <div><dt>ETA</dt><dd>${escapeHtml(s.estimatedDelivery || 'N/A')}</dd></div>
+        </dl>
         <div class="shipment-list-actions">
           <button type="button" onclick="event.stopPropagation(); editShipment('${escapeHtml(s.trackingNumber)}');">Edit</button>
           <button type="button" onclick="event.stopPropagation(); deleteShipment('${escapeHtml(s.trackingNumber)}');" style="color: red;">Delete</button>
         </div>
-      </td>
-    </tr>
+      </details>
+    </article>
   `).join('');
 }
 

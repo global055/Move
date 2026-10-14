@@ -167,9 +167,21 @@ body[data-theme='light'] .sidebar {
 .form-actions { display: flex; gap: 10px; margin-top: 16px; }
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
 .toolbar input, .toolbar select { flex: 1; min-width: 220px; }
-.table-wrap { width: 100%; overflow-x: auto; }
+.table-wrap { width: 100%; overflow: visible; }
 table { width: 100%; border-collapse: collapse; }
 th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+.shipment-list { display: grid; gap: 10px; }
+.shipment-list-item { min-width: 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-2); cursor: pointer; }
+.shipment-list-heading { min-width: 0; color: var(--text); overflow-wrap: anywhere; }
+.shipment-list-details { margin-top: 10px; }
+.shipment-list-details > summary { width: fit-content; color: var(--accent); font-weight: 600; cursor: pointer; }
+.shipment-list-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 12px 0; }
+.shipment-list-fields > div { min-width: 0; }
+.shipment-list-fields dt { color: var(--muted); font-size: 0.82rem; }
+.shipment-list-fields dd { margin: 3px 0 0; color: var(--text); overflow-wrap: anywhere; }
+.shipment-list-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.shipment-list-actions button { padding: 8px 10px; border: 0; border-radius: 8px; background: var(--panel); color: var(--text); cursor: pointer; }
+.shipment-list-empty { margin: 0; padding: 24px; color: var(--muted); text-align: center; }
 .action-btns { display: flex; gap: 8px; flex-wrap: wrap; }
 .action-btns button { padding: 8px 10px; border-radius: 999px; border: none; color: white; cursor: pointer; }
 .action-btns .edit { background: var(--accent); }
@@ -318,16 +330,7 @@ th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border)
   .form-actions .btn { flex: 1 1 140px; }
   .toolbar { flex-direction: column; }
   .toolbar input, .toolbar select { min-width: 0; width: 100%; }
-  .table-wrap { overflow: visible; }
-  .table-wrap table, .table-wrap tbody { display: block; width: 100%; }
-  .table-wrap thead { display: none; }
-  .table-wrap tbody tr { display: block; margin-bottom: 12px; padding: 4px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-2); }
-  .table-wrap tbody td { display: grid; grid-template-columns: minmax(78px, 0.34fr) minmax(0, 1fr); align-items: start; gap: 10px; padding: 10px 0; white-space: normal; overflow-wrap: anywhere; }
-  .table-wrap tbody td::before { content: attr(data-label); color: var(--muted); font-size: 0.82rem; font-weight: 600; }
-  .table-wrap tbody td:last-child { border-bottom: 0; }
-  .table-wrap tbody tr.empty-shipment-row td { display: block; text-align: center !important; }
-  .shipment-list-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-  .shipment-list-actions button { padding: 8px 10px; border: 0; border-radius: 8px; background: var(--panel); color: var(--text); cursor: pointer; }
+  .shipment-list-fields { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .event-editor-item { align-items: flex-start; flex-direction: column; }
   .shipment-map { height: 280px; }
 }
