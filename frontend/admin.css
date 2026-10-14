@@ -140,7 +140,7 @@ body[data-theme='light'] .sidebar {
 .sidebar-nav { display: flex; flex-direction: column; gap: 8px; }
 .sidebar-nav a { padding: 10px 12px; border-radius: 10px; color: var(--muted); }
 .sidebar-nav a.active, .sidebar-nav a:hover { background: rgba(31,123,255,0.16); color: white; }
-.admin-menu-toggle { display: none; border: 0; border-radius: 10px; padding: 10px 12px; background: rgba(31,123,255,0.16); color: var(--text); font-weight: 700; cursor: pointer; }
+.admin-menu-toggle { display: none; border: 0; border-radius: 10px; padding: 10px 12px; background: rgba(31,123,255,0.16); color: var(--text); font-weight: 700; cursor: pointer; white-space: nowrap; }
 .admin-view-section:not(.is-active), .admin-field-section:not(.is-active) { display: none !important; }
 .admin-field-grid > label { display: none; }
 .admin-field-grid > label.is-active { display: flex; }
@@ -303,6 +303,8 @@ th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border)
   .dashboard-main { min-width: 0; padding: 12px; gap: 14px; }
   .dashboard-topbar { flex-direction: row; align-items: center; }
   .dashboard-topbar h1 { margin: 0; font-size: 1.3rem; }
+  .topbar-actions { flex: 0 0 auto; }
+  .admin-menu-toggle { padding: 9px 10px; font-size: 0.85rem; }
   .user-badge { max-width: 44vw; overflow-wrap: anywhere; font-size: 0.82rem; }
   .cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .stat-card { padding: 12px; }
@@ -316,7 +318,16 @@ th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border)
   .form-actions .btn { flex: 1 1 140px; }
   .toolbar { flex-direction: column; }
   .toolbar input, .toolbar select { min-width: 0; width: 100%; }
-  th, td { padding: 9px 10px; white-space: nowrap; }
+  .table-wrap { overflow: visible; }
+  .table-wrap table, .table-wrap tbody { display: block; width: 100%; }
+  .table-wrap thead { display: none; }
+  .table-wrap tbody tr { display: block; margin-bottom: 12px; padding: 4px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--panel-2); }
+  .table-wrap tbody td { display: grid; grid-template-columns: minmax(78px, 0.34fr) minmax(0, 1fr); align-items: start; gap: 10px; padding: 10px 0; white-space: normal; overflow-wrap: anywhere; }
+  .table-wrap tbody td::before { content: attr(data-label); color: var(--muted); font-size: 0.82rem; font-weight: 600; }
+  .table-wrap tbody td:last-child { border-bottom: 0; }
+  .table-wrap tbody tr.empty-shipment-row td { display: block; text-align: center !important; }
+  .shipment-list-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .shipment-list-actions button { padding: 8px 10px; border: 0; border-radius: 8px; background: var(--panel); color: var(--text); cursor: pointer; }
   .event-editor-item { align-items: flex-start; flex-direction: column; }
   .shipment-map { height: 280px; }
 }

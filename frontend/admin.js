@@ -270,7 +270,7 @@ function renderTable(shipments) {
 
   if (!shipments.length) {
     tableBody.innerHTML = `
-      <tr>
+      <tr class="empty-shipment-row">
         <td colspan="6" style="text-align:center; padding: 24px; color: #666;">No shipments found.</td>
       </tr>
     `;
@@ -279,14 +279,16 @@ function renderTable(shipments) {
 
   tableBody.innerHTML = shipments.map((s) => `
     <tr onclick="selectShipment('${escapeHtml(s.trackingNumber)}')" style="cursor:pointer;">
-      <td><strong>${escapeHtml(s.trackingNumber || 'N/A')}</strong></td>
-      <td>${escapeHtml(s.shipper?.name || s.senderName || 'N/A')}</td>
-      <td>${escapeHtml(s.originName || 'N/A')} → ${escapeHtml(s.destinationName || 'N/A')}</td>
-      <td><span style="color: #28a745; font-weight: bold;">${escapeHtml(s.status || 'In Transit')}</span></td>
-      <td>${escapeHtml(s.estimatedDelivery || 'N/A')}</td>
-      <td>
-        <button type="button" onclick="event.stopPropagation(); editShipment('${escapeHtml(s.trackingNumber)}');">Edit</button>
-        <button type="button" onclick="event.stopPropagation(); deleteShipment('${escapeHtml(s.trackingNumber)}');" style="color: red;">Delete</button>
+      <td data-label="Tracking"><strong>${escapeHtml(s.trackingNumber || 'N/A')}</strong></td>
+      <td data-label="Customer">${escapeHtml(s.shipper?.name || s.senderName || 'N/A')}</td>
+      <td data-label="Route">${escapeHtml(s.originName || 'N/A')} → ${escapeHtml(s.destinationName || 'N/A')}</td>
+      <td data-label="Status"><span style="color: #28a745; font-weight: bold;">${escapeHtml(s.status || 'In Transit')}</span></td>
+      <td data-label="ETA">${escapeHtml(s.estimatedDelivery || 'N/A')}</td>
+      <td data-label="Actions">
+        <div class="shipment-list-actions">
+          <button type="button" onclick="event.stopPropagation(); editShipment('${escapeHtml(s.trackingNumber)}');">Edit</button>
+          <button type="button" onclick="event.stopPropagation(); deleteShipment('${escapeHtml(s.trackingNumber)}');" style="color: red;">Delete</button>
+        </div>
       </td>
     </tr>
   `).join('');
