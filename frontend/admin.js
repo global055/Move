@@ -9,7 +9,9 @@ let mapLayerGroup = null;
 let selectedMarker = null;
 let activePackageAnimationFrame = null;
 let editingTimeline = [];
+let customShipmentSections = [];
 let activeAdminSection = 'overview';
+let shipmentFormMode = 'create';
 
 window.addEventListener('DOMContentLoaded', async () => {
   const admin = await verifyAdminSession();
@@ -39,7 +41,7 @@ function attachUiHandlers() {
   }
 
   document.getElementById('cancelEditBtn')?.addEventListener('click', resetShipmentForm);
-  document.getElementById('resetFormBtn')?.addEventListener('click', resetShipmentForm);
+  document.getElementById('resetFormBtn')?.addEventListener('click', startNewShipment);
   // Attach theme toggle to all theme buttons (page contains two theme buttons)
   Array.from(document.querySelectorAll('#themeToggleBtn, .btn-theme')).forEach((el) => el.addEventListener('click', toggleTheme));
   document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
@@ -50,13 +52,16 @@ function attachUiHandlers() {
   document.getElementById('searchInput')?.addEventListener('input', applyFilters);
   document.getElementById('statusFilter')?.addEventListener('change', applyFilters);
   document.getElementById('addEventBtn')?.addEventListener('click', addTimelineEvent);
+  document.getElementById('addCustomSectionBtn')?.addEventListener('click', addCustomShipmentSection);
+  document.getElementById('customShipmentSections')?.addEventListener('click', handleCustomSectionsClick);
+  document.getElementById('customShipmentSections')?.addEventListener('input', handleCustomSectionsInput);
   document.getElementById('clearEventsBtn')?.addEventListener('click', () => {
     editingTimeline = [];
     renderTimelineEditor();
   });
   document.getElementById('previewTrackingBtn')?.addEventListener('click', previewTrackingPage);
   document.getElementById('adminMenuToggle')?.addEventListener('click', toggleAdminMenu);
-  document.querySelectorAll('#adminSectionNav [data-admin-section]').forEach((link) => {
+  document.querySelectorAll('.admin-section-nav [data-admin-section]').forEach((link) => {
     link.addEventListener('click', (event) => {
       event.preventDefault();
       setAdminSection(link.dataset.adminSection);
@@ -75,21 +80,46 @@ function toggleAdminMenu() {
 function setAdminSection(section) {
   activeAdminSection = section;
   const titles = {
-    overview: 'Shipment overview', 'shipment-information': 'Shipment information', shipper: 'Shipper details',
+    overview: 'Shipment overview', 'quick-entry': 'Quick shipment entry', 'shipment-information': 'Shipment information', shipper: 'Shipper details',
     recipient: 'Recipient details', delivery: 'Delivery details', status: 'Current status',
     'latest-update': 'Latest update', 'tracking-history': 'Tracking history', preview: 'Tracking page preview'
   };
   const title = document.getElementById('adminSectionTitle');
   if (title) title.textContent = titles[section] || 'Shipment management';
-  document.querySelectorAll('#adminSectionNav [data-admin-section]').forEach((link) => link.classList.toggle('active', link.dataset.adminSection === section));
+  const shipmentManagerTitle = document.querySelector('#shipments .panel-header h2');
+  if (shipmentManagerTitle) shipmentManagerTitle.textContent = section === 'quick-entry' ? 'Quick shipment entry' : 'Shipment manager';
+  document.getElementById('shipmentForm')?.classList.toggle('is-quick-entry', section === 'quick-entry');
+  document.querySelectorAll('.admin-section-nav [data-admin-section]').forEach((link) => link.classList.toggle('active', link.dataset.adminSection === section));
   document.querySelectorAll('.admin-view-section').forEach((view) => {
     view.classList.toggle('is-active', section === 'overview' ? view.dataset.adminView === 'overview' : view.dataset.adminView === 'form');
   });
   document.querySelectorAll('.admin-field-section').forEach((view) => {
-    const isFieldGroup = view.dataset.adminView === 'field-groups' && ['shipment-information', 'delivery', 'status'].includes(section);
-    view.classList.toggle('is-active', view.dataset.adminView === section || isFieldGroup);
+    const isFieldGroup = view.dataset.adminView === 'field-groups' && ['quick-entry', 'shipment-information', 'delivery', 'status'].includes(section);
+    const isQuickContactGroup = section === 'quick-entry' && ['shipper', 'recipient'].includes(view.dataset.adminView);
+    view.classList.toggle('is-active', view.dataset.adminView === section || isFieldGroup || isQuickContactGroup);
   });
-  document.querySelectorAll('.admin-field-grid label').forEach((label) => label.classList.toggle('is-active', label.dataset.adminSection === section));
+  const quickEntryFields = new Set([
+    'trackingNumber', 'origin', 'destination', 'originLat', 'originLng', 'destLat', 'destLng',
+    'currentLocation', 'currentLat', 'currentLng', 'estimatedDelivery', 'deliveryDate', 'shipmentType',
+    'carrier', 'packageDescription', 'packageWeight', 'status',
+    'shipperName', 'shipperPhone', 'shipperEmail', 'shipperAddress',
+    'receiverName', 'receiverPhone', 'receiverEmail', 'receiverAddress'
+  ]);
+  document.querySelectorAll('#shipmentForm .admin-field-section label').forEach((label) => {
+    const field = label.querySelector('input, select, textarea');
+    const isQuickField = section === 'quick-entry' && field && quickEntryFields.has(field.id);
+    label.classList.toggle('is-quick-visible', isQuickField);
+    if (label.closest('.admin-field-grid')) {
+      label.classList.toggle('is-active', isQuickField || label.dataset.adminSection === section);
+    }
+  });
+  if (section === 'quick-entry') {
+    const shipmentFields = document.querySelector('.admin-field-section[data-admin-view="field-groups"]');
+    if (shipmentFields) shipmentFields.open = true;
+    document.querySelectorAll('.admin-field-section[data-admin-view="shipper"], .admin-field-section[data-admin-view="recipient"]').forEach((group) => {
+      group.open = true;
+    });
+  }
   document.getElementById('adminSectionNav')?.classList.remove('is-open');
   document.getElementById('adminMenuToggle')?.setAttribute('aria-expanded', 'false');
 }
@@ -162,12 +192,28 @@ function handleTrackingNumberBlur(event) {
   }
 }
 
+function startNewShipment() {
+  resetShipmentForm();
+  setAdminSection('quick-entry');
+  document.getElementById('trackingNumber')?.focus();
+}
+
 function setOptionalVal(fieldId, value) {
   const normalizedValue = value == null ? '' : (typeof value === 'string' ? value.trim() : value);
   setVal(fieldId, normalizedValue === '' ? '' : normalizedValue);
 }
 
 function populateShipmentForm(shipment) {
+  shipmentFormMode = 'edit';
+  customShipmentSections = Array.isArray(shipment.customSections)
+    ? shipment.customSections.map((section) => ({
+      title: section.title || '',
+      fields: Array.isArray(section.fields)
+        ? section.fields.map((field) => ({ label: field.label || '', value: field.value || '' }))
+        : []
+    }))
+    : [];
+  renderCustomShipmentSections();
   setOptionalVal('shipmentId', shipment._id);
   setOptionalVal('trackingNumber', shipment.trackingNumber);
   setOptionalVal('senderName', shipment.shipper?.name || shipment.senderName);
@@ -359,6 +405,14 @@ function buildShipmentPayload() {
       time: getVal('latestUpdateTime')
     },
     timeline: editingTimeline,
+    customSections: customShipmentSections
+      .map((section) => ({
+        title: section.title.trim(),
+        fields: section.fields
+          .map((field) => ({ label: field.label.trim(), value: field.value.trim() }))
+          .filter((field) => field.label || field.value)
+      }))
+      .filter((section) => section.title || section.fields.length),
     currentLocationName: getVal('currentLocation'),
     coordinates: {
       origin: getCoords('originLat', 'originLng'),
@@ -408,9 +462,9 @@ async function saveShipment() {
     return;
   }
 
-  const existingShipment = shipmentsCache.find((shipment) => shipment.trackingNumber === trackingNumber);
-  const method = existingShipment ? 'PUT' : 'POST';
-  const endpoint = existingShipment ? `${API_URL}/${encodeURIComponent(trackingNumber)}` : API_URL;
+  const isEditing = shipmentFormMode === 'edit' && Boolean(getVal('shipmentId'));
+  const method = isEditing ? 'PUT' : 'POST';
+  const endpoint = isEditing ? `${API_URL}/${encodeURIComponent(trackingNumber)}` : API_URL;
 
   const payload = buildShipmentPayload();
   payload.trackingNumber = trackingNumber;
@@ -603,6 +657,7 @@ function renderShipmentDetails(shipment) {
 function addTimelineEvent() {
   const description = getVal('eventDescription');
   const event = {
+    isManual: true,
     status: getVal('eventStatus') || getVal('status') || 'In Transit',
     title: getVal('eventTitle'),
     description,
@@ -662,6 +717,82 @@ function renderTimelineEditor() {
       <div class="event-editor-actions"><button type="button" class="btn btn-secondary" onclick="editTimelineEvent(${index})">Edit</button><button type="button" class="btn btn-secondary" onclick="removeTimelineEvent(${index})">Remove</button></div>
     </div>
   `).join('') : '<p class="event-editor-empty">No tracking events added yet.</p>';
+}
+
+function addCustomShipmentSection() {
+  customShipmentSections.push({ title: '', fields: [{ label: '', value: '' }] });
+  renderCustomShipmentSections();
+  const sectionInputs = document.querySelectorAll('#customShipmentSections [data-custom-section-title]');
+  sectionInputs[sectionInputs.length - 1]?.focus();
+}
+
+function renderCustomShipmentSections() {
+  const container = document.getElementById('customShipmentSections');
+  if (!container) return;
+  if (!customShipmentSections.length) {
+    container.innerHTML = '<p class="custom-sections-empty">No custom sections added.</p>';
+    return;
+  }
+
+  container.innerHTML = customShipmentSections.map((section, sectionIndex) => `
+    <article class="custom-shipment-section">
+      <div class="custom-shipment-section-header">
+        <label>Section name
+          <input type="text" value="${escapeHtml(section.title)}" data-custom-section-title="${sectionIndex}" placeholder="e.g. Customs information" />
+        </label>
+        <button type="button" class="btn btn-secondary" data-remove-custom-section="${sectionIndex}">Remove section</button>
+      </div>
+      <div class="custom-shipment-fields">
+        ${section.fields.map((field, fieldIndex) => `
+          <div class="custom-shipment-field">
+            <label>Field name
+              <input type="text" value="${escapeHtml(field.label)}" data-custom-field-label="${sectionIndex}:${fieldIndex}" placeholder="e.g. Customs broker" />
+            </label>
+            <label>Value
+              <input type="text" value="${escapeHtml(field.value)}" data-custom-field-value="${sectionIndex}:${fieldIndex}" placeholder="Enter value" />
+            </label>
+            <button type="button" class="custom-remove-field" data-remove-custom-field="${sectionIndex}:${fieldIndex}" aria-label="Remove field">&times;</button>
+          </div>
+        `).join('')}
+      </div>
+      <button type="button" class="btn btn-secondary custom-add-field" data-add-custom-field="${sectionIndex}">Add field</button>
+    </article>
+  `).join('');
+}
+
+function handleCustomSectionsInput(event) {
+  const target = event.target;
+  if (target.matches('[data-custom-section-title]')) {
+    const sectionIndex = Number(target.dataset.customSectionTitle);
+    if (customShipmentSections[sectionIndex]) customShipmentSections[sectionIndex].title = target.value;
+    return;
+  }
+
+  const fieldKey = target.dataset.customFieldLabel || target.dataset.customFieldValue;
+  if (!fieldKey) return;
+  const [sectionIndex, fieldIndex] = fieldKey.split(':').map(Number);
+  const field = customShipmentSections[sectionIndex]?.fields[fieldIndex];
+  if (!field) return;
+  if (target.hasAttribute('data-custom-field-label')) field.label = target.value;
+  if (target.hasAttribute('data-custom-field-value')) field.value = target.value;
+}
+
+function handleCustomSectionsClick(event) {
+  const button = event.target.closest('button');
+  if (!button) return;
+
+  if (button.hasAttribute('data-remove-custom-section')) {
+    customShipmentSections.splice(Number(button.dataset.removeCustomSection), 1);
+  } else if (button.hasAttribute('data-add-custom-field')) {
+    customShipmentSections[Number(button.dataset.addCustomField)]?.fields.push({ label: '', value: '' });
+  } else if (button.hasAttribute('data-remove-custom-field')) {
+    const [sectionIndex, fieldIndex] = button.dataset.removeCustomField.split(':').map(Number);
+    customShipmentSections[sectionIndex]?.fields.splice(fieldIndex, 1);
+  } else {
+    return;
+  }
+
+  renderCustomShipmentSections();
 }
 
 function applyFilters() {
@@ -944,6 +1075,9 @@ async function verifyAdminSession() {
 }
 
 function resetShipmentForm() {
+  shipmentFormMode = 'create';
+  customShipmentSections = [];
+  renderCustomShipmentSections();
   const fields = [
     'shipmentId', 'trackingNumber', 'senderName', 'receiverName',
     'origin', 'destination', 'estimatedDelivery', 'expectedDeliveryTime', 'pickupDate', 'pickupTime', 'deliveryDate', 'deliveryTime', 'deliveryLocation', 'deliveryMethod', 'deliveryDescription', 'shipmentType', 'carrier', 'totalFreight', 'status',

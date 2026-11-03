@@ -182,6 +182,13 @@ const shipmentSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: {}
   },
+  customSections: [{
+    title: String,
+    fields: [{
+      label: String,
+      value: String
+    }]
+  }],
   pickupDate: { type: String },
   pickupTime: { type: String },
   deliveryDate: { type: String },
@@ -190,6 +197,7 @@ const shipmentSchema = new mongoose.Schema({
   deliveryDescription: String,
   expectedDeliveryTime: { type: String },
   timeline: [{
+    isManual: { type: Boolean, default: false },
     title: String,
     date: String,
     time: String,

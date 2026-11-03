@@ -435,6 +435,34 @@ body[data-page='dashboard'] .sidebar-nav a:hover {
   color: #fff;
 }
 
+body[data-page='dashboard'] .horizontal-section-nav {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--border);
+  scrollbar-width: thin;
+}
+
+body[data-page='dashboard'] .horizontal-section-nav a {
+  flex: 0 0 auto;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 4px 4px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+body[data-page='dashboard'] .horizontal-section-nav a:hover,
+body[data-page='dashboard'] .horizontal-section-nav a.active {
+  border-color: var(--border);
+  border-bottom-color: var(--panel);
+  background: var(--panel);
+  color: var(--accent);
+}
+
 body[data-page='dashboard'] #logoutBtn {
   margin-top: auto;
   border: 1px solid #50575e;
@@ -557,6 +585,142 @@ body[data-page='dashboard'] .form-section {
   background: var(--panel-2);
 }
 
+body[data-page='dashboard'] .shipment-save-bar {
+  position: sticky;
+  z-index: 4;
+  bottom: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 18px -20px -20px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--panel);
+  box-shadow: 0 -8px 18px rgba(0, 0, 0, 0.06);
+}
+
+body[data-page='dashboard'] .shipment-save-label {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+body[data-page='dashboard'] .shipment-save-actions {
+  display: flex;
+  gap: 8px;
+}
+
+body[data-page='dashboard'] .shipment-save-actions .btn-primary {
+  min-width: 124px;
+}
+
+body[data-page='dashboard'] .shipment-save-actions .btn {
+  padding: 8px 12px;
+  font-size: 0.88rem;
+}
+
+body[data-page='dashboard'] #shipmentForm.is-quick-entry .admin-field-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+body[data-page='dashboard'] #shipmentForm.is-quick-entry .admin-field-section[data-admin-view='shipper'] .form-grid,
+body[data-page='dashboard'] #shipmentForm.is-quick-entry .admin-field-section[data-admin-view='recipient'] .form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+body[data-page='dashboard'] #shipmentForm.is-quick-entry .admin-field-section[data-admin-view='shipper'] label,
+body[data-page='dashboard'] #shipmentForm.is-quick-entry .admin-field-section[data-admin-view='recipient'] label {
+  display: none;
+}
+
+body[data-page='dashboard'] #shipmentForm.is-quick-entry .admin-field-section[data-admin-view='shipper'] label.is-quick-visible,
+body[data-page='dashboard'] #shipmentForm.is-quick-entry .admin-field-section[data-admin-view='recipient'] label.is-quick-visible {
+  display: flex;
+}
+
+body[data-page='dashboard'] #shipmentForm:not(.is-quick-entry) .custom-sections-panel {
+  display: none;
+}
+
+body[data-page='dashboard'] .custom-sections-panel {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel-2);
+}
+
+body[data-page='dashboard'] .custom-sections-header,
+body[data-page='dashboard'] .custom-shipment-section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+body[data-page='dashboard'] .custom-sections-header {
+  margin-bottom: 14px;
+}
+
+body[data-page='dashboard'] .custom-sections-header h3 {
+  margin: 0 0 4px;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+body[data-page='dashboard'] .custom-sections-header p,
+body[data-page='dashboard'] .custom-sections-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+body[data-page='dashboard'] .custom-shipment-sections {
+  display: grid;
+  gap: 12px;
+}
+
+body[data-page='dashboard'] .custom-shipment-section {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel);
+}
+
+body[data-page='dashboard'] .custom-shipment-section-header > label {
+  flex: 1;
+}
+
+body[data-page='dashboard'] .custom-shipment-fields {
+  display: grid;
+  gap: 8px;
+}
+
+body[data-page='dashboard'] .custom-shipment-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  align-items: end;
+  gap: 10px;
+}
+
+body[data-page='dashboard'] .custom-remove-field {
+  width: 36px;
+  height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--panel-2);
+  color: var(--danger);
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+body[data-page='dashboard'] .custom-add-field {
+  width: fit-content;
+}
+
 @media (max-width: 900px) {
   .dashboard-shell {
     grid-template-columns: minmax(0, 1fr);
@@ -608,6 +772,11 @@ body[data-page='dashboard'] .form-section {
     max-height: min(60vh, 420px);
     overflow-y: auto;
   }
+
+  body[data-page='dashboard'] .horizontal-section-nav {
+    margin: 0 -20px;
+    padding: 0 20px 8px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -648,6 +817,16 @@ body[data-page='dashboard'] .form-section {
     min-height: 60px;
     margin: 0 -12px;
     padding: 10px 12px;
+  }
+
+  body[data-page='dashboard'] .horizontal-section-nav {
+    margin: 0 -12px;
+    padding: 0 12px 8px;
+  }
+
+  body[data-page='dashboard'] .horizontal-section-nav a {
+    padding: 8px 10px;
+    font-size: 0.82rem;
   }
 
   body[data-page='dashboard'] .dashboard-topbar h1 {
@@ -691,7 +870,59 @@ body[data-page='dashboard'] .form-section {
     padding: 14px;
   }
 
+  body[data-page='dashboard'] .shipment-save-bar {
+    margin: 16px -14px -14px;
+    padding: 10px 14px max(10px, env(safe-area-inset-bottom));
+  }
+
+  body[data-page='dashboard'] .shipment-save-label {
+    font-size: 0.76rem;
+  }
+
+  body[data-page='dashboard'] .shipment-save-actions {
+    flex: 0 0 auto;
+  }
+
+  body[data-page='dashboard'] .shipment-save-actions .btn-primary {
+    min-width: 0;
+  }
+
+  body[data-page='dashboard'] .shipment-save-actions .btn {
+    padding: 8px 10px;
+    font-size: 0.82rem;
+  }
+
   body[data-page='dashboard'] .shipment-list-fields {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  body[data-page='dashboard'] #shipmentForm.is-quick-entry .admin-field-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  body[data-page='dashboard'] #shipmentForm.is-quick-entry .admin-field-section[data-admin-view='shipper'] .form-grid,
+  body[data-page='dashboard'] #shipmentForm.is-quick-entry .admin-field-section[data-admin-view='recipient'] .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  body[data-page='dashboard'] .custom-sections-header,
+  body[data-page='dashboard'] .custom-shipment-section-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  body[data-page='dashboard'] .custom-shipment-field {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 6px;
+  }
+
+  body[data-page='dashboard'] .custom-shipment-field label {
+    font-size: 0.78rem;
+  }
+
+  body[data-page='dashboard'] .custom-remove-field {
+    width: 32px;
   }
 }

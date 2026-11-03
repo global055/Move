@@ -167,6 +167,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const shipment = result.data;
 
         const currentLocationText = shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation || '';
+        const hasCreatedTrackingEvent = Array.isArray(shipment.timeline) && shipment.timeline.some((event) => {
+          if (event.isManual === true) return true;
+          const hasCustomTitle = typeof event.title === 'string' && event.title.trim() !== '';
+          const hasCustomLocation = typeof event.location === 'string'
+            && event.location.trim() !== ''
+            && event.location !== shipment.currentLocationName
+            && event.location !== shipment.currentPackageLocation;
+          const eventDescription = event.description || event.remarks || '';
+          const hasCustomDescription = typeof eventDescription === 'string'
+            && eventDescription.trim() !== ''
+            && eventDescription !== 'Shipment updated'
+            && eventDescription !== shipment.description;
+          return hasCustomTitle || hasCustomLocation || hasCustomDescription;
+        });
         const summaryRows = [
           ['Sender', shipment.senderName],
           ['Receiver', shipment.receiverName],
@@ -206,7 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${summaryRows}
             </div>
             ${shipment.description ? `<div class="tracking-result-description"><strong>Description:</strong> ${escapeHtml(shipment.description)}</div>` : ''}
-            <a class="more-details-button" href="tracking-details.html?tracking=${encodeURIComponent(shipment.trackingNumber || trackingNumber)}">More Details <span aria-hidden="true">→</span></a>
+            ${hasCreatedTrackingEvent ? `<a class="more-details-button" href="tracking-details.html?tracking=${encodeURIComponent(shipment.trackingNumber || trackingNumber)}">More Details <span aria-hidden="true">→</span></a>` : ''}
           </div>
         `;
 
