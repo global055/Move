@@ -16,7 +16,6 @@
             <p class="eyebrow">Operations Hub</p>
             <h2>Global Movement</h2>
           </div>
-          <button id="themeToggleBtn" class="btn btn-theme" type="button">White theme</button>
         </div>
 
         <nav class="sidebar-nav" id="adminSectionNav" aria-label="Shipment sections">
@@ -42,6 +41,7 @@
           </div>
           <div class="topbar-actions">
             <button id="adminMenuToggle" class="admin-menu-toggle" type="button" aria-expanded="false" aria-controls="adminSectionNav">☰ Menu</button>
+            <button id="themeToggleBtn" class="btn btn-theme" type="button">Dark theme</button>
             <div id="adminUserBadge" class="user-badge">Loading...</div>
           </div>
         </header>
@@ -247,11 +247,6 @@
             <div>
               <p class="eyebrow">Search & filter</p>
               <h2>Shipment list</h2>
-            <details id="previewPanel" class="form-section admin-field-section" data-admin-view="preview">
-              <summary class="form-section-title">Preview tracking page</summary>
-              <p class="preview-copy">Open the public tracking page using the selected tracking number.</p>
-              <button type="button" id="previewTrackingBtn" class="btn btn-primary">Preview Tracking Page</button>
-            </details>
             </div>
           </div>
           <div class="toolbar">
@@ -269,6 +264,17 @@
           <div class="table-wrap">
             <div id="shipmentsTableBody" class="shipment-list" aria-live="polite"></div>
           </div>
+        </section>
+
+        <section id="previewPanel" class="card panel-card admin-field-section" data-admin-view="preview">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Public tracking</p>
+              <h2>Preview tracking page</h2>
+            </div>
+          </div>
+          <p class="preview-copy">Open the public tracking page using the selected tracking number.</p>
+          <button type="button" id="previewTrackingBtn" class="btn btn-primary">Preview tracking page</button>
         </section>
 
         <section id="mapSection" class="card panel-card hidden admin-view-section" data-admin-view="overview">

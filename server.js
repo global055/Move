@@ -44,6 +44,19 @@ app.use(cors({
       return;
     }
 
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        const requestOrigin = new URL(origin);
+        if (['localhost', '127.0.0.1', '[::1]'].includes(requestOrigin.hostname)) {
+          callback(null, true);
+          return;
+        }
+      } catch (error) {
+        callback(error);
+        return;
+      }
+    }
+
     if (origin.endsWith('.vercel.app') || origin.endsWith('.railway.app') || origin.endsWith('.onrender.com')) {
       callback(null, true);
       return;
@@ -303,16 +316,30 @@ const buildTimelineEntry = (payload = {}, existingShipment = null) => ({
 });
 
 const normalizeShipmentPayload = (payload = {}, existingShipment = null, isCreate = false) => {
+  const hasPayloadField = (field) => Object.prototype.hasOwnProperty.call(payload, field);
+  const hasNestedPayloadField = (group, field) => Object.prototype.hasOwnProperty.call(payload[group] || {}, field);
   const normalizedPayload = {
     ...payload,
     trackingNumber: normalizeTrackingNumber(payload.trackingNumber || existingShipment?.trackingNumber),
-    senderName: payload.shipper?.name || payload.senderName || existingShipment?.shipper?.name || existingShipment?.senderName || '',
-    receiverName: payload.receiverName || existingShipment?.receiverName || payload.receiver?.name || '',
-    originName: payload.originName || payload.origin || existingShipment?.originName || '',
-    destinationName: payload.destinationName || payload.destination || existingShipment?.destinationName || '',
-    deliveryLocation: payload.deliveryLocation || existingShipment?.deliveryLocation || '',
-    currentLocationName: payload.currentLocationName || payload.currentPackageLocation || existingShipment?.currentLocationName || '',
-    currentPackageLocation: payload.currentPackageLocation || payload.currentLocationName || existingShipment?.currentPackageLocation || '',
+    senderName: hasNestedPayloadField('shipper', 'name')
+      ? payload.shipper.name
+      : hasPayloadField('senderName') ? payload.senderName : existingShipment?.shipper?.name || existingShipment?.senderName || '',
+    receiverName: hasPayloadField('receiverName')
+      ? payload.receiverName
+      : hasNestedPayloadField('receiver', 'name') ? payload.receiver.name : existingShipment?.receiverName || '',
+    originName: hasPayloadField('originName')
+      ? payload.originName
+      : hasPayloadField('origin') ? payload.origin : existingShipment?.originName || '',
+    destinationName: hasPayloadField('destinationName')
+      ? payload.destinationName
+      : hasPayloadField('destination') ? payload.destination : existingShipment?.destinationName || '',
+    deliveryLocation: hasPayloadField('deliveryLocation') ? payload.deliveryLocation : existingShipment?.deliveryLocation || '',
+    currentLocationName: hasPayloadField('currentLocationName')
+      ? payload.currentLocationName
+      : hasPayloadField('currentPackageLocation') ? payload.currentPackageLocation : existingShipment?.currentLocationName || '',
+    currentPackageLocation: hasPayloadField('currentPackageLocation')
+      ? payload.currentPackageLocation
+      : hasPayloadField('currentLocationName') ? payload.currentLocationName : existingShipment?.currentPackageLocation || '',
     shipper: {
       ...(existingShipment?.shipper || {}),
       ...(payload.shipper || {})
@@ -334,19 +361,6 @@ const normalizeShipmentPayload = (payload = {}, existingShipment = null, isCreat
       ...(payload.latestUpdate || {})
     }
   };
-
-  if (!normalizedPayload.originName && existingShipment?.originName) {
-    normalizedPayload.originName = existingShipment.originName;
-  }
-  if (!normalizedPayload.destinationName && existingShipment?.destinationName) {
-    normalizedPayload.destinationName = existingShipment.destinationName;
-  }
-  if (!normalizedPayload.currentLocationName && existingShipment?.currentLocationName) {
-    normalizedPayload.currentLocationName = existingShipment.currentLocationName;
-  }
-  if (!normalizedPayload.currentPackageLocation && existingShipment?.currentPackageLocation) {
-    normalizedPayload.currentPackageLocation = existingShipment.currentPackageLocation;
-  }
 
   const existingTimeline = Array.isArray(existingShipment?.timeline) ? existingShipment.timeline : [];
 

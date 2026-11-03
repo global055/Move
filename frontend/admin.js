@@ -219,7 +219,6 @@ function populateShipmentForm(shipment) {
   setOptionalVal('cargoValue', shipment.cargo?.value);
   setOptionalVal('cargoIncoterms', shipment.cargo?.incoterms);
   setOptionalVal('cargoDangerousGoods', shipment.cargo?.dangerousGoods == null ? '' : String(shipment.cargo.dangerousGoods));
-  setOptionalVal('cargoInstructions', shipment.cargo?.specialInstructions);
 
   setOptionalVal('modeOfShipment', shipment.modeOfShipment);
   setOptionalVal('packageDescription', shipment.packageDescription || shipment.description);
@@ -233,7 +232,7 @@ function populateShipmentForm(shipment) {
   setOptionalVal('referenceNumber', shipment.referenceNumber);
   setOptionalVal('packageDimensions', shipment.packageDimensions);
   setOptionalVal('insurance', shipment.insurance);
-  setOptionalVal('specialInstructions', shipment.specialInstructions);
+  setOptionalVal('specialInstructions', shipment.specialInstructions || shipment.cargo?.specialInstructions);
 
   setOptionalVal('latestUpdateTitle', shipment.latestUpdate?.title);
   setOptionalVal('latestUpdateDescription', shipment.latestUpdate?.description);
@@ -397,7 +396,7 @@ function buildShipmentPayload() {
       value: Number.isFinite(cargoValueValue) ? cargoValueValue : null,
       incoterms: getVal('cargoIncoterms'),
       dangerousGoods: dangerousGoodsValue === 'true',
-      specialInstructions: getVal('cargoInstructions')
+      specialInstructions: getVal('specialInstructions')
     }
   };
 }
@@ -900,7 +899,7 @@ const THEME_STORAGE_KEY = 'gm_admin_theme';
 
 function initTheme() {
   const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-  const theme = storedTheme === 'light' ? 'light' : 'dark';
+  const theme = storedTheme === 'dark' ? 'dark' : 'light';
   applyTheme(theme);
 }
 
@@ -952,7 +951,7 @@ function resetShipmentForm() {
     'currentLat', 'currentLng', 'currentLocation', 'weight', 'description',
     'shipperCompany', 'shipperName', 'shipperPhone', 'shipperEmail', 'shipperAddress', 'shipperCity', 'shipperState', 'shipperPostalCode', 'shipperCountry',
     'receiverCompany', 'receiverPhone', 'receiverEmail', 'receiverAddress', 'receiverCity', 'receiverState', 'receiverPostalCode', 'receiverCountry',
-    'cargoType', 'cargoDescription', 'cargoPieces', 'cargoWeight', 'cargoVolume', 'cargoDimensions', 'cargoValue', 'cargoIncoterms', 'cargoDangerousGoods', 'cargoInstructions',
+    'cargoType', 'cargoDescription', 'cargoPieces', 'cargoWeight', 'cargoVolume', 'cargoDimensions', 'cargoValue', 'cargoIncoterms', 'cargoDangerousGoods',
     'latestUpdateTitle', 'latestUpdateDescription', 'latestUpdateLocation', 'latestUpdateDate', 'latestUpdateTime', 'eventStatus', 'eventTitle', 'eventLocation', 'eventDate', 'eventTime', 'eventDescription'
   ];
   fields.forEach((id) => setVal(id, ''));
