@@ -122,12 +122,122 @@ async function loadTrackingDatalist() {
 
 function buildHomepageFieldRow(label, value) {
   if (value == null || value === '') return '';
-  return `<p><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</p>`;
+  return `<div><strong>${escapeHtml(label)}</strong><span>${escapeHtml(value)}</span></div>`;
+}
+
+function renderHomepageCustomSections(shipment) {
+  const sections = Array.isArray(shipment.customSections)
+    ? shipment.customSections.map((section) => ({
+      title: typeof section.title === 'string' ? section.title.trim() : '',
+      fields: Array.isArray(section.fields)
+        ? section.fields.filter((field) => field && field.value != null && String(field.value).trim() !== '')
+        : []
+    })).filter((section) => section.fields.length)
+    : [];
+
+  if (!sections.length) return '';
+
+  return `
+    <section class="homepage-custom-sections" aria-label="Additional shipment details">
+      <h4>Additional shipment details</h4>
+      ${sections.map((section) => `
+        <div class="homepage-custom-section">
+          ${section.title ? `<h5>${escapeHtml(section.title)}</h5>` : ''}
+          <div class="homepage-custom-fields">
+            ${section.fields.map((field) => `
+              <div><strong>${escapeHtml(field.label || 'Detail')}</strong><span>${escapeHtml(field.value || '')}</span></div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('')}
+    </section>
+  `;
+}
+
+function renderHomepageQuickEntryFields(shipment) {
+  const currentLocationText = shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation || '';
+  return [
+    ['Origin', shipment.originName || shipment.origin],
+    ['Destination', shipment.destinationName || shipment.destination],
+    ['Origin latitude', shipment.coordinates?.origin?.lat],
+    ['Origin longitude', shipment.coordinates?.origin?.lng],
+    ['Destination latitude', shipment.coordinates?.destination?.lat],
+    ['Destination longitude', shipment.coordinates?.destination?.lng],
+    ['Current Location', currentLocationText],
+    ['Current latitude', shipment.coordinates?.currentLocation?.lat],
+    ['Current longitude', shipment.coordinates?.currentLocation?.lng],
+    ['Estimated Delivery', shipment.estimatedDelivery],
+    ['Delivery Date', shipment.deliveryDate],
+    ['Shipment Type', shipment.shipmentType],
+    ['Carrier', shipment.carrier],
+    ['Package Description', shipment.packageDescription],
+    ['Package Weight', shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : '')],
+    ['Shipper Name', shipment.shipper?.name || shipment.senderName],
+    ['Shipper Phone', shipment.shipper?.phone],
+    ['Shipper Email', shipment.shipper?.email],
+    ['Shipper Address', shipment.shipper?.address],
+    ['Receiver Name', shipment.receiver?.name || shipment.receiverName],
+    ['Receiver Phone', shipment.receiver?.phone],
+    ['Receiver Email', shipment.receiver?.email],
+    ['Receiver Address', shipment.receiver?.address]
+  ].map(([label, value]) => buildHomepageFieldRow(label, value)).join('');
 }
 
 function formatCurrency(value) {
   if (value == null || Number.isNaN(Number(value))) return '';
   return `$${Number(Number(value)).toFixed(2)}`;
+}
+
+function homepageTimelineSortValue(event) {
+  const timestamp = new Date(event.timestamp || `${event.date || ''}T${event.time || '00:00'}`).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function formatHomepageEventDate(event) {
+  if (event.date) return event.date;
+  if (!event.timestamp) return '';
+  const date = new Date(event.timestamp);
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString();
+}
+
+function formatHomepageEventTime(event) {
+  if (event.time) return event.time;
+  if (!event.timestamp) return '';
+  const date = new Date(event.timestamp);
+  return Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderHomepageEvents(shipment) {
+  const events = Array.isArray(shipment.timeline)
+    ? [...shipment.timeline].sort((a, b) => homepageTimelineSortValue(b) - homepageTimelineSortValue(a))
+    : [];
+
+  if (!events.length) {
+    return '<p class="homepage-events-empty">No tracking events have been posted yet.</p>';
+  }
+
+  const eventRows = events.map((event, index) => {
+    const title = event.title || event.status || (index === 0 ? shipment.status : '') || 'Shipment update';
+    const description = event.description || event.remarks || '';
+    const location = event.location || event.currentLocationName || '';
+    const dateTime = [formatHomepageEventDate(event), formatHomepageEventTime(event)].filter(Boolean).join(' · ');
+    return `
+      <li class="homepage-event ${index === 0 ? 'is-current' : ''}">
+        <span class="homepage-event-marker" aria-hidden="true"></span>
+        <div class="homepage-event-content">
+          <div class="homepage-event-heading">
+            <strong>${escapeHtml(title)}</strong>
+            ${dateTime ? `<time>${escapeHtml(dateTime)}</time>` : ''}
+          </div>
+          ${description ? `<p>${escapeHtml(description)}</p>` : ''}
+          ${location ? `<span class="homepage-event-location">${escapeHtml(location)}</span>` : ''}
+          ${event.updatedBy ? `<span class="homepage-event-updated">Updated by ${escapeHtml(event.updatedBy)}</span>` : ''}
+        </div>
+      </li>
+    `;
+  }).join('');
+
+  return `<ol class="homepage-event-list">${eventRows}</ol>`;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -166,61 +276,32 @@ document.addEventListener('DOMContentLoaded', () => {
       if (result.success) {
         const shipment = result.data;
 
-        const currentLocationText = shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation || '';
-        const hasCreatedTrackingEvent = Array.isArray(shipment.timeline) && shipment.timeline.some((event) => {
-          if (event.isManual === true) return true;
-          const hasCustomTitle = typeof event.title === 'string' && event.title.trim() !== '';
-          const hasCustomLocation = typeof event.location === 'string'
-            && event.location.trim() !== ''
-            && event.location !== shipment.currentLocationName
-            && event.location !== shipment.currentPackageLocation;
-          const eventDescription = event.description || event.remarks || '';
-          const hasCustomDescription = typeof eventDescription === 'string'
-            && eventDescription.trim() !== ''
-            && eventDescription !== 'Shipment updated'
-            && eventDescription !== shipment.description;
-          return hasCustomTitle || hasCustomLocation || hasCustomDescription;
-        });
-        const summaryRows = [
-          ['Sender', shipment.senderName],
-          ['Receiver', shipment.receiverName],
-          ['Origin', shipment.originName],
-          ['Destination', shipment.destinationName],
-          ['Current Status', shipment.status],
-          ['Shipment Type', shipment.shipmentType],
-          ['Carrier', shipment.carrier],
-          ['Mode of Shipment', shipment.modeOfShipment],
-          ['Package Weight', shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : '')],
-          ['Total Freight', formatCurrency(shipment.totalFreight)],
-          ['Estimated Delivery', shipment.estimatedDelivery],
-          ['Expected Delivery Time', shipment.expectedDeliveryTime],
-          ['Pickup Date', shipment.pickupDate],
-          ['Pickup Time', shipment.pickupTime],
-          ['Delivery Date', shipment.deliveryDate],
-          ['Delivery Time', shipment.deliveryTime],
-          ['Departure Airport/Port', shipment.departureAirportPort],
-          ['Arrival Airport/Port', shipment.arrivalAirportPort],
-          ['Current Location', currentLocationText],
-          ['Current Package Location', shipment.currentPackageLocation],
-          ['Payment Status', shipment.paymentStatus],
-          ['Reference Number', shipment.referenceNumber],
-          ['Package Dimensions', shipment.packageDimensions],
-          ['Insurance', shipment.insurance],
-          ['Special Instructions', shipment.specialInstructions]
-        ].map(([label, value]) => buildHomepageFieldRow(label, value)).join('');
+        const summaryRows = renderHomepageQuickEntryFields(shipment);
+        const eventCount = Array.isArray(shipment.timeline) ? shipment.timeline.length : 0;
 
         statusBox.classList.remove('is-loading');
         statusBox.innerHTML = `
           <div class="tracking-result-card">
             <div class="tracking-result-header">
-              <h3>Package #${escapeHtml(shipment.trackingNumber || trackingNumber)}</h3>
+              <div>
+                <span class="tracking-result-label">Shipment tracking</span>
+                <h3>${escapeHtml(shipment.trackingNumber || trackingNumber)}</h3>
+              </div>
               <span class="tracking-pill">${escapeHtml(shipment.status || 'Unknown')}</span>
             </div>
             <div class="tracking-result-grid">
               ${summaryRows}
             </div>
-            ${shipment.description ? `<div class="tracking-result-description"><strong>Description:</strong> ${escapeHtml(shipment.description)}</div>` : ''}
-            ${hasCreatedTrackingEvent ? `<a class="more-details-button" href="tracking-details.html?tracking=${encodeURIComponent(shipment.trackingNumber || trackingNumber)}">More Details <span aria-hidden="true">→</span></a>` : ''}
+            ${renderHomepageCustomSections(shipment)}
+            ${shipment.description ? `<p class="tracking-result-description">${escapeHtml(shipment.description)}</p>` : ''}
+            <section class="homepage-events" aria-label="Shipment event history">
+              <div class="homepage-events-header">
+                <h4>Shipment events</h4>
+                <span>${eventCount} ${eventCount === 1 ? 'event' : 'events'}</span>
+              </div>
+              ${renderHomepageEvents(shipment)}
+            </section>
+            <a class="more-details-button" href="tracking-details.html?tracking=${encodeURIComponent(shipment.trackingNumber || trackingNumber)}">Full shipment details <span aria-hidden="true">→</span></a>
           </div>
         `;
 
