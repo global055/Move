@@ -195,7 +195,7 @@ function renderStatusContext(status, shipment, latestUpdate) {
 function resolveLatestUpdate(shipment, timelineItems) {
   const storedUpdate = shipment.latestUpdate;
   const hasStoredUpdate = storedUpdate && Object.values(storedUpdate).some((value) => hasDisplayValue(value));
-  return hasStoredUpdate ? storedUpdate : (timelineItems[0] || {});
+  return hasStoredUpdate ? storedUpdate : (timelineItems[timelineItems.length - 1] || {});
 }
 
 function timelineSortValue(event) {
@@ -272,7 +272,9 @@ async function trackShipment(trackingNumber) {
         shipment.currentLocation,
         latestUpdate.location,
         shipment.deliveryLocation
-      ) || 'Not Available';
+      ) || (shipment.coordinates?.currentLocation?.lat != null && shipment.coordinates?.currentLocation?.lng != null
+        ? `${shipment.coordinates.currentLocation.lat}, ${shipment.coordinates.currentLocation.lng}`
+        : 'Not Available');
 
       const shipmentDetailsRows = [
         ['Origin', originName],

@@ -2320,8 +2320,13 @@ main {
   .shipment-custom-card,
   .shipment-history-card {
     grid-column: 1 / -1;
-    break-inside: avoid;
+    break-inside: auto;
     box-shadow: none;
+  }
+
+  .shipment-header-card,
+  .shipment-party-card {
+    break-inside: avoid;
   }
 
   .shipment-header-card {
@@ -2399,6 +2404,13 @@ main {
     box-shadow: none;
   }
 
+  .shipment-details-card .tracking-card-header,
+  .shipment-custom-card .tracking-card-header,
+  .shipment-history-card .tracking-card-header {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
   .shipment-details-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
@@ -2411,6 +2423,18 @@ main {
 
   .shipment-timeline .timeline-item {
     break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .shipment-details-grid > div {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .shipment-details-grid,
+  .shipment-timeline {
+    orphans: 3;
+    widows: 3;
   }
 
   .shipment-results .tracking-pill {
