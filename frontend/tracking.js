@@ -1,6 +1,8 @@
 const API_BASE_URL = '';
 const API_URL = `${API_BASE_URL}/api/public/shipments`;
 const TRACKING_NUMBERS_URL = `${API_BASE_URL}/api/public/shipments/tracking-numbers`;
+let activeTrackingNumber = '';
+let trackingRefreshTimer = null;
 
 // Load shipments and populate datalist on page load
 window.addEventListener('DOMContentLoaded', () => {
@@ -55,48 +57,33 @@ function buildAddressRow(label, values) {
 
 function getStatusMeta(status) {
   const normalized = String(status || 'In Transit').trim().toLowerCase();
-  if (normalized.includes('delivered')) {
-    return { className: 'status-delivered', label: 'Delivered', icon: '🟢' };
+  if (normalized.includes('delivered')) return { className: 'status-delivered', label: 'Delivered', icon: 'check' };
+  if (normalized.includes('out for delivery')) return { className: 'status-out-for-delivery', label: 'Out for Delivery', icon: 'truck' };
+  if (normalized.includes('hold')) return { className: 'status-on-hold', label: 'On Hold', icon: 'warning' };
+  if (normalized.includes('exception') || normalized.includes('delayed') || normalized.includes('returned') || normalized.includes('cancel')) {
+    return { className: 'status-exception', label: status || 'Exception', icon: 'warning' };
   }
-  if (normalized.includes('arriving soon')) {
-    return { className: 'status-arriving', label: 'Arriving Soon', icon: '🟠' };
+  if (normalized.includes('processing')) return { className: 'status-processing', label: 'Processing', icon: 'spinner' };
+  if (normalized.includes('pending') || normalized.includes('order received') || normalized.includes('label')) {
+    return { className: 'status-pending', label: normalized.includes('label') ? 'Label Created' : 'Pending', icon: 'dot' };
   }
-  if (normalized.includes('out for delivery')) {
-    return { className: 'status-arriving', label: 'Out for Delivery', icon: '🟠' };
-  }
-  if (normalized.includes('arrived at facility')) {
-    return { className: 'status-in-transit', label: 'Arrived at Facility', icon: '🔵' };
-  }
-  if (normalized.includes('shipment accepted')) {
-    return { className: 'status-in-transit', label: 'Shipment Accepted', icon: '🔵' };
-  }
-  if (normalized.includes('delayed')) {
-    return { className: 'status-delayed', label: 'Delayed', icon: '🔴' };
-  }
-  if (normalized.includes('pending') || normalized.includes('order received') || normalized.includes('processing')) {
-    return { className: 'status-pending', label: 'Pending', icon: '⚪' };
-  }
-  if (normalized.includes('label')) {
-    return { className: 'status-pending', label: 'Label Created', icon: '⚪' };
-  }
-  if (normalized.includes('hold')) {
-    return { className: 'status-delayed', label: 'On Hold', icon: '🔴' };
-  }
-  if (normalized.includes('exception')) {
-    return { className: 'status-delayed', label: 'Exception', icon: '🔴' };
-  }
-  if (normalized.includes('returned')) {
-    return { className: 'status-delayed', label: 'Returned', icon: '🔴' };
-  }
-  if (normalized.includes('cancel')) {
-    return { className: 'status-delayed', label: 'Cancelled', icon: '🔴' };
-  }
-  return { className: 'status-in-transit', label: 'In Transit', icon: '🔵' };
+  if (normalized.includes('accepted')) return { className: 'status-accepted', label: 'Shipment Accepted', icon: 'check' };
+  if (normalized.includes('arrived at facility')) return { className: 'status-facility', label: 'Arrived at Facility', icon: 'pin' };
+  if (normalized.includes('enroute') || normalized.includes('in transit') || normalized.includes('shipped')) return { className: 'status-in-transit', label: 'In Transit', icon: 'route' };
+  if (normalized.includes('picked up')) return { className: 'status-in-transit', label: 'Picked Up', icon: 'route' };
+  if (normalized.includes('arriving soon')) return { className: 'status-in-transit', label: 'Arriving Soon', icon: 'route' };
+  return { className: 'status-in-transit', label: status || 'In Transit', icon: 'route' };
 }
 
 function renderStatusPill(status) {
   const meta = getStatusMeta(status);
-  return `<span class="tracking-pill ${meta.className}">${meta.icon} ${escapeHtml(meta.label)}</span>`;
+  return `<span class="tracking-pill ${meta.className}"><span class="status-indicator status-indicator--${meta.icon}" aria-hidden="true"></span>${escapeHtml(meta.label)}</span>`;
+}
+
+function timelineStateClass(status, index, currentIndex) {
+  const meta = getStatusMeta(status);
+  const progressClass = currentIndex < 0 || index < currentIndex ? 'is-upcoming' : index === currentIndex ? 'is-current' : 'is-completed';
+  return `${meta.className} ${progressClass}`;
 }
 
 function renderTrackingError(message) {
@@ -159,6 +146,14 @@ async function trackShipment(trackingNumber) {
     }
 
     const shipment = result.data;
+    activeTrackingNumber = shipment.trackingNumber || trackingNumber;
+    if (!trackingRefreshTimer) {
+      trackingRefreshTimer = window.setInterval(() => {
+        if (document.visibilityState === 'visible' && activeTrackingNumber) {
+          trackShipment(activeTrackingNumber);
+        }
+      }, 60000);
+    }
 
     const statusBox = document.getElementById('statusBox');
     if (statusBox) {
@@ -180,15 +175,16 @@ async function trackShipment(trackingNumber) {
       const timelineItems = Array.isArray(shipment.timeline)
         ? [...shipment.timeline].sort((a, b) => timelineSortValue(b) - timelineSortValue(a))
         : [];
+      const currentTimelineIndex = timelineItems.findIndex((item) => timelineSortValue(item) <= Date.now());
       const timelineHtml = timelineItems.length > 0 ? timelineItems.map((item, index) => {
         const displayDate = item.date || (item.timestamp ? new Date(item.timestamp).toLocaleDateString() : 'Not Available');
         const displayTime = item.time || (item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Not Available');
         const displayRemarks = item.remarks || item.description || 'No remarks provided.';
         const displayLocation = item.location || item.currentLocationName || 'Not Available';
-        const isCurrent = index === 0;
+        const isCurrent = index === currentTimelineIndex;
         return `
-          <li class="timeline-item ${isCurrent ? 'current-step' : ''}">
-            <div class="timeline-marker"></div>
+          <li class="timeline-item ${timelineStateClass(item.status || item.title || currentStatus, index, currentTimelineIndex)} ${isCurrent ? 'current-step' : ''}">
+            <div class="timeline-marker" aria-hidden="true"><span></span></div>
             <div class="timeline-content">
               <div class="timeline-top">
                 <span class="timeline-status">${escapeHtml(item.title || item.status || currentStatus)}</span>
@@ -200,7 +196,6 @@ async function trackShipment(trackingNumber) {
               </div>
               <p>${escapeHtml(displayRemarks)}</p>
               ${item.title && item.status ? `<small>${escapeHtml(item.status)}</small>` : ''}
-              ${item.updatedBy ? `<small>Updated by ${escapeHtml(item.updatedBy)}</small>` : ''}
             </div>
           </li>
         `;
@@ -413,6 +408,7 @@ document.getElementById('trackingForm')?.addEventListener('submit', (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.reveal').forEach((element) => element.classList.add('is-visible'));
   const tracking = new URLSearchParams(window.location.search).get('tracking')?.trim();
   const input = document.getElementById('trackingInput');
   if (tracking && input) {

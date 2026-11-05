@@ -3,11 +3,13 @@ const API_URL = `${API_BASE_URL}/api/public/shipments`;
 const TRACKING_NUMBERS_URL = `${API_BASE_URL}/api/public/shipments/tracking-numbers`;
 
 let homepageMap = null;
-let homepageRouteLine = null;
+let homepageRouteLines = [];
 let homepageOriginMarker = null;
 let homepageDestinationMarker = null;
 let homepagePackageMarker = null;
 let homepageLastPackageLatLng = null;
+let homepageTrackingRefreshTimer = null;
+let homepageActiveTrackingNumber = '';
 
 function initNavigation() {
   const toggle = document.querySelector('.mobile-nav-toggle');
@@ -216,13 +218,17 @@ function renderHomepageEvents(shipment) {
     return '<p class="homepage-events-empty">No tracking events have been posted yet.</p>';
   }
 
+  const currentEventIndex = events.findIndex((event) => homepageTimelineSortValue(event) <= Date.now());
   const eventRows = events.map((event, index) => {
-    const title = event.title || event.status || (index === 0 ? shipment.status : '') || 'Shipment update';
+    const isCurrent = index === currentEventIndex;
+    const progressClass = currentEventIndex < 0 || index < currentEventIndex ? 'is-upcoming' : isCurrent ? 'is-current' : 'is-completed';
+    const title = event.title || event.status || (isCurrent ? shipment.status : '') || 'Shipment update';
+    const statusClass = homepageStatusClass(event.status || event.title || shipment.status);
     const description = event.description || event.remarks || '';
     const location = event.location || event.currentLocationName || '';
     const dateTime = [formatHomepageEventDate(event), formatHomepageEventTime(event)].filter(Boolean).join(' · ');
     return `
-      <li class="homepage-event ${index === 0 ? 'is-current' : ''}">
+      <li class="homepage-event ${statusClass} ${progressClass}">
         <span class="homepage-event-marker" aria-hidden="true"></span>
         <div class="homepage-event-content">
           <div class="homepage-event-heading">
@@ -231,13 +237,50 @@ function renderHomepageEvents(shipment) {
           </div>
           ${description ? `<p>${escapeHtml(description)}</p>` : ''}
           ${location ? `<span class="homepage-event-location">${escapeHtml(location)}</span>` : ''}
-          ${event.updatedBy ? `<span class="homepage-event-updated">Updated by ${escapeHtml(event.updatedBy)}</span>` : ''}
         </div>
       </li>
     `;
   }).join('');
 
   return `<ol class="homepage-event-list">${eventRows}</ol>`;
+}
+
+function homepageStatusClass(status) {
+  const normalized = String(status || '').trim().toLowerCase();
+  if (normalized.includes('delivered')) return 'status-delivered';
+  if (normalized.includes('out for delivery')) return 'status-out-for-delivery';
+  if (normalized.includes('hold')) return 'status-on-hold';
+  if (normalized.includes('exception') || normalized.includes('delayed') || normalized.includes('returned') || normalized.includes('cancel')) return 'status-exception';
+  if (normalized.includes('processing')) return 'status-processing';
+  if (normalized.includes('pending') || normalized.includes('order received') || normalized.includes('label')) return 'status-pending';
+  if (normalized.includes('accepted')) return 'status-accepted';
+  if (normalized.includes('arrived at facility')) return 'status-facility';
+  return 'status-in-transit';
+}
+
+function homepageStatusLabel(status) {
+  const normalized = String(status || '').trim().toLowerCase();
+  if (normalized.includes('delivered')) return 'Delivered';
+  if (normalized.includes('out for delivery')) return 'Out for Delivery';
+  if (normalized.includes('hold')) return 'On Hold';
+  if (normalized.includes('processing')) return 'Processing';
+  if (normalized.includes('pending') || normalized.includes('order received')) return 'Pending';
+  if (normalized.includes('label')) return 'Label Created';
+  if (normalized.includes('accepted')) return 'Shipment Accepted';
+  if (normalized.includes('arrived at facility')) return 'Arrived at Facility';
+  if (normalized.includes('enroute') || normalized.includes('in transit') || normalized.includes('shipped')) return 'In Transit';
+  return status || 'Unknown';
+}
+
+function homepageStatusIndicator(status) {
+  const statusClass = homepageStatusClass(status);
+  if (statusClass === 'status-pending') return 'dot';
+  if (statusClass === 'status-processing') return 'spinner';
+  if (statusClass === 'status-on-hold' || statusClass === 'status-exception') return 'warning';
+  if (statusClass === 'status-out-for-delivery') return 'truck';
+  if (statusClass === 'status-delivered' || statusClass === 'status-accepted') return 'check';
+  if (statusClass === 'status-facility') return 'pin';
+  return 'route';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -275,9 +318,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (result.success) {
         const shipment = result.data;
+        homepageActiveTrackingNumber = shipment.trackingNumber || trackingNumber;
 
         const summaryRows = renderHomepageQuickEntryFields(shipment);
         const eventCount = Array.isArray(shipment.timeline) ? shipment.timeline.length : 0;
+        if (!homepageTrackingRefreshTimer) {
+          homepageTrackingRefreshTimer = window.setInterval(() => {
+            if (document.visibilityState === 'visible' && trackingInput.value.trim() === homepageActiveTrackingNumber) {
+              trackingForm.requestSubmit();
+            }
+          }, 60000);
+        }
 
         statusBox.classList.remove('is-loading');
         statusBox.innerHTML = `
@@ -287,25 +338,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="tracking-result-label">Shipment tracking</span>
                 <h3>${escapeHtml(shipment.trackingNumber || trackingNumber)}</h3>
               </div>
-              <span class="tracking-pill">${escapeHtml(shipment.status || 'Unknown')}</span>
+              <span class="tracking-pill ${homepageStatusClass(shipment.status)}"><span class="status-indicator status-indicator--${homepageStatusIndicator(shipment.status)}" aria-hidden="true"></span>${escapeHtml(homepageStatusLabel(shipment.status))}</span>
             </div>
             <div class="tracking-result-grid">
               ${summaryRows}
             </div>
             ${renderHomepageCustomSections(shipment)}
             ${shipment.description ? `<p class="tracking-result-description">${escapeHtml(shipment.description)}</p>` : ''}
-            <section class="homepage-events" aria-label="Shipment event history">
+            <button type="button" class="more-details-button js-toggle-shipment-events" data-expanded="false" aria-expanded="false">
+              View more shipments <span aria-hidden="true">→</span>
+            </button>
+            <section class="homepage-events hidden" aria-label="Shipment event history" aria-live="polite">
               <div class="homepage-events-header">
                 <h4>Shipment events</h4>
                 <span>${eventCount} ${eventCount === 1 ? 'event' : 'events'}</span>
               </div>
-              ${renderHomepageEvents(shipment)}
+              <div class="homepage-events-body">
+                ${renderHomepageEvents(shipment)}
+              </div>
             </section>
-            <a class="more-details-button" href="tracking-details.html?tracking=${encodeURIComponent(shipment.trackingNumber || trackingNumber)}">Full shipment details <span aria-hidden="true">→</span></a>
           </div>
         `;
 
-        if (shipment.coordinates && shipment.coordinates.currentLocation) {
+        const toggleButton = statusBox.querySelector('.js-toggle-shipment-events');
+        const shipmentEvents = statusBox.querySelector('.homepage-events');
+
+        if (toggleButton && shipmentEvents) {
+          toggleButton.addEventListener('click', () => {
+            const expanded = toggleButton.dataset.expanded === 'true';
+            const shouldExpand = !expanded;
+
+            toggleButton.dataset.expanded = String(shouldExpand);
+            toggleButton.setAttribute('aria-expanded', String(shouldExpand));
+            shipmentEvents.classList.toggle('hidden', !shouldExpand);
+
+            toggleButton.innerHTML = shouldExpand
+              ? 'Hide shipment events <span aria-hidden="true">↑</span>'
+              : 'View more shipments <span aria-hidden="true">→</span>';
+          });
+        }
+
+        if (shipment.coordinates && (shipment.coordinates.origin || shipment.coordinates.currentLocation || shipment.coordinates.destination)) {
           showHomepageMap();
           renderShipmentOnHomepageMap(shipment);
         } else {
@@ -359,10 +432,10 @@ function initializeHomepageMap(lat, lng) {
 }
 
 function clearHomepageRoute() {
-  if (homepageRouteLine && homepageMap) {
-    homepageMap.removeLayer(homepageRouteLine);
-  }
-  homepageRouteLine = null;
+  homepageRouteLines.forEach((routeLine) => {
+    if (homepageMap) homepageMap.removeLayer(routeLine);
+  });
+  homepageRouteLines = [];
 }
 
 function clearHomepageFixedMarkers() {
@@ -387,8 +460,38 @@ function createHomepageCircleMarker(coords, options) {
   return window.L.circleMarker([coords.lat, coords.lng], options).addTo(homepageMap);
 }
 
+function createHomepageRouteMarker(coords, type, label) {
+  return window.L.marker([coords.lat, coords.lng], {
+    icon: window.L.divIcon({
+      className: 'route-map-marker-shell',
+      html: `<span class="route-map-marker route-map-marker--${type}" aria-label="${label}">${type === 'origin' ? 'O' : type === 'destination' ? 'D' : '✓'}</span>`,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
+    })
+  }).addTo(homepageMap).bindPopup(`<strong>${label}</strong>`);
+}
+
+function addHomepageRouteLine(points, className, color, dashArray = null) {
+  if (points.length < 2) return;
+  const routeLine = window.L.polyline(points, {
+    className,
+    color,
+    weight: 5,
+    opacity: 0.9,
+    dashArray,
+    lineCap: 'round'
+  }).addTo(homepageMap);
+  homepageRouteLines.push(routeLine);
+}
+
+function isHomepageShipmentMoving(status) {
+  const normalized = String(status || '').toLowerCase();
+  return ['in transit', 'out for delivery', 'enroute', 'arriving soon', 'picked up', 'on the way', 'moving', 'departed', 'shipped']
+    .some((value) => normalized.includes(value));
+}
+
 function buildHomepagePackageMarkerHtml(status) {
-  const statusClass = status === 'Delivered' ? 'is-delivered' : status === 'In Transit' ? 'is-active' : 'is-pending';
+  const statusClass = homepageStatusClass(status);
   return `<div class="package-map-marker ${statusClass} is-current-location" aria-label="Package location"></div>`;
 }
 
@@ -444,9 +547,9 @@ function animateHomepageMarkerMovement(marker, fromCoords, toCoords, duration = 
 
 function renderShipmentOnHomepageMap(shipment) {
   if (!homepageMap) {
-    const currentLocation = shipment.coordinates?.currentLocation;
-    if (!currentLocation) return;
-    homepageMap = initializeHomepageMap(currentLocation.lat, currentLocation.lng);
+    const center = shipment.coordinates?.currentLocation || shipment.coordinates?.origin || shipment.coordinates?.destination;
+    if (!center) return;
+    homepageMap = initializeHomepageMap(center.lat, center.lng);
   }
 
   if (!homepageMap) return;
@@ -457,37 +560,39 @@ function renderShipmentOnHomepageMap(shipment) {
   const origin = shipment.coordinates?.origin;
   const current = shipment.coordinates?.currentLocation;
   const destination = shipment.coordinates?.destination;
+  const status = String(shipment.status || '').toLowerCase();
+  const isDelivered = status.includes('delivered');
+  const isMoving = isHomepageShipmentMoving(status);
   const bounds = window.L.latLngBounds([]);
 
   if (origin?.lat != null && origin?.lng != null) {
-    homepageOriginMarker = createHomepageCircleMarker(origin, {
-      radius: 8,
-      color: '#1f77b4',
-      fillColor: '#1f77b4',
-      fillOpacity: 0.9,
-      weight: 2
-    }).bindPopup('<strong>Origin</strong>');
+    homepageOriginMarker = createHomepageRouteMarker(origin, 'origin', 'Origin');
     bounds.extend([origin.lat, origin.lng]);
   }
 
   if (destination?.lat != null && destination?.lng != null) {
-    homepageDestinationMarker = createHomepageCircleMarker(destination, {
-      radius: 8,
-      color: '#d9534f',
-      fillColor: '#d9534f',
-      fillOpacity: 0.9,
-      weight: 2
-    }).bindPopup('<strong>Destination</strong>');
+    homepageDestinationMarker = createHomepageRouteMarker(destination, isDelivered ? 'delivered' : 'destination', isDelivered ? 'Delivered destination' : 'Destination');
     bounds.extend([destination.lat, destination.lng]);
   }
 
-  if (origin && destination) {
-    homepageRouteLine = window.L.polyline([[origin.lat, origin.lng], [destination.lat, destination.lng]], {
-      color: '#2a9df4',
-      weight: 4,
-      opacity: 0.85,
-      dashArray: '8,6'
-    }).addTo(homepageMap);
+  const hasCurrent = current?.lat != null && current?.lng != null;
+  if (origin && destination && isDelivered) {
+    addHomepageRouteLine([[origin.lat, origin.lng], [destination.lat, destination.lng]], 'route-line route-line--complete', '#239653');
+  } else if (origin && destination && hasCurrent) {
+    addHomepageRouteLine([[origin.lat, origin.lng], [current.lat, current.lng]], 'route-line route-line--complete', '#239653');
+    addHomepageRouteLine(
+      [[current.lat, current.lng], [destination.lat, destination.lng]],
+      `route-line ${isMoving ? 'route-line--active' : 'route-line--upcoming'}`,
+      isMoving ? '#08a6d8' : '#9aa8b8',
+      isMoving ? '10 10' : '5 8'
+    );
+  } else if (origin && destination) {
+    addHomepageRouteLine(
+      [[origin.lat, origin.lng], [destination.lat, destination.lng]],
+      `route-line ${isMoving ? 'route-line--active' : 'route-line--upcoming'}`,
+      isMoving ? '#08a6d8' : '#9aa8b8',
+      isMoving ? '10 10' : '5 8'
+    );
   }
 
   if (current?.lat != null && current?.lng != null) {
@@ -495,11 +600,13 @@ function renderShipmentOnHomepageMap(shipment) {
     const popupText = `<strong>Package Location</strong><br>Status: ${escapeHtml(shipment.status || 'Unknown')}`;
 
     if (homepagePackageMarker && homepageLastPackageLatLng) {
+      homepagePackageMarker.setIcon(createHomepagePackageIcon(shipment.status));
       animateHomepageMarkerMovement(homepagePackageMarker, homepageLastPackageLatLng, currentCoords);
       if (homepagePackageMarker.getPopup && homepagePackageMarker.getPopup()) {
         homepagePackageMarker.setPopupContent(popupText);
       }
     } else if (homepagePackageMarker) {
+      homepagePackageMarker.setIcon(createHomepagePackageIcon(shipment.status));
       homepagePackageMarker.setLatLng([currentCoords.lat, currentCoords.lng]);
       if (homepagePackageMarker.getPopup && homepagePackageMarker.getPopup()) {
         homepagePackageMarker.setPopupContent(popupText);

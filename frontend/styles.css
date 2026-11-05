@@ -484,6 +484,104 @@ main {
   color: var(--neutral);
 }
 
+.tracking-pill.status-pending { background: rgba(237, 151, 34, 0.12); color: #a85b00; }
+.tracking-pill.status-processing { background: rgba(44, 112, 218, 0.12); color: #245db4; }
+.tracking-pill.status-in-transit { background: rgba(0, 157, 202, 0.12); color: #007ca3; }
+.tracking-pill.status-out-for-delivery { background: rgba(15, 137, 133, 0.12); color: #087c78; }
+.tracking-pill.status-on-hold,
+.tracking-pill.status-exception { background: rgba(211, 69, 53, 0.12); color: #b7342c; }
+.tracking-pill.status-accepted { background: rgba(35, 150, 83, 0.12); color: #1d7c45; }
+.tracking-pill.status-facility { background: rgba(64, 112, 174, 0.12); color: #365f93; }
+
+.status-indicator {
+  position: relative;
+  display: inline-grid;
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  place-items: center;
+  border-radius: 50%;
+  background: currentColor;
+  color: #168fc1;
+}
+
+.status-indicator--dot { color: #e99420; animation: status-pending-pulse 2.2s ease-in-out infinite; }
+.status-indicator--spinner { color: #3978d3; }
+.status-indicator--spinner::after {
+  position: absolute;
+  inset: -4px;
+  border: 1.5px solid transparent;
+  border-top-color: currentColor;
+  border-right-color: currentColor;
+  border-radius: 50%;
+  content: "";
+  animation: status-spin 1.3s linear infinite;
+}
+.status-indicator--route { color: #00a7d4; animation: status-transit-pulse 2s ease-out infinite; }
+.status-indicator--route::after,
+.status-indicator--dot::after {
+  position: absolute;
+  inset: -4px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  content: "";
+  opacity: 0;
+  animation: status-radar-wave 2s ease-out infinite;
+}
+.status-indicator--warning { color: #d54b3d; animation: status-warning-pulse 2.5s ease-in-out infinite; }
+.status-indicator--warning::before { content: "!"; color: white; font-size: 9px; font-weight: 800; }
+.status-indicator--truck {
+  width: 16px;
+  flex-basis: 16px;
+  border-radius: 2px;
+  background: transparent;
+  color: #087f82;
+}
+.status-indicator--truck::before {
+  position: absolute;
+  content: "🚚";
+  color: currentColor;
+  font-size: 14px;
+  line-height: 1;
+  animation: status-truck-move 1.8s ease-in-out infinite;
+}
+.status-indicator--check { color: #239653; }
+.status-indicator--check::before {
+  width: 5px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  content: "";
+  transform: rotate(45deg) scaleY(0);
+  transform-origin: center;
+  animation: status-check-draw 0.5s 0.15s ease-out forwards;
+}
+.status-indicator--pin { color: #4a77b5; }
+
+@keyframes status-pending-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(233, 148, 32, 0.25); transform: scale(0.9); }
+  50% { box-shadow: 0 0 0 4px rgba(233, 148, 32, 0.1); transform: scale(1.08); }
+}
+@keyframes status-spin { to { transform: rotate(360deg); } }
+@keyframes status-transit-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 167, 212, 0.25); }
+  50% { box-shadow: 0 0 0 4px rgba(0, 167, 212, 0.08); }
+}
+@keyframes status-radar-wave { 0% { transform: scale(0.65); opacity: 0.5; } 100% { transform: scale(1.9); opacity: 0; } }
+@keyframes status-warning-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(213, 75, 61, 0.22); } 50% { box-shadow: 0 0 0 4px rgba(213, 75, 61, 0.06); } }
+@keyframes status-truck-move { 0%, 100% { transform: translateX(-1px); } 50% { transform: translateX(2px); } }
+@keyframes status-check-draw { to { transform: rotate(45deg) scaleY(1); } }
+
+.tracking-pill.status-delivered .status-indicator::after {
+  position: absolute;
+  inset: -5px;
+  border: 1px solid rgba(35, 150, 83, 0.45);
+  border-radius: 50%;
+  content: "";
+  animation: status-success-ripple 1.8s ease-out infinite;
+}
+@keyframes status-success-ripple { from { transform: scale(0.55); opacity: 0.75; } to { transform: scale(1.65); opacity: 0; } }
+
 .tracking-summary-actions {
   display: flex;
   align-items: center;
@@ -628,7 +726,8 @@ main {
 .tracking-result-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px 24px;
+  gap: 10px 16px;
+  align-items: stretch;
 }
 
 .tracking-result-grid .full {
@@ -681,6 +780,7 @@ main {
 }
 
 .timeline-item {
+  position: relative;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 18px;
@@ -694,14 +794,78 @@ main {
   border-color: rgba(11, 61, 145, 0.18);
   background: rgba(11, 61, 145, 0.05);
 }
+.timeline-item.current-step.status-pending { border-color: rgba(233, 148, 32, 0.32); background: rgba(233, 148, 32, 0.055); }
+.timeline-item.current-step.status-processing { border-color: rgba(57, 120, 211, 0.32); background: rgba(57, 120, 211, 0.055); }
+.timeline-item.current-step.status-in-transit { border-color: rgba(0, 167, 212, 0.32); background: rgba(0, 167, 212, 0.055); }
+.timeline-item.current-step.status-out-for-delivery { border-color: rgba(8, 127, 130, 0.32); background: rgba(8, 127, 130, 0.055); }
+.timeline-item.current-step.status-on-hold,
+.timeline-item.current-step.status-exception { border-color: rgba(213, 75, 61, 0.32); background: rgba(213, 75, 61, 0.055); }
+.timeline-item.current-step.status-delivered,
+.timeline-item.current-step.status-accepted { border-color: rgba(35, 150, 83, 0.32); background: rgba(35, 150, 83, 0.055); }
 
 .timeline-marker {
+  position: relative;
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: var(--accent);
+  background: #00a7d4;
   margin-top: 6px;
-  box-shadow: 0 0 0 6px rgba(11, 61, 145, 0.08);
+  box-shadow: 0 0 0 4px rgba(0, 167, 212, 0.12);
+}
+
+.timeline-item.status-pending .timeline-marker { background: #e99420; box-shadow: 0 0 0 4px rgba(233, 148, 32, 0.12); }
+.timeline-item.status-processing .timeline-marker { background: #3978d3; box-shadow: 0 0 0 4px rgba(57, 120, 211, 0.12); }
+.timeline-item.status-on-hold .timeline-marker,
+.timeline-item.status-exception .timeline-marker { background: #d54b3d; box-shadow: 0 0 0 4px rgba(213, 75, 61, 0.12); }
+.timeline-item.status-out-for-delivery .timeline-marker { background: #087f82; box-shadow: 0 0 0 4px rgba(8, 127, 130, 0.12); }
+.timeline-item.status-delivered .timeline-marker,
+.timeline-item.status-accepted .timeline-marker { background: #239653; box-shadow: 0 0 0 4px rgba(35, 150, 83, 0.12); }
+.timeline-item.status-facility .timeline-marker { background: #4a77b5; }
+.timeline-item.is-current .timeline-marker::after {
+  position: absolute;
+  inset: -5px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  color: inherit;
+  content: "";
+  animation: status-radar-wave 2s ease-out infinite;
+}
+.timeline-item.status-pending .timeline-marker::after { color: #e99420; }
+.timeline-item.status-processing .timeline-marker::after { color: #3978d3; animation: status-spin 2s linear infinite; border-style: dashed; }
+.timeline-item.status-on-hold .timeline-marker::after,
+.timeline-item.status-exception .timeline-marker::after { color: #d54b3d; animation: status-warning-pulse 2.5s ease-in-out infinite; }
+.timeline-item.status-out-for-delivery .timeline-marker::after { color: #087f82; animation: status-truck-move 1.8s ease-in-out infinite; }
+.timeline-item.status-delivered .timeline-marker::before {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  width: 4px;
+  height: 7px;
+  border-right: 2px solid white;
+  border-bottom: 2px solid white;
+  content: "";
+  transform: rotate(45deg);
+}
+.timeline-item.is-completed .timeline-marker { box-shadow: none; }
+.timeline-item.is-upcoming .timeline-marker { background: #aab4c0; box-shadow: none; }
+.timeline-item.is-upcoming .timeline-status { color: #8491a0; }
+.timeline-item.status-pending .timeline-status { color: #a85b00; }
+.timeline-item.status-processing .timeline-status { color: #245db4; }
+.timeline-item.status-in-transit .timeline-status { color: #007ca3; }
+.timeline-item.status-out-for-delivery .timeline-status { color: #087c78; }
+.timeline-item.status-on-hold .timeline-status,
+.timeline-item.status-exception .timeline-status { color: #b7342c; }
+.timeline-item.status-delivered .timeline-status,
+.timeline-item.status-accepted .timeline-status { color: #1d7c45; }
+.timeline-item.status-facility .timeline-status { color: #365f93; }
+
+.timeline-item:not(:last-child)::after {
+  position: absolute;
+  top: 38px;
+  bottom: -1px;
+  left: 25px;
+  border-left: 1px solid rgba(35, 150, 83, 0.48);
+  content: "";
 }
 
 .timeline-content {
@@ -912,6 +1076,10 @@ main {
   border-top: 1px solid var(--border);
 }
 
+.homepage-events.hidden {
+  display: none;
+}
+
 .homepage-events-header {
   display: flex;
   align-items: baseline;
@@ -971,6 +1139,15 @@ main {
   border-color: var(--accent-strong);
   background: var(--accent-strong);
   box-shadow: 0 0 0 3px rgba(13, 90, 217, 0.12);
+}
+.homepage-event.is-current .homepage-event-marker::after {
+  position: absolute;
+  inset: -5px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  color: #00a7d4;
+  content: "";
+  animation: status-radar-wave 2s ease-out infinite;
 }
 
 .homepage-event-content {
@@ -1039,7 +1216,7 @@ main {
 }
 
 .homepage-map {
-  height: 320px;
+  height: 500px;
   margin-top: 18px;
   border-radius: 20px;
   overflow: hidden;
@@ -1460,6 +1637,14 @@ main {
   opacity: 0.9;
 }
 
+.package-tracking-icon.status-pending { filter: drop-shadow(0 0 8px rgba(233, 148, 32, 0.55)); }
+.package-tracking-icon.status-processing { filter: drop-shadow(0 0 8px rgba(57, 120, 211, 0.55)); }
+.package-tracking-icon.status-in-transit { filter: drop-shadow(0 0 9px rgba(0, 167, 212, 0.65)); }
+.package-tracking-icon.status-out-for-delivery { filter: drop-shadow(0 0 8px rgba(8, 127, 130, 0.55)); }
+.package-tracking-icon.status-on-hold,
+.package-tracking-icon.status-exception { filter: drop-shadow(0 0 8px rgba(213, 75, 61, 0.55)); }
+.package-tracking-icon.status-delivered { filter: drop-shadow(0 0 8px rgba(35, 150, 83, 0.6)); }
+
 @keyframes package-float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-4px); }
@@ -1543,6 +1728,15 @@ main {
   background: linear-gradient(135deg, #ffffff 0%, #f2f7ff 100%);
 }
 
+.status-context.status-pending { border-left-color: #e99420; background: #fffaf1; }
+.status-context.status-processing { border-left-color: #3978d3; background: #f3f7ff; }
+.status-context.status-in-transit { border-left-color: #00a7d4; background: #f0fbff; }
+.status-context.status-out-for-delivery { border-left-color: #087f82; background: #f0fbf9; }
+.status-context.status-on-hold,
+.status-context.status-exception { border-left-color: #d54b3d; background: #fff6f4; }
+.status-context.status-delivered,
+.status-context.status-accepted { border-left-color: #239653; background: #f2fbf5; }
+
 .status-context h2 {
   margin: 0;
   font-size: 1.35rem;
@@ -1604,7 +1798,7 @@ main {
   bottom: 0;
   left: 18px;
   width: 1px;
-  background: rgba(11, 61, 145, 0.18);
+  background: rgba(35, 150, 83, 0.35);
 }
 
 .details-timeline-icon {
@@ -1621,9 +1815,111 @@ main {
   font-weight: 800;
 }
 
-.details-timeline-icon.status-delivered { border-color: var(--success); color: var(--success); }
-.details-timeline-icon.status-delayed { border-color: var(--danger); color: var(--danger); }
-.details-timeline-icon.status-pending { border-color: var(--neutral); color: var(--neutral); }
+.details-timeline-icon.status-delivered,
+.details-timeline-item.status-delivered .details-timeline-icon,
+.details-timeline-item.status-accepted .details-timeline-icon { border-color: #239653; color: #239653; }
+.details-timeline-item.status-pending .details-timeline-icon { border-color: #e99420; color: #a85b00; }
+.details-timeline-item.status-processing .details-timeline-icon { border-color: #3978d3; color: #245db4; }
+.details-timeline-item.status-in-transit .details-timeline-icon { border-color: #00a7d4; color: #007ca3; }
+.details-timeline-item.status-out-for-delivery .details-timeline-icon { border-color: #087f82; color: #087c78; }
+.details-timeline-item.status-on-hold .details-timeline-icon,
+.details-timeline-item.status-exception .details-timeline-icon { border-color: #d54b3d; color: #b7342c; }
+.details-timeline-item.status-facility .details-timeline-icon { border-color: #4a77b5; color: #365f93; }
+.details-timeline-icon.status-indicator--dot { animation: status-pending-pulse 2.2s ease-in-out infinite; }
+.details-timeline-icon.status-indicator--spinner::before { content: ""; width: 18px; height: 18px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: status-spin 1.3s linear infinite; }
+.details-timeline-icon.status-indicator--route::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px rgba(0, 167, 212, 0.12); animation: status-transit-pulse 2s ease-in-out infinite; }
+.details-timeline-icon.status-indicator--truck::before { content: "🚚"; font-size: 15px; animation: status-truck-move 1.8s ease-in-out infinite; }
+.details-timeline-icon.status-indicator--warning::before { content: "!"; font-weight: 800; }
+.details-timeline-icon.status-indicator--check::before { content: "✓"; animation: status-check-draw 0.5s ease-out both; }
+.details-timeline-item.is-current .details-timeline-icon { animation: milestone-current 2.2s ease-in-out infinite; }
+.details-timeline-item.status-pending.is-current .details-timeline-icon { animation: status-pending-pulse 2.2s ease-in-out infinite; }
+.details-timeline-item.status-on-hold.is-current .details-timeline-icon,
+.details-timeline-item.status-exception.is-current .details-timeline-icon { animation: status-warning-pulse 2.5s ease-in-out infinite; }
+.details-timeline-item.is-completed.status-pending .details-timeline-icon { background: #e99420; border-color: #e99420; color: white; }
+.details-timeline-item.is-completed.status-processing .details-timeline-icon { background: #3978d3; border-color: #3978d3; color: white; }
+.details-timeline-item.is-completed.status-in-transit .details-timeline-icon { background: #00a7d4; border-color: #00a7d4; color: white; }
+.details-timeline-item.is-completed.status-out-for-delivery .details-timeline-icon { background: #087f82; border-color: #087f82; color: white; }
+.details-timeline-item.is-completed.status-on-hold .details-timeline-icon,
+.details-timeline-item.is-completed.status-exception .details-timeline-icon { background: #d54b3d; border-color: #d54b3d; color: white; }
+.details-timeline-item.is-completed.status-delivered .details-timeline-icon,
+.details-timeline-item.is-completed.status-accepted .details-timeline-icon { background: #239653; border-color: #239653; color: white; }
+.details-timeline-item.is-completed.status-facility .details-timeline-icon { background: #4a77b5; border-color: #4a77b5; color: white; }
+
+@keyframes milestone-current { 0%, 100% { box-shadow: 0 0 0 0 currentColor; } 50% { box-shadow: 0 0 0 5px transparent; } }
+
+.homepage-event.status-pending .homepage-event-marker { background: #e99420; }
+.homepage-event.status-processing .homepage-event-marker { background: #3978d3; }
+.homepage-event.status-in-transit .homepage-event-marker { background: #00a7d4; }
+.homepage-event.status-out-for-delivery .homepage-event-marker { background: #087f82; }
+.homepage-event.status-on-hold .homepage-event-marker,
+.homepage-event.status-exception .homepage-event-marker { background: #d54b3d; }
+.homepage-event.status-delivered .homepage-event-marker,
+.homepage-event.status-accepted .homepage-event-marker { background: #239653; }
+.homepage-event.status-facility .homepage-event-marker { background: #4a77b5; }
+.homepage-event.is-upcoming .homepage-event-marker { border-color: #aab4c0; background: #aab4c0; box-shadow: none; animation: none; }
+.homepage-event.is-upcoming .homepage-event-content { opacity: 0.62; }
+.details-timeline-item.is-upcoming .details-timeline-icon { border-color: #aab4c0; background: #f0f3f6; color: #8491a0; animation: none; }
+.details-timeline-item.is-upcoming > div { opacity: 0.62; }
+.homepage-event.is-current .homepage-event-marker { animation: status-transit-pulse 2s ease-in-out infinite; }
+.homepage-event.status-pending.is-current .homepage-event-marker { animation: status-pending-pulse 2.2s ease-in-out infinite; }
+.homepage-event.status-processing.is-current .homepage-event-marker::after { border: 1.5px dashed #3978d3; }
+.homepage-event.status-on-hold.is-current .homepage-event-marker { animation: status-warning-pulse 2.5s ease-in-out infinite; }
+.homepage-event.status-out-for-delivery.is-current .homepage-event-marker { animation: status-truck-move 1.8s ease-in-out infinite; }
+.homepage-event.status-delivered.is-current .homepage-event-marker::after { border-color: #239653; animation: status-success-ripple 1.8s ease-out infinite; }
+
+.route-map-marker-shell { background: transparent; border: 0; }
+.route-map-marker {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #315e8b;
+  box-shadow: 0 2px 8px rgba(7, 17, 32, 0.3);
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+.route-map-marker--origin { background: #239653; }
+.route-map-marker--destination { background: #536579; }
+.route-map-marker--delivered { background: #239653; animation: status-success-ripple 1.8s ease-out infinite; }
+.route-line--complete { stroke: #239653; }
+.route-line--active { stroke: #08a6d8; stroke-dasharray: 10 10; animation: route-dash-flow 1.2s linear infinite; }
+.route-line--upcoming { stroke: #9aa8b8; stroke-dasharray: 5 8; }
+@keyframes route-dash-flow { to { stroke-dashoffset: -20; } }
+
+.package-map-marker.status-pending { background: #e99420; box-shadow: 0 0 0 4px rgba(233, 148, 32, 0.2); animation: status-pending-pulse 2.2s ease-in-out infinite; }
+.package-map-marker.status-processing { background: #3978d3; box-shadow: 0 0 0 4px rgba(57, 120, 211, 0.18); animation: status-spin 2.5s linear infinite; }
+.package-map-marker.status-processing::after { position: absolute; inset: -5px; border: 2px solid transparent; border-top-color: #3978d3; border-right-color: #3978d3; border-radius: 50%; content: ""; animation: status-spin 1.3s linear infinite; }
+.package-map-marker.status-in-transit { background: #00a7d4; box-shadow: 0 0 0 4px rgba(0, 167, 212, 0.2); animation: status-transit-pulse 2s ease-in-out infinite; }
+.package-map-marker.status-out-for-delivery { background: #087f82; box-shadow: 0 0 0 4px rgba(8, 127, 130, 0.2); animation: status-truck-move 1.8s ease-in-out infinite; }
+.package-map-marker.status-on-hold,
+.package-map-marker.status-exception { background: #d54b3d; box-shadow: 0 0 0 4px rgba(213, 75, 61, 0.2); animation: status-warning-pulse 2.5s ease-in-out infinite; }
+.package-map-marker.status-delivered { background: #239653; box-shadow: 0 0 0 4px rgba(35, 150, 83, 0.2); }
+.package-map-marker.status-delivered::after { position: absolute; inset: -5px; border: 1px solid #239653; border-radius: 50%; content: ""; animation: status-success-ripple 1.8s ease-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tracking-pill .status-indicator,
+  .tracking-pill .status-indicator::before,
+  .tracking-pill .status-indicator::after,
+  .timeline-item .timeline-marker,
+  .timeline-item .timeline-marker::before,
+  .timeline-item .timeline-marker::after,
+  .homepage-event-marker,
+  .homepage-event-marker::after,
+  .details-timeline-icon,
+  .details-timeline-icon::before,
+  .route-line--active,
+  .route-map-marker--delivered,
+  .package-map-marker,
+  .package-map-marker::before,
+  .package-map-marker::after,
+  .package-tracking-icon {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
 
 .details-timeline-top {
   display: flex;
@@ -1770,6 +2066,10 @@ main {
     margin: 0 auto;
   }
 
+  .timeline-item:not(:last-child)::after {
+    left: calc(50% - 1px);
+  }
+
   .services-grid,
   .features-grid,
   .testimonial-grid,
@@ -1853,6 +2153,11 @@ main {
     height: 300px;
     max-height: 52vh;
     border-radius: 20px;
+  }
+
+  .homepage-map {
+    height: 360px;
+    max-height: 58vh;
   }
 
   .cta-actions .btn {

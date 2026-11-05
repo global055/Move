@@ -142,6 +142,7 @@
                 <option>Label Created</option>
                 <option>Shipment Accepted</option>
                 <option>Pending</option>
+                <option>Processing</option>
                 <option>Picked Up</option>
                 <option>On Hold</option>
                 <option>Out for Delivery</option>
@@ -197,7 +198,7 @@
               <div id="eventEditorList" class="event-editor-list"></div>
               <div class="form-grid event-entry-form">
                 <label>Event status<select id="eventStatus">
-                  <option>Label Created</option><option>Shipment Accepted</option><option>In Transit</option><option>Arrived at Facility</option><option>Out for Delivery</option><option>Delivered</option><option>On Hold</option><option>Exception</option><option>Returned</option><option>Cancelled</option>
+                  <option>Label Created</option><option>Shipment Accepted</option><option>Pending</option><option>Processing</option><option>In Transit</option><option>Arrived at Facility</option><option>Out for Delivery</option><option>Delivered</option><option>On Hold</option><option>Exception</option><option>Returned</option><option>Cancelled</option>
                 </select></label>
                 <label>Event title<input id="eventTitle" type="text" /></label>
                 <label>Event location<input id="eventLocation" type="text" /></label>
@@ -275,10 +276,17 @@
             <select id="statusFilter">
               <option value="">All statuses</option>
               <option>Order Received</option>
+              <option>Pending</option>
               <option>Processing</option>
+              <option>Shipment Accepted</option>
+              <option>Picked Up</option>
               <option>In Transit</option>
+              <option>Out for Delivery</option>
+              <option>On Hold</option>
+              <option>Exception</option>
               <option>Arriving Soon</option>
               <option>Delivered</option>
+              <option>Returned</option>
               <option>Cancelled</option>
             </select>
           </div>

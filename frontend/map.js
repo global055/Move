@@ -1,6 +1,6 @@
 (function () {
   let map = null;
-  let routeLine = null;
+  let routeLines = [];
   let originMarker = null;
   let packageMarker = null;
   let destinationMarker = null;
@@ -28,10 +28,8 @@
   }
 
   function clearRoute() {
-    if (routeLine) {
-      map.removeLayer(routeLine);
-      routeLine = null;
-    }
+    routeLines.forEach((routeLine) => map.removeLayer(routeLine));
+    routeLines = [];
   }
 
   function clearFixedMarkers() {
@@ -56,6 +54,34 @@
     return window.L.circleMarker([coords.lat, coords.lng], options).addTo(map);
   }
 
+  function createRouteMarker(coords, type, label) {
+    return window.L.marker([coords.lat, coords.lng], {
+      icon: window.L.divIcon({
+        className: 'route-map-marker-shell',
+        html: `<span class="route-map-marker route-map-marker--${type}" aria-label="${label}">${type === 'origin' ? 'O' : type === 'destination' ? 'D' : '✓'}</span>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15]
+      })
+    }).addTo(map).bindPopup(`<strong>${label}</strong>`);
+  }
+
+  function addRouteLine(points, className, color, dashArray = null) {
+    if (points.length < 2) return;
+    const line = window.L.polyline(points, {
+      className,
+      color,
+      weight: 5,
+      opacity: 0.9,
+      dashArray,
+      lineCap: 'round'
+    }).addTo(map);
+    routeLines.push(line);
+  }
+
+  function isDeliveredStatus(status) {
+    return String(status || '').toLowerCase().includes('delivered');
+  }
+
   function isShipmentMovingStatus(status) {
     if (!status) return false;
     const normalized = status.toLowerCase();
@@ -74,13 +100,20 @@
 
   function createPackageIcon(status) {
     const isMoving = isShipmentMovingStatus(status);
-    return window.L.icon({
-      iconUrl: 'imges/package%20indicator.png',
-      iconRetinaUrl: 'imges/package%20indicator.png',
-      className: `package-tracking-icon ${isMoving ? 'is-moving' : 'is-paused'}`,
-      iconSize: [52, 52],
-      iconAnchor: [26, 26],
-      popupAnchor: [0, -14]
+    const normalized = String(status || '').toLowerCase();
+    const statusClass = normalized.includes('delivered') ? 'status-delivered'
+      : normalized.includes('out for delivery') ? 'status-out-for-delivery'
+        : normalized.includes('hold') ? 'status-on-hold'
+          : normalized.includes('exception') || normalized.includes('delayed') || normalized.includes('returned') || normalized.includes('cancel') ? 'status-exception'
+            : normalized.includes('processing') ? 'status-processing'
+              : normalized.includes('pending') || normalized.includes('order received') || normalized.includes('label') ? 'status-pending'
+                : 'status-in-transit';
+    return window.L.divIcon({
+      className: 'package-marker-wrapper',
+      html: `<span class="package-map-marker ${statusClass} ${isMoving ? 'is-active' : 'is-paused'}" aria-label="${escapeMapHtml(status || 'Shipment')} location"></span>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+      popupAnchor: [0, -12]
     });
   }
 
@@ -136,39 +169,34 @@
     const bounds = window.L.latLngBounds([]);
 
     if (origin?.lat != null && origin?.lng != null) {
-      originMarker = createCircleMarker(origin, {
-        radius: 8,
-        color: '#1f77b4',
-        fillColor: '#1f77b4',
-        fillOpacity: 0.9,
-        weight: 2
-      }).bindPopup('<strong>Pickup Location</strong>');
+      originMarker = createRouteMarker(origin, 'origin', 'Origin');
       bounds.extend([origin.lat, origin.lng]);
     }
 
     if (destination?.lat != null && destination?.lng != null) {
-      destinationMarker = createCircleMarker(destination, {
-        radius: 8,
-        color: '#d74d4d',
-        fillColor: '#d74d4d',
-        fillOpacity: 0.9,
-        weight: 2
-      }).bindPopup('<strong>Destination Location</strong>');
+      destinationMarker = createRouteMarker(destination, isDeliveredStatus(shipment.status) ? 'delivered' : 'destination', isDeliveredStatus(shipment.status) ? 'Delivered destination' : 'Destination');
       bounds.extend([destination.lat, destination.lng]);
     }
 
-    if (origin && destination) {
-      routeLine = window.L.polyline([
-        [origin.lat, origin.lng],
-        [destination.lat, destination.lng]
-      ], {
-        color: '#2b70d9',
-        weight: 3,
-        opacity: 0.9,
-        smoothFactor: 1.2
-      }).addTo(map);
-      bounds.extend([origin.lat, origin.lng]);
-      bounds.extend([destination.lat, destination.lng]);
+    const hasCurrent = current?.lat != null && current?.lng != null;
+    const moving = isShipmentMovingStatus(shipment.status);
+    if (origin && destination && isDeliveredStatus(shipment.status)) {
+      addRouteLine([[origin.lat, origin.lng], [destination.lat, destination.lng]], 'route-line route-line--complete', '#239653');
+    } else if (origin && destination && hasCurrent) {
+      addRouteLine([[origin.lat, origin.lng], [current.lat, current.lng]], 'route-line route-line--complete', '#239653');
+      addRouteLine(
+        [[current.lat, current.lng], [destination.lat, destination.lng]],
+        `route-line ${moving ? 'route-line--active' : 'route-line--upcoming'}`,
+        moving ? '#08a6d8' : '#9aa8b8',
+        moving ? '10 10' : '5 8'
+      );
+    } else if (origin && destination) {
+      addRouteLine(
+        [[origin.lat, origin.lng], [destination.lat, destination.lng]],
+        `route-line ${moving ? 'route-line--active' : 'route-line--upcoming'}`,
+        moving ? '#08a6d8' : '#9aa8b8',
+        moving ? '10 10' : '5 8'
+      );
     }
 
     if (current?.lat != null && current?.lng != null) {
