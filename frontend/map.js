@@ -98,6 +98,13 @@
       .replace(/'/g, '&#39;');
   }
 
+  function getLocationName(...values) {
+    const coordinatesPattern = /^\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*$/;
+    return values.find((value) => (
+      typeof value === 'string' && value.trim() && !coordinatesPattern.test(value)
+    ))?.trim() || 'Location name unavailable';
+  }
+
   function createPackageIcon(status) {
     const isMoving = isShipmentMovingStatus(status);
     const normalized = String(status || '').toLowerCase();
@@ -204,7 +211,11 @@
       const lastUpdated = shipment.timeline && shipment.timeline.length
         ? (shipment.timeline[shipment.timeline.length - 1].time || shipment.timeline[shipment.timeline.length - 1].date || 'Recently updated')
         : 'Recently updated';
-      const currentLocationName = shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation || `${current.lat.toFixed(4)}, ${current.lng.toFixed(4)}`;
+      const currentLocationName = getLocationName(
+        shipment.currentLocationName,
+        shipment.currentPackageLocation,
+        shipment.currentLocation
+      );
       const popupText = `
         <div class="shipment-map-popup">
           <div class="shipment-map-popup__title">Package Location</div>

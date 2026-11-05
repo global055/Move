@@ -43,6 +43,13 @@ function hasDisplayValue(value) {
   return true;
 }
 
+function getLocationName(...values) {
+  const coordinatesPattern = /^\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*$/;
+  return values.find((value) => (
+    typeof value === 'string' && value.trim() && !coordinatesPattern.test(value)
+  ))?.trim() || '';
+}
+
 function buildFieldRow(label, value, fullWidth = false) {
   if (!hasDisplayValue(value)) return '';
   const displayValue = typeof value === 'string' ? value.trim() : value;
@@ -77,6 +84,7 @@ function renderPartyCard(kind, party, fallbackName, fallbackAddress) {
   const address = [party?.address, party?.city, party?.state, party?.postalCode, party?.country]
     .filter(hasDisplayValue).join(', ') || fallbackAddress;
   const fields = [
+    renderPartyField('user', 'Company', party?.company),
     renderPartyField('location', 'Address', address),
     renderPartyField('phone', 'Phone', party?.phone),
     renderPartyField('email', 'Email', party?.email)
@@ -84,7 +92,7 @@ function renderPartyCard(kind, party, fallbackName, fallbackAddress) {
 
   return `
     <section class="shipment-party-card">
-      <div class="shipment-party-heading">${renderContactIcon('user')}<div><span>${kind}</span><h2>${escapeHtml(name || `${kind} details unavailable`)}</h2></div></div>
+      <div class="shipment-party-heading">${renderContactIcon('user')}<div><span>${kind} information</span><h2>${escapeHtml(name || `${kind} details unavailable`)}</h2></div></div>
       <div class="shipment-contact-list">${fields || '<p class="shipment-no-data">No contact details provided.</p>'}</div>
     </section>
   `;
@@ -163,7 +171,13 @@ async function copyTrackingNumber(trackingNumber, button) {
 
 function renderStatusContext(status, shipment, latestUpdate) {
   const normalized = String(status || '').toLowerCase();
-  const location = latestUpdate.location || shipment.deliveryLocation || shipment.currentLocationName || shipment.currentPackageLocation || '';
+  const location = getLocationName(
+    latestUpdate.location,
+    shipment.currentLocationName,
+    shipment.currentPackageLocation,
+    shipment.currentLocation,
+    shipment.deliveryLocation
+  );
   const description = latestUpdate.description || latestUpdate.remarks || '';
   let title = 'Shipment in progress';
   if (normalized.includes('delivered')) title = 'Delivery confirmed';
@@ -212,20 +226,8 @@ async function trackShipment(trackingNumber) {
 
     const statusBox = document.getElementById('statusBox');
     if (statusBox) {
-      const currentLocation = shipment.coordinates?.currentLocation;
-      const originCoords = shipment.coordinates?.origin;
-      const destinationCoords = shipment.coordinates?.destination;
-      const currentLocationText = currentLocation?.lat != null && currentLocation?.lng != null
-        ? `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}`
-        : (shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation || 'Not Available');
-      const originText = originCoords?.lat != null && originCoords?.lng != null
-        ? `${originCoords.lat.toFixed(4)}, ${originCoords.lng.toFixed(4)}`
-        : shipment.originName || shipment.origin || 'Not Available';
-      const destinationText = destinationCoords?.lat != null && destinationCoords?.lng != null
-        ? `${destinationCoords.lat.toFixed(4)}, ${destinationCoords.lng.toFixed(4)}`
-        : shipment.destinationName || shipment.destination || 'Not Available';
-      const originName = shipment.origin || shipment.originName || 'Not Available';
-      const destinationName = shipment.destination || shipment.destinationName || 'Not Available';
+      const originName = getLocationName(shipment.originName, shipment.origin) || 'Not Available';
+      const destinationName = getLocationName(shipment.destinationName, shipment.destination) || 'Not Available';
       const currentStatus = shipment.status || 'In Transit';
       const timelineItems = Array.isArray(shipment.timeline)
         ? [...shipment.timeline].sort((a, b) => timelineSortValue(a) - timelineSortValue(b))
@@ -237,7 +239,7 @@ async function trackShipment(trackingNumber) {
         const displayDate = item.date || (item.timestamp ? new Date(item.timestamp).toLocaleDateString() : 'Not Available');
         const displayTime = item.time || (item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Not Available');
         const displayRemarks = item.remarks || item.description || 'No remarks provided.';
-        const displayLocation = item.location || item.currentLocationName || 'Not Available';
+        const displayLocation = getLocationName(item.location, item.currentLocationName) || 'Not Available';
         const isCurrent = index === currentTimelineIndex;
         return `
           <li class="timeline-item ${timelineStateClass(item.status || item.title || currentStatus, index, currentTimelineIndex)} ${isCurrent ? 'current-step' : ''}">
@@ -264,6 +266,13 @@ async function trackShipment(trackingNumber) {
       const estimatedDelivery = shipment.estimatedDelivery || 'Not available';
       const description = shipment.packageDescription || shipment.description || 'No description provided.';
       const latestUpdate = resolveLatestUpdate(shipment, timelineItems);
+      const currentLocationText = getLocationName(
+        shipment.currentLocationName,
+        shipment.currentPackageLocation,
+        shipment.currentLocation,
+        latestUpdate.location,
+        shipment.deliveryLocation
+      ) || 'Not Available';
 
       const shipmentDetailsRows = [
         ['Origin', originName],
@@ -289,7 +298,6 @@ async function trackShipment(trackingNumber) {
         ['Weight', shipment.weight != null ? `${shipment.weight} kg` : ''],
         ['Package Description', shipment.packageDescription || shipment.description],
         ['Description', shipment.description],
-        ['Current Location', shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation],
         ['Special Instructions', shipment.specialInstructions],
         ['Cargo Type', shipment.cargo?.type],
         ['Cargo Description', shipment.cargo?.description],
