@@ -154,12 +154,7 @@
                 <option>Exception</option>
                 <option>Returned</option>
               </select></label>
-              <label>Origin latitude<input id="originLat" name="originLat" type="number" step="0.0001" /></label>
-              <label>Origin longitude<input id="originLng" name="originLng" type="number" step="0.0001" /></label>
-              <label>Destination latitude<input id="destLat" name="destLat" type="number" step="0.0001" /></label>
-              <label>Destination longitude<input id="destLng" name="destLng" type="number" step="0.0001" /></label>
-              <label>Current latitude<input id="currentLat" name="currentLat" type="number" step="0.0001" /></label>
-              <label>Current longitude<input id="currentLng" name="currentLng" type="number" step="0.0001" /></label>
+              <!-- Removed coordinate fields: originLat, originLng, destLat, destLng, currentLat, currentLng -->
               <label>Current location<input id="currentLocation" name="currentLocation" type="text" /></label>
               <label>Weight (kg)<input id="weight" name="weight" type="number" step="0.01" /></label>
               <label>Description<textarea id="description" name="description" rows="2" style="font-family: inherit;"></textarea></label>
@@ -169,16 +164,15 @@
             <details class="form-section admin-field-section" data-admin-view="shipper">
               <summary class="form-section-title">Shipper information</summary>
               <div class="form-grid">
-                <label>Shipper company<input id="shipperCompany" name="shipperCompany" type="text" /></label>
-                <label>Sender name<input id="senderName" name="senderName" type="text" /></label>
-                <label>Shipper name<input id="shipperName" name="shipperName" type="text" /></label>
-                <label>Shipper phone<input id="shipperPhone" name="shipperPhone" type="text" /></label>
-                <label>Shipper email<input id="shipperEmail" name="shipperEmail" type="email" /></label>
-                <label>Shipper address<input id="shipperAddress" name="shipperAddress" type="text" /></label>
-                <label>Shipper city<input id="shipperCity" name="shipperCity" type="text" /></label>
-                <label>Shipper state<input id="shipperState" name="shipperState" type="text" /></label>
-                <label>Shipper postal code<input id="shipperPostalCode" name="shipperPostalCode" type="text" /></label>
-                <label>Shipper country<input id="shipperCountry" name="shipperCountry" type="text" /></label>
+                <label>Company<input id="shipperCompany" name="shipperCompany" type="text" /></label>
+                <label>Name<input id="shipperName" name="shipperName" type="text" /></label>
+                <label>Phone<input id="shipperPhone" name="shipperPhone" type="text" /></label>
+                <label>Email<input id="shipperEmail" name="shipperEmail" type="email" /></label>
+                <label>Address<input id="shipperAddress" name="shipperAddress" type="text" /></label>
+                <label>City<input id="shipperCity" name="shipperCity" type="text" /></label>
+                <label>State<input id="shipperState" name="shipperState" type="text" /></label>
+                <label>Postal code<input id="shipperPostalCode" name="shipperPostalCode" type="text" /></label>
+                <label>Country<input id="shipperCountry" name="shipperCountry" type="text" /></label>
               </div>
             </details>
 
@@ -213,15 +207,15 @@
             <details class="form-section admin-field-section" data-admin-view="recipient">
               <summary class="form-section-title">Receiver information</summary>
               <div class="form-grid">
-                <label>Receiver name<input id="receiverName" name="receiverName" type="text" /></label>
-                <label>Receiver company<input id="receiverCompany" name="receiverCompany" type="text" /></label>
-                <label>Receiver phone<input id="receiverPhone" name="receiverPhone" type="text" /></label>
-                <label>Receiver email<input id="receiverEmail" name="receiverEmail" type="email" /></label>
-                <label>Receiver address<input id="receiverAddress" name="receiverAddress" type="text" /></label>
-                <label>Receiver city<input id="receiverCity" name="receiverCity" type="text" /></label>
-                <label>Receiver state<input id="receiverState" name="receiverState" type="text" /></label>
-                <label>Receiver postal code<input id="receiverPostalCode" name="receiverPostalCode" type="text" /></label>
-                <label>Receiver country<input id="receiverCountry" name="receiverCountry" type="text" /></label>
+                <label>Company<input id="receiverCompany" name="receiverCompany" type="text" /></label>
+                <label>Name<input id="receiverName" name="receiverName" type="text" /></label>
+                <label>Phone<input id="receiverPhone" name="receiverPhone" type="text" /></label>
+                <label>Email<input id="receiverEmail" name="receiverEmail" type="email" /></label>
+                <label>Address<input id="receiverAddress" name="receiverAddress" type="text" /></label>
+                <label>City<input id="receiverCity" name="receiverCity" type="text" /></label>
+                <label>State<input id="receiverState" name="receiverState" type="text" /></label>
+                <label>Postal code<input id="receiverPostalCode" name="receiverPostalCode" type="text" /></label>
+                <label>Country<input id="receiverCountry" name="receiverCountry" type="text" /></label>
               </div>
             </details>
 

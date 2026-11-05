@@ -315,6 +315,7 @@ async function trackShipment(trackingNumber) {
       const routeDistance = originName !== 'Not Available' || destinationName !== 'Not Available'
         ? `<div class="shipment-route-summary"><div><span>Origin</span><strong>${escapeHtml(originName)}</strong></div><span class="shipment-route-arrow" aria-hidden="true">→</span><div><span>Destination</span><strong>${escapeHtml(destinationName)}</strong></div></div>`
         : '';
+      const printedAt = new Date();
       const recentHistoryHtml = timelineItems.length
         ? `<ol class="timeline-list shipment-timeline">${timelineHtml}</ol>`
         : '<div class="tracking-empty-history">No tracking history is available for this shipment yet.</div>';
@@ -325,11 +326,18 @@ async function trackShipment(trackingNumber) {
             <div class="shipment-header-topline"><span>Global Movement <span aria-hidden="true">/</span> Shipment record</span><span class="shipment-verified">${renderContactIcon('shield')} Verified</span></div>
             <div class="shipment-header-main">
               <div class="shipment-number-block"><span>Tracking number</span><h2 class="tracking-number-heading">${escapeHtml(shipment.trackingNumber || trackingNumber)}</h2></div>
-              <button type="button" class="copy-button shipment-copy-button" data-copy-tracking>Copy number</button>
+              <div class="shipment-header-actions">
+                <button type="button" class="copy-button shipment-copy-button" data-copy-tracking>Copy number</button>
+                <button type="button" class="copy-button shipment-print-button" data-print-tracking>Print tracking result</button>
+              </div>
             </div>
             <div class="shipment-header-meta">
               <div><span>Current status</span>${renderStatusPill(currentStatus)}</div>
               <div class="shipment-updated">${renderContactIcon('calendar')}<span><small>Last updated</small><strong>${escapeHtml(lastUpdated)}</strong></span></div>
+            </div>
+            <div class="shipment-print-meta">
+              <span class="shipment-print-stamp">Verified</span>
+              <span>Printed on <time data-print-date datetime="${printedAt.toISOString()}">${escapeHtml(printedAt.toLocaleDateString([], { dateStyle: 'long' }))}</time></span>
             </div>
           </section>
 
@@ -356,6 +364,15 @@ async function trackShipment(trackingNumber) {
       statusBox.innerHTML = shipmentInfoHtml;
       statusBox.classList.add('tracking-results-card-wrapper');
       statusBox.querySelector('[data-copy-tracking]')?.addEventListener('click', (event) => copyTrackingNumber(shipment.trackingNumber || trackingNumber, event.currentTarget));
+      statusBox.querySelector('[data-print-tracking]')?.addEventListener('click', () => {
+        const printDate = statusBox.querySelector('[data-print-date]');
+        if (printDate) {
+          const printedAt = new Date();
+          printDate.dateTime = printedAt.toISOString();
+          printDate.textContent = printedAt.toLocaleDateString([], { dateStyle: 'long' });
+        }
+        window.print();
+      });
     }
 
     const mapSection = document.getElementById('trackingMapSection');

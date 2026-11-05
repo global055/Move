@@ -2260,3 +2260,162 @@ main {
   .tracking-map-section .map-shell { height: 340px; max-height: 62vh; }
 }
 
+@page {
+  size: A4;
+  margin: 14mm;
+}
+
+.shipment-print-meta {
+  display: none;
+}
+
+@media print {
+  body {
+    background: #fff !important;
+    color: #17263a;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .topbar,
+  .page-hero,
+  .back-link,
+  .tracking-page-card > h3,
+  .tracking-page-card > form,
+  .tracking-page-card > #statusBox:not(.tracking-results-card-wrapper),
+  #trackingMapSection,
+  .footer,
+  .shipment-copy-button,
+  .shipment-print-button {
+    display: none !important;
+  }
+
+  .page-shell {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .tracking-page-card,
+  .tracking-page-card #statusBox.tracking-results-card-wrapper {
+    display: block;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .shipment-results {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .shipment-header-card,
+  .shipment-parties,
+  .shipment-details-card,
+  .shipment-custom-card,
+  .shipment-history-card {
+    grid-column: 1 / -1;
+    break-inside: avoid;
+    box-shadow: none;
+  }
+
+  .shipment-header-card {
+    padding: 18px 20px;
+    border: 1px solid #24344a;
+    border-radius: 12px;
+    background: #fff;
+    color: #17263a;
+  }
+
+  .shipment-header-topline > span:first-child,
+  .shipment-number-block > span,
+  .shipment-header-meta > div > span:first-child,
+  .shipment-updated small,
+  .shipment-number-block .tracking-number-heading,
+  .shipment-updated strong {
+    color: #17263a;
+  }
+
+  .shipment-header-main {
+    margin-top: 12px;
+  }
+
+  .shipment-header-meta {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-color: #d7dee7;
+  }
+
+  .shipment-header-actions {
+    display: none;
+  }
+
+  .shipment-print-meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #d7dee7;
+    color: #43536a;
+    font-size: 9pt;
+  }
+
+  .shipment-print-stamp {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 58px;
+    height: 58px;
+    border: 3px double #176f86;
+    border-radius: 50%;
+    color: #176f86;
+    font-size: 8pt;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    transform: rotate(-10deg);
+  }
+
+  .shipment-parties {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .shipment-party-card,
+  .shipment-details-card,
+  .shipment-custom-card,
+  .shipment-history-card {
+    padding: 16px;
+    border: 1px solid #d7dee7;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .shipment-details-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .shipment-details-grid > div {
+    padding: 9px;
+    break-inside: avoid;
+  }
+
+  .shipment-timeline .timeline-item {
+    break-inside: avoid;
+  }
+
+  .shipment-results .tracking-pill {
+    border: 1px solid #cbd5e1;
+    background: #f3f6fa !important;
+    color: #17263a !important;
+  }
+}

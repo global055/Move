@@ -288,22 +288,7 @@ function populateShipmentForm(shipment) {
   editingTimeline = Array.isArray(shipment.timeline) ? shipment.timeline.map((event) => ({ ...event })) : [];
   renderTimelineEditor();
 
-  if (shipment.coordinates) {
-    setOptionalVal('originLat', shipment.coordinates.origin?.lat);
-    setOptionalVal('originLng', shipment.coordinates.origin?.lng);
-    setOptionalVal('destLat', shipment.coordinates.destination?.lat);
-    setOptionalVal('destLng', shipment.coordinates.destination?.lng);
-    setOptionalVal('currentLat', shipment.coordinates.currentLocation?.lat);
-    setOptionalVal('currentLng', shipment.coordinates.currentLocation?.lng);
-    setOptionalVal(
-      'currentLocation',
-      shipment.coordinates.currentLocation
-        ? `${shipment.coordinates.currentLocation.lat}, ${shipment.coordinates.currentLocation.lng}`
-        : shipment.currentLocationName || shipment.currentLocation
-    );
-  } else {
-    setOptionalVal('currentLocation', shipment.currentLocationName || shipment.currentLocation);
-  }
+  setOptionalVal('currentLocation', shipment.currentLocationName || shipment.currentLocation);
 
   renderShipmentDetails(shipment);
   showShipmentOnMap(shipment);
@@ -414,11 +399,7 @@ function buildShipmentPayload() {
       }))
       .filter((section) => section.title || section.fields.length),
     currentLocationName: getVal('currentLocation'),
-    coordinates: {
-      origin: getCoords('originLat', 'originLng'),
-      destination: getCoords('destLat', 'destLng'),
-      currentLocation: getCoords('currentLat', 'currentLng')
-    },
+    // Coordinates removed: only use name-based location fields
     shipper: {
       company: getVal('shipperCompany'),
       name: getVal('shipperName'),
