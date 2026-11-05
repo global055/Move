@@ -55,6 +55,60 @@ function buildAddressRow(label, values) {
   return `<div class="full"><strong>${escapeHtml(label)}</strong><span>${escapeHtml(displayValues.map((value) => typeof value === 'string' ? value.trim() : value).join(', '))}</span></div>`;
 }
 
+function renderContactIcon(name) {
+  const paths = {
+    user: '<circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c.5-3.2 2.8-5 7-5s6.5 1.8 7 5"></path>',
+    location: '<path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"></path><circle cx="12" cy="10" r="2"></circle>',
+    phone: '<path d="M7 3h3l1.4 4-2 1.5a15 15 0 0 0 6.1 6.1l1.5-2L21 14v3c0 1.1-.9 2-2 2C10 19 5 14 5 5c0-1.1.9-2 2-2Z"></path>',
+    email: '<rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m4 7 8 6 8-6"></path>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path>',
+    shield: '<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"></path><path d="m9 12 2 2 4-4"></path>'
+  };
+  return `<svg class="shipment-inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || ''}</svg>`;
+}
+
+function renderPartyField(icon, label, value) {
+  if (!hasDisplayValue(value)) return '';
+  return `<div class="shipment-contact-field">${renderContactIcon(icon)}<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div></div>`;
+}
+
+function renderPartyCard(kind, party, fallbackName, fallbackAddress) {
+  const name = party?.name || fallbackName;
+  const address = [party?.address, party?.city, party?.state, party?.postalCode, party?.country]
+    .filter(hasDisplayValue).join(', ') || fallbackAddress;
+  const fields = [
+    renderPartyField('location', 'Address', address),
+    renderPartyField('phone', 'Phone', party?.phone),
+    renderPartyField('email', 'Email', party?.email)
+  ].filter(Boolean).join('');
+
+  return `
+    <section class="shipment-party-card">
+      <div class="shipment-party-heading">${renderContactIcon('user')}<div><span>${kind}</span><h2>${escapeHtml(name || `${kind} details unavailable`)}</h2></div></div>
+      <div class="shipment-contact-list">${fields || '<p class="shipment-no-data">No contact details provided.</p>'}</div>
+    </section>
+  `;
+}
+
+function formatLastUpdated(shipment, latestUpdate) {
+  const dateTime = [latestUpdate?.date, latestUpdate?.time].filter(hasDisplayValue).join(' ');
+  if (dateTime) return dateTime;
+  const updatedAt = shipment.updatedAt || latestUpdate?.timestamp;
+  if (!updatedAt) return 'Not available';
+  const date = new Date(updatedAt);
+  return Number.isNaN(date.getTime()) ? 'Not available' : date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function renderCustomSections(sections) {
+  if (!Array.isArray(sections)) return '';
+  return sections.map((section) => {
+    const fields = Array.isArray(section?.fields) ? section.fields : [];
+    const rows = fields.map((field) => buildFieldRow(field?.label || 'Detail', field?.value)).filter(Boolean).join('');
+    if (!rows) return '';
+    return `<section class="tracking-card shipment-custom-card"><div class="tracking-card-header"><h2>${escapeHtml(section.title || 'Additional details')}</h2></div><div class="shipment-details-grid">${rows}</div></section>`;
+  }).join('');
+}
+
 function getStatusMeta(status) {
   const normalized = String(status || 'In Transit').trim().toLowerCase();
   if (normalized.includes('delivered')) return { className: 'status-delivered', label: 'Delivered', icon: 'check' };
@@ -82,7 +136,8 @@ function renderStatusPill(status) {
 
 function timelineStateClass(status, index, currentIndex) {
   const meta = getStatusMeta(status);
-  const progressClass = currentIndex < 0 || index < currentIndex ? 'is-upcoming' : index === currentIndex ? 'is-current' : 'is-completed';
+  const isUpcoming = currentIndex < 0 || index > currentIndex;
+  const progressClass = isUpcoming ? 'is-upcoming' : index === currentIndex ? 'is-current' : 'is-completed';
   return `${meta.className} ${progressClass}`;
 }
 
@@ -173,9 +228,11 @@ async function trackShipment(trackingNumber) {
       const destinationName = shipment.destination || shipment.destinationName || 'Not Available';
       const currentStatus = shipment.status || 'In Transit';
       const timelineItems = Array.isArray(shipment.timeline)
-        ? [...shipment.timeline].sort((a, b) => timelineSortValue(b) - timelineSortValue(a))
+        ? [...shipment.timeline].sort((a, b) => timelineSortValue(a) - timelineSortValue(b))
         : [];
-      const currentTimelineIndex = timelineItems.findIndex((item) => timelineSortValue(item) <= Date.now());
+      const currentTimelineIndex = timelineItems.reduce((latestIndex, item, index) => (
+        timelineSortValue(item) <= Date.now() ? index : latestIndex
+      ), -1);
       const timelineHtml = timelineItems.length > 0 ? timelineItems.map((item, index) => {
         const displayDate = item.date || (item.timestamp ? new Date(item.timestamp).toLocaleDateString() : 'Not Available');
         const displayTime = item.time || (item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Not Available');
@@ -208,84 +265,21 @@ async function trackShipment(trackingNumber) {
       const description = shipment.packageDescription || shipment.description || 'No description provided.';
       const latestUpdate = resolveLatestUpdate(shipment, timelineItems);
 
-      const summaryCards = `
-        <div class="tracking-overview">
-          <div class="tracking-highlight">
-            <span class="tracking-highlight__label">Package Weight</span>
-            <strong class="tracking-highlight__value">${escapeHtml(packageWeight)}</strong>
-          </div>
-          <div class="tracking-highlight">
-            <span class="tracking-highlight__label">Estimated Delivery</span>
-            <strong class="tracking-highlight__value">${escapeHtml(estimatedDelivery)}</strong>
-          </div>
-          <div class="tracking-highlight tracking-highlight--wide">
-            <span class="tracking-highlight__label">Description</span>
-            <strong class="tracking-highlight__value">${escapeHtml(description)}</strong>
-          </div>
-          <div class="tracking-highlight tracking-highlight--wide">
-            <span class="tracking-highlight__label">Latest Update</span>
-            <strong class="tracking-highlight__value">${escapeHtml(latestUpdate.title || latestUpdate.status || 'No latest update available')}</strong>
-            <span>${escapeHtml([latestUpdate.location, latestUpdate.date, latestUpdate.time].filter(Boolean).join(' · '))}</span>
-          </div>
-          <div class="tracking-highlight">
-            <span class="tracking-highlight__label">Shipment Status</span>
-            <strong class="tracking-highlight__value">${renderStatusPill(currentStatus)}</strong>
-          </div>
-          <div class="tracking-highlight">
-            <span class="tracking-highlight__label">Current Location</span>
-            <strong class="tracking-highlight__value">${escapeHtml(currentLocationText || 'Not available')}</strong>
-          </div>
-          <div class="tracking-highlight">
-            <span class="tracking-highlight__label">Tracking Number</span>
-            <strong class="tracking-highlight__value">${escapeHtml(shipment.trackingNumber || trackingNumber)}</strong>
-          </div>
-        </div>
-      `;
-
-      const summaryRows = [
-        ['Tracking Number', shipment.trackingNumber],
-        ['Sender', shipment.senderName],
-        ['Receiver', shipment.receiverName],
-        ['Current Status', currentStatus],
-        ['Shipment Type', shipment.shipmentType],
-        ['Courier/Carrier', shipment.carrier],
-        ['Mode of Shipment', shipment.modeOfShipment || shipment.cargo?.type],
-        ['Package Weight', packageWeight],
-        ['Total Freight', shipment.totalFreight != null ? `$${shipment.totalFreight.toFixed(2)}` : ''],
-        ['Estimated Delivery Date', shipment.estimatedDelivery],
-        ['Expected Delivery Time', shipment.expectedDeliveryTime],
-        ['Pickup', pickupDateTime],
-        ['Delivery', deliveryDateTime],
-        ['Current Package Location', currentLocationText]
-      ].map(([label, value]) => buildFieldRow(label, value)).filter(Boolean).join('');
-
-      const shipperRows = [
-        ['Shipper Name', shipment.shipper?.name || shipment.senderName],
-        ['Shipper Phone', shipment.shipper?.phone],
-        ['Shipper Email', shipment.shipper?.email],
-        ['Shipper Company', shipment.shipper?.company],
-        ['Shipper Address', [shipment.shipper?.address, shipment.shipper?.city, shipment.shipper?.state, shipment.shipper?.postalCode, shipment.shipper?.country]]
-      ].map(([label, value]) => Array.isArray(value) ? buildAddressRow(label, value) : buildFieldRow(label, value)).filter(Boolean).join('');
-
-      const receiverRows = [
-        ['Receiver Name', shipment.receiver?.name || shipment.receiverName],
-        ['Receiver Phone', shipment.receiver?.phone],
-        ['Receiver Email', shipment.receiver?.email],
-        ['Receiver Company', shipment.receiver?.company],
-        ['Receiver Address', [shipment.receiver?.address, shipment.receiver?.city, shipment.receiver?.state, shipment.receiver?.postalCode, shipment.receiver?.country]]
-      ].map(([label, value]) => Array.isArray(value) ? buildAddressRow(label, value) : buildFieldRow(label, value)).filter(Boolean).join('');
-
       const shipmentDetailsRows = [
         ['Origin', originName],
         ['Destination', destinationName],
-        ['Origin coordinates', originCoords?.lat != null && originCoords?.lng != null ? `${originCoords.lat.toFixed(4)}, ${originCoords.lng.toFixed(4)}` : ''],
-        ['Destination coordinates', destinationCoords?.lat != null && destinationCoords?.lng != null ? `${destinationCoords.lat.toFixed(4)}, ${destinationCoords.lng.toFixed(4)}` : ''],
+        ['Shipment Type', shipment.shipmentType],
+        ['Shipping Method', shipment.deliveryMethod || shipment.modeOfShipment || shipment.serviceType],
+        ['Carrier', shipment.carrier],
+        ['Package Weight', packageWeight],
+        ['Total Freight', shipment.totalFreight != null ? `$${Number(shipment.totalFreight).toFixed(2)}` : ''],
+        ['Estimated Delivery', estimatedDelivery],
+        ['Expected Delivery Time', shipment.expectedDeliveryTime],
+        ['Current Location', currentLocationText],
+        ['Pickup', pickupDateTime],
+        ['Delivery', deliveryDateTime],
         ['Departure Airport/Port', shipment.departureAirportPort],
         ['Arrival Airport/Port', shipment.arrivalAirportPort],
-        ['Pickup Date', shipment.pickupDate],
-        ['Pickup Time', shipment.pickupTime],
-        ['Delivery Date', shipment.deliveryDate],
-        ['Delivery Time', shipment.deliveryTime],
         ['Quantity', shipment.quantity != null ? shipment.quantity : ''],
         ['Service Type', shipment.serviceType],
         ['Payment Status', shipment.paymentStatus],
@@ -309,70 +303,46 @@ async function trackShipment(trackingNumber) {
         ['Cargo Special Instructions', shipment.cargo?.specialInstructions]
       ].map(([label, value]) => buildFieldRow(label, value)).filter(Boolean).join('');
 
+      const lastUpdated = formatLastUpdated(shipment, latestUpdate);
+      const routeDistance = originName !== 'Not Available' || destinationName !== 'Not Available'
+        ? `<div class="shipment-route-summary"><div><span>Origin</span><strong>${escapeHtml(originName)}</strong></div><span class="shipment-route-arrow" aria-hidden="true">→</span><div><span>Destination</span><strong>${escapeHtml(destinationName)}</strong></div></div>`
+        : '';
       const recentHistoryHtml = timelineItems.length
-        ? `<ul class="timeline-list">${timelineHtml}</ul>`
-        : '<div class="tracking-empty-history">No tracking history is available yet.</div>';
+        ? `<ol class="timeline-list shipment-timeline">${timelineHtml}</ol>`
+        : '<div class="tracking-empty-history">No tracking history is available for this shipment yet.</div>';
 
       const shipmentInfoHtml = `
-        <div class="tracking-results-grid">
-          <section class="tracking-card tracking-summary-card">
-            <div class="tracking-card-header">
-              <div>
-                <p class="eyebrow">Shipment summary</p>
-                <h2 class="tracking-number-heading">${escapeHtml(shipment.trackingNumber || 'Tracking details')}</h2>
-                <p class="tracking-summary-subtitle">${escapeHtml(originName)} → ${escapeHtml(destinationName)}</p>
-              </div>
-              <div class="tracking-summary-actions">${currentStatus ? renderStatusPill(currentStatus) : ''}<button type="button" class="copy-button" data-copy-tracking>Copy</button></div>
+        <div class="tracking-results-grid shipment-results">
+          <section class="shipment-header-card">
+            <div class="shipment-header-topline"><span>Global Movement <span aria-hidden="true">/</span> Shipment record</span><span class="shipment-verified">${renderContactIcon('shield')} Verified</span></div>
+            <div class="shipment-header-main">
+              <div class="shipment-number-block"><span>Tracking number</span><h2 class="tracking-number-heading">${escapeHtml(shipment.trackingNumber || trackingNumber)}</h2></div>
+              <button type="button" class="copy-button shipment-copy-button" data-copy-tracking>Copy number</button>
             </div>
-            <a class="tracking-details-link" href="tracking-details.html?tracking=${encodeURIComponent(shipment.trackingNumber || trackingNumber)}">See All Tracking Details <span aria-hidden="true">→</span></a>
-            ${renderStatusContext(currentStatus, shipment, latestUpdate)}
-            ${summaryCards}
-            <div class="tracking-confirmation">Tracking confirmed for ${escapeHtml(shipment.trackingNumber || trackingNumber)}</div>
-            <div class="tracking-result-grid">
-              ${summaryRows}
+            <div class="shipment-header-meta">
+              <div><span>Current status</span>${renderStatusPill(currentStatus)}</div>
+              <div class="shipment-updated">${renderContactIcon('calendar')}<span><small>Last updated</small><strong>${escapeHtml(lastUpdated)}</strong></span></div>
             </div>
           </section>
 
-          ${shipperRows ? `
-            <section class="tracking-card">
-              <div class="tracking-card-header"><h3>Shipper information</h3></div>
-              <div class="tracking-result-grid">
-                ${shipperRows}
-              </div>
-            </section>
-          ` : ''}
+          <div class="shipment-parties">
+            ${renderPartyCard('Sender', shipment.shipper, shipment.senderName, shipment.senderLocation)}
+            ${renderPartyCard('Receiver', shipment.receiver, shipment.receiverName, shipment.receiverLocation)}
+          </div>
 
-          ${receiverRows ? `
-            <section class="tracking-card">
-              <div class="tracking-card-header"><h3>Receiver information</h3></div>
-              <div class="tracking-result-grid">
-                ${receiverRows}
-              </div>
-            </section>
-          ` : ''}
+          <section class="tracking-card shipment-details-card">
+            <div class="tracking-card-header"><div><p class="eyebrow">Shipment profile</p><h2>Shipment details</h2></div></div>
+            ${routeDistance}
+            <div class="shipment-details-grid">${shipmentDetailsRows}</div>
+            ${shipment.description && shipment.packageDescription && shipment.description !== shipment.packageDescription ? `<p class="shipment-description">${escapeHtml(shipment.description)}</p>` : ''}
+          </section>
 
-          ${shipmentDetailsRows ? `
-            <section class="tracking-card">
-              <div class="tracking-card-header"><h3>Shipment details</h3></div>
-              <div class="tracking-result-grid">
-                ${shipmentDetailsRows}
-              </div>
-            </section>
-          ` : ''}
+          ${renderCustomSections(shipment.customSections)}
 
-          <section class="tracking-card timeline-card">
-            <div class="tracking-card-header"><h3>Recent Tracking Events</h3></div>
+          <section class="tracking-card timeline-card shipment-history-card">
+            <div class="tracking-card-header"><div><p class="eyebrow">Milestone history</p><h2>Tracking timeline</h2></div><span class="shipment-event-count">${timelineItems.length} ${timelineItems.length === 1 ? 'event' : 'events'}</span></div>
             ${recentHistoryHtml}
           </section>
-
-          ${hasDisplayValue(currentLocationText) ? `
-            <section class="tracking-card">
-              <div class="tracking-card-header"><h3>Live package map</h3></div>
-              <div class="tracking-map-placeholder">
-                <p>${escapeHtml(currentLocationText)}</p>
-              </div>
-            </section>
-          ` : ''}
         </div>
       `;
       statusBox.innerHTML = shipmentInfoHtml;
@@ -380,8 +350,17 @@ async function trackShipment(trackingNumber) {
       statusBox.querySelector('[data-copy-tracking]')?.addEventListener('click', (event) => copyTrackingNumber(shipment.trackingNumber || trackingNumber, event.currentTarget));
     }
 
+    const mapSection = document.getElementById('trackingMapSection');
+    const hasMapCoordinates = [shipment.coordinates?.origin, shipment.coordinates?.currentLocation, shipment.coordinates?.destination]
+      .some((point) => point && point.lat != null && point.lng != null && Number.isFinite(Number(point.lat)) && Number.isFinite(Number(point.lng)));
+    if (mapSection) {
+      mapSection.classList.toggle('hidden', !hasMapCoordinates);
+      mapSection.setAttribute('aria-hidden', String(!hasMapCoordinates));
+    }
+
     if (window.GM && typeof window.GM.updateMapFromShipment === 'function') {
       window.GM.updateMapFromShipment(shipment);
+      window.setTimeout(() => window.GM.map?.invalidateSize(), 100);
       return;
     }
 
