@@ -2197,7 +2197,7 @@ main {
 .shipment-header-card .status-indicator--truck { width: 12px; height: 12px; flex-basis: 12px; border-radius: 50%; background: #955bdc; color: #955bdc; }
 .shipment-header-card .status-indicator--truck::before { width: 6px; height: 6px; border-radius: 50%; background: currentColor; content: ""; animation: status-truck-move 1.8s ease-in-out infinite; }
 .shipment-parties { grid-column: span 12; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
-.shipment-party-card, .shipment-details-card, .shipment-custom-card, .shipment-history-card { border-radius: 16px; box-shadow: 0 8px 24px rgba(15,33,54,.07); }
+.shipment-party-card, .shipment-details-card, .shipment-parcel-card, .shipment-custom-card, .shipment-history-card { border-radius: 16px; box-shadow: 0 8px 24px rgba(15,33,54,.07); }
 .shipment-party-card { min-width: 0; padding: 22px; border: 1px solid #e3e8ef; background: #fff; }
 .shipment-party-heading { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid #edf0f4; }
 .shipment-party-heading > .shipment-inline-icon { width: 40px; height: 40px; padding: 10px; border-radius: 12px; color: #176f86; background: #eaf5f7; }
@@ -2210,9 +2210,9 @@ main {
 .shipment-contact-field span { font-size: .74rem; font-weight: 700; text-transform: uppercase; }
 .shipment-contact-field strong { color: #26364b; font-size: .9rem; font-weight: 500; line-height: 1.5; overflow-wrap: anywhere; }
 .shipment-no-data { margin: 0; color: #78869a; font-size: .88rem; }
-.shipment-details-card, .shipment-custom-card, .shipment-history-card { grid-column: span 12; }
-.shipment-details-card .tracking-card-header, .shipment-custom-card .tracking-card-header, .shipment-history-card .tracking-card-header { align-items: center; margin-bottom: 20px; }
-.shipment-details-card .tracking-card-header h2, .shipment-custom-card .tracking-card-header h2, .shipment-history-card .tracking-card-header h2 { color: #17263a; font-size: 1.25rem; }
+.shipment-details-card, .shipment-parcel-card, .shipment-custom-card, .shipment-history-card { grid-column: span 12; }
+.shipment-details-card .tracking-card-header, .shipment-parcel-card .tracking-card-header, .shipment-custom-card .tracking-card-header, .shipment-history-card .tracking-card-header { align-items: center; margin-bottom: 20px; }
+.shipment-details-card .tracking-card-header h2, .shipment-parcel-card .tracking-card-header h2, .shipment-custom-card .tracking-card-header h2, .shipment-history-card .tracking-card-header h2 { color: #17263a; font-size: 1.25rem; }
 .shipment-details-card .eyebrow, .shipment-history-card .eyebrow { margin: 0 0 4px; }
 .shipment-route-summary { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); align-items: center; gap: 16px; margin-bottom: 20px; padding: 16px 18px; border: 1px solid #e2e8ee; border-radius: 12px; background: #f7f9fb; }
 .shipment-route-summary > div { display: grid; gap: 4px; min-width: 0; }
@@ -2252,7 +2252,7 @@ main {
   .shipment-number-block .tracking-number-heading { font-size: 1.55rem; }
   .shipment-header-meta { align-items: flex-start; flex-direction: column; gap: 16px; margin-top: 17px; }
   .shipment-parties { grid-template-columns: 1fr; gap: 13px; }
-  .shipment-party-card, .tracking-card.shipment-details-card, .tracking-card.shipment-custom-card, .tracking-card.shipment-history-card { padding: 18px; }
+  .shipment-party-card, .tracking-card.shipment-details-card, .tracking-card.shipment-parcel-card, .tracking-card.shipment-custom-card, .tracking-card.shipment-history-card { padding: 18px; }
   .shipment-details-grid { grid-template-columns: 1fr; }
   .shipment-route-summary { gap: 10px; padding: 13px; }
   .shipment-route-summary strong { font-size: .88rem; }
@@ -2317,6 +2317,7 @@ main {
   .shipment-header-card,
   .shipment-parties,
   .shipment-details-card,
+  .shipment-parcel-card,
   .shipment-custom-card,
   .shipment-history-card {
     grid-column: 1 / -1;
@@ -2395,6 +2396,7 @@ main {
 
   .shipment-party-card,
   .shipment-details-card,
+  .shipment-parcel-card,
   .shipment-custom-card,
   .shipment-history-card {
     padding: 16px;
@@ -2405,6 +2407,7 @@ main {
   }
 
   .shipment-details-card .tracking-card-header,
+  .shipment-parcel-card .tracking-card-header,
   .shipment-custom-card .tracking-card-header,
   .shipment-history-card .tracking-card-header {
     break-after: avoid;

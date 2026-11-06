@@ -74,28 +74,38 @@ function renderContactIcon(name) {
   return `<svg class="shipment-inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || ''}</svg>`;
 }
 
+function hasContactValue(value) {
+  if (!hasDisplayValue(value)) return false;
+  return !['n/a', 'na', 'not available', 'not provided'].includes(String(value).trim().toLowerCase());
+}
+
 function renderPartyField(icon, label, value) {
-  if (!hasDisplayValue(value)) return '';
-  return `<div class="shipment-contact-field">${renderContactIcon(icon)}<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div></div>`;
+  const displayValue = hasContactValue(value) ? value : 'Not provided';
+  return `<div class="shipment-contact-field">${renderContactIcon(icon)}<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(displayValue)}</strong></div></div>`;
 }
 
 function renderPartyCard(kind, party, fallbackName, fallbackAddress) {
-  const name = party?.name || fallbackName;
+  const name = hasContactValue(party?.name) ? party.name : fallbackName;
   const address = [party?.address, party?.city, party?.state, party?.postalCode, party?.country]
-    .filter(hasDisplayValue).join(', ') || fallbackAddress;
+    .filter(hasContactValue).join(', ') || fallbackAddress;
   const fields = [
-    renderPartyField('user', 'Company', party?.company),
-    renderPartyField('location', 'Address', address),
+    renderPartyField('location', 'Location', address),
     renderPartyField('phone', 'Phone', party?.phone),
     renderPartyField('email', 'Email', party?.email)
   ].filter(Boolean).join('');
 
   return `
     <section class="shipment-party-card">
-      <div class="shipment-party-heading">${renderContactIcon('user')}<div><span>${kind} information</span><h2>${escapeHtml(name || `${kind} details unavailable`)}</h2></div></div>
+      <div class="shipment-party-heading">${renderContactIcon('user')}<div><span>${kind} information</span><h2>${escapeHtml(hasContactValue(name) ? name : `${kind} name not provided`)}</h2>${hasContactValue(party?.company) ? `<p class="shipment-party-company">${escapeHtml(party.company)}</p>` : ''}</div></div>
       <div class="shipment-contact-list">${fields || '<p class="shipment-no-data">No contact details provided.</p>'}</div>
     </section>
   `;
+}
+
+function formatShipmentDate(value) {
+  if (!hasDisplayValue(value)) return '';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString([], { dateStyle: 'medium' });
 }
 
 function formatLastUpdated(shipment, latestUpdate) {
@@ -262,7 +272,8 @@ async function trackShipment(trackingNumber) {
 
       const pickupDateTime = [shipment.pickupDate, shipment.pickupTime].filter(Boolean).join(' ');
       const deliveryDateTime = [shipment.deliveryDate, shipment.deliveryTime].filter(Boolean).join(' ');
-      const packageWeight = shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : 'Not available');
+      const parcelWeight = shipment.packageWeight ?? shipment.weight ?? shipment.cargo?.weight;
+      const packageWeight = parcelWeight != null ? `${parcelWeight} kg` : 'Not available';
       const estimatedDelivery = shipment.estimatedDelivery || 'Not available';
       const description = shipment.packageDescription || shipment.description || 'No description provided.';
       const latestUpdate = resolveLatestUpdate(shipment, timelineItems);
@@ -276,42 +287,20 @@ async function trackShipment(trackingNumber) {
         ? `${shipment.coordinates.currentLocation.lat}, ${shipment.coordinates.currentLocation.lng}`
         : 'Not Available');
 
-      const shipmentDetailsRows = [
-        ['Origin', originName],
-        ['Destination', destinationName],
-        ['Shipment Type', shipment.shipmentType],
-        ['Shipping Method', shipment.deliveryMethod || shipment.modeOfShipment || shipment.serviceType],
-        ['Carrier', shipment.carrier],
-        ['Package Weight', packageWeight],
-        ['Total Freight', shipment.totalFreight != null ? `$${Number(shipment.totalFreight).toFixed(2)}` : ''],
-        ['Estimated Delivery', estimatedDelivery],
-        ['Expected Delivery Time', shipment.expectedDeliveryTime],
-        ['Current Location', currentLocationText],
-        ['Pickup', pickupDateTime],
-        ['Delivery', deliveryDateTime],
-        ['Departure Airport/Port', shipment.departureAirportPort],
-        ['Arrival Airport/Port', shipment.arrivalAirportPort],
-        ['Quantity', shipment.quantity != null ? shipment.quantity : ''],
-        ['Service Type', shipment.serviceType],
-        ['Payment Status', shipment.paymentStatus],
-        ['Reference Number', shipment.referenceNumber],
-        ['Package Dimensions', shipment.packageDimensions || shipment.cargo?.dimensions],
-        ['Insurance', shipment.insurance],
-        ['Weight', shipment.weight != null ? `${shipment.weight} kg` : ''],
-        ['Package Description', shipment.packageDescription || shipment.description],
-        ['Description', shipment.description],
-        ['Special Instructions', shipment.specialInstructions],
-        ['Cargo Type', shipment.cargo?.type],
-        ['Cargo Description', shipment.cargo?.description],
-        ['Cargo Pieces', shipment.cargo?.pieces],
-        ['Cargo Weight', shipment.cargo?.weight != null ? `${shipment.cargo.weight} kg` : ''],
-        ['Cargo Volume', shipment.cargo?.volume != null ? `${shipment.cargo.volume}` : ''],
-        ['Cargo Value', shipment.cargo?.value != null ? `$${shipment.cargo.value.toFixed(2)}` : ''],
-        ['Cargo Dimensions', shipment.cargo?.dimensions],
-        ['Incoterms', shipment.cargo?.incoterms],
-        ['Dangerous Goods', shipment.cargo?.dangerousGoods != null ? (shipment.cargo.dangerousGoods ? 'Yes' : 'No') : ''],
-        ['Cargo Special Instructions', shipment.cargo?.specialInstructions]
-      ].map(([label, value]) => buildFieldRow(label, value)).filter(Boolean).join('');
+      const shipmentDate = formatShipmentDate(shipment.shipmentDate || shipment.createdAt);
+      const shipmentDetailRows = [
+        buildFieldRow('Weight', packageWeight),
+        buildFieldRow('Type', shipment.shipmentType || shipment.cargo?.type || 'Not provided'),
+        buildFieldRow('Shipment Date', shipmentDate || 'Not provided'),
+        `<div><strong>Status</strong>${renderStatusPill(currentStatus)}</div>`,
+        buildFieldRow('Current Location', currentLocationText, true)
+      ].filter(Boolean).join('');
+      const parcelInformationRows = [
+        buildFieldRow('Weight', packageWeight),
+        buildFieldRow('Pickup Date', shipment.pickupDate || 'Not provided'),
+        buildFieldRow('Expected Delivery', estimatedDelivery !== 'Not available' ? estimatedDelivery : 'Not provided'),
+        buildFieldRow('Delivery Mode', shipment.deliveryMethod || shipment.modeOfShipment || shipment.serviceType || 'Not provided')
+      ].filter(Boolean).join('');
 
       const lastUpdated = formatLastUpdated(shipment, latestUpdate);
       const routeDistance = originName !== 'Not Available' || destinationName !== 'Not Available'
@@ -351,8 +340,13 @@ async function trackShipment(trackingNumber) {
           <section class="tracking-card shipment-details-card">
             <div class="tracking-card-header"><div><p class="eyebrow">Shipment profile</p><h2>Shipment details</h2></div></div>
             ${routeDistance}
-            <div class="shipment-details-grid">${shipmentDetailsRows}</div>
-            ${shipment.description && shipment.packageDescription && shipment.description !== shipment.packageDescription ? `<p class="shipment-description">${escapeHtml(shipment.description)}</p>` : ''}
+            <div class="shipment-details-grid">${shipmentDetailRows}</div>
+          </section>
+
+          <section class="tracking-card shipment-parcel-card">
+            <div class="tracking-card-header"><div><p class="eyebrow">Parcel profile</p><h2>Parcel information</h2></div></div>
+            <div class="shipment-details-grid">${parcelInformationRows || '<p class="shipment-no-data">No parcel information provided.</p>'}</div>
+            ${shipment.packageDescription || shipment.description ? `<p class="shipment-description">${escapeHtml(shipment.packageDescription || shipment.description)}</p>` : ''}
           </section>
 
           ${renderCustomSections(shipment.customSections)}
