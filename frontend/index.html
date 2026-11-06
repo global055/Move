@@ -73,13 +73,14 @@
               </div>
               <button type="submit">Track now</button>
             </form>
-            <div id="statusBox" class="status-box">
-              <p>Awaiting shipment details...</p>
-            </div>
           </div>
-          <div class="tracking-info-card reveal">
-
-          </div>
+        </div>
+        <div id="statusBox" class="status-box" aria-live="polite">
+          <p>Awaiting shipment details...</p>
+        </div>
+        <div id="homepage-map-heading" class="tracking-map-heading hidden">
+          <div><p class="eyebrow">Route visibility</p><h2>Shipment route</h2></div>
+          <span>Origin · current location · destination</span>
         </div>
         <div id="homepage-map" class="homepage-map hidden" aria-hidden="true"></div>
       </section>

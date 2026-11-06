@@ -46,7 +46,9 @@ function hasDisplayValue(value) {
 function getLocationName(...values) {
   const coordinatesPattern = /^\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*$/;
   return values.find((value) => (
-    typeof value === 'string' && value.trim() && !coordinatesPattern.test(value)
+    typeof value === 'string' && value.trim() &&
+    !['n/a', 'na', 'not available', 'not provided'].includes(value.trim().toLowerCase()) &&
+    !coordinatesPattern.test(value)
   ))?.trim() || '';
 }
 
@@ -87,7 +89,7 @@ function renderPartyField(icon, label, value) {
 function renderPartyCard(kind, party, fallbackName, fallbackAddress) {
   const name = hasContactValue(party?.name) ? party.name : fallbackName;
   const address = [party?.address, party?.city, party?.state, party?.postalCode, party?.country]
-    .filter(hasContactValue).join(', ') || fallbackAddress;
+    .filter((value) => getLocationName(value)).join(', ') || getLocationName(fallbackAddress);
   const fields = [
     renderPartyField('location', 'Location', address),
     renderPartyField('phone', 'Phone', party?.phone),
@@ -283,9 +285,7 @@ async function trackShipment(trackingNumber) {
         shipment.currentLocation,
         latestUpdate.location,
         shipment.deliveryLocation
-      ) || (shipment.coordinates?.currentLocation?.lat != null && shipment.coordinates?.currentLocation?.lng != null
-        ? `${shipment.coordinates.currentLocation.lat}, ${shipment.coordinates.currentLocation.lng}`
-        : 'Not Available');
+      ) || 'Not provided';
 
       const shipmentDate = formatShipmentDate(shipment.shipmentDate || shipment.createdAt);
       const shipmentDetailRows = [

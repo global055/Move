@@ -122,9 +122,88 @@ async function loadTrackingDatalist() {
   }
 }
 
-function buildHomepageFieldRow(label, value) {
-  if (value == null || value === '') return '';
-  return `<div><strong>${escapeHtml(label)}</strong><span>${escapeHtml(value)}</span></div>`;
+function homepageContactIcon(name) {
+  const paths = {
+    user: '<circle cx="12" cy="8" r="3.5"></circle><path d="M5 20c.5-3.2 2.8-5 7-5s6.5 1.8 7 5"></path>',
+    location: '<path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"></path><circle cx="12" cy="10" r="2"></circle>',
+    phone: '<path d="M7 3h3l1.4 4-2 1.5a15 15 0 0 0 6.1 6.1l1.5-2L21 14v3c0 1.1-.9 2-2 2C10 19 5 14 5 5c0-1.1.9-2 2-2Z"></path>',
+    email: '<rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m4 7 8 6 8-6"></path>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path>',
+    shield: '<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"></path><path d="m9 12 2 2 4-4"></path>'
+  };
+  return `<svg class="shipment-inline-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || ''}</svg>`;
+}
+
+function homepageHasContactValue(value) {
+  if (value == null || String(value).trim() === '') return false;
+  return !['n/a', 'na', 'not available', 'not provided'].includes(String(value).trim().toLowerCase());
+}
+
+function homepageLocationName(...values) {
+  const coordinatesPattern = /^\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*$/;
+  return values.find((value) => (
+    typeof value === 'string' && homepageHasContactValue(value) && !coordinatesPattern.test(value)
+  ))?.trim() || '';
+}
+
+function renderHomepagePartyCard(kind, party, fallbackName, fallbackLocation) {
+  const name = homepageHasContactValue(party?.name) ? party.name : fallbackName;
+  const location = [party?.address, party?.city, party?.state, party?.postalCode, party?.country]
+    .filter((value) => homepageLocationName(value)).join(', ') || homepageLocationName(fallbackLocation);
+  const fields = [
+    ['location', 'Location', location],
+    ['phone', 'Phone', party?.phone],
+    ['email', 'Email', party?.email]
+  ].map(([icon, label, value]) => `
+    <div class="shipment-contact-field">
+      ${homepageContactIcon(icon)}
+      <div><span>${label}</span><strong>${escapeHtml(homepageHasContactValue(value) ? value : 'Not provided')}</strong></div>
+    </div>
+  `).join('');
+
+  return `
+    <section class="shipment-party-card">
+      <div class="shipment-party-heading">
+        ${homepageContactIcon('user')}
+        <div><span>${kind} information</span><h2>${escapeHtml(homepageHasContactValue(name) ? name : `${kind} name not provided`)}</h2></div>
+      </div>
+      <div class="shipment-contact-list">${fields}</div>
+    </section>
+  `;
+}
+
+function homepageField(label, value, fullWidth = false) {
+  const displayValue = value == null || String(value).trim() === '' ? 'Not provided' : value;
+  return `<div class="${fullWidth ? 'full' : ''}"><strong>${label}</strong><span>${escapeHtml(displayValue)}</span></div>`;
+}
+
+function homepageStatusRow(status) {
+  const statusClass = homepageStatusClass(status);
+  const indicator = homepageStatusIndicator(status);
+  return `<div><strong>Status</strong><span class="tracking-pill ${statusClass}"><span class="status-indicator status-indicator--${indicator}" aria-hidden="true"></span>${escapeHtml(homepageStatusLabel(status))}</span></div>`;
+}
+
+function homepageShipmentDate(shipment) {
+  const value = shipment.shipmentDate || shipment.createdAt;
+  if (!value) return '';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString([], { dateStyle: 'medium' });
+}
+
+function homepageLastUpdated(shipment) {
+  const latest = shipment.latestUpdate || {};
+  const updateDate = [latest.date, latest.time].filter(Boolean).join(' ');
+  if (updateDate) return updateDate;
+  const latestEvent = Array.isArray(shipment.timeline)
+    ? [...shipment.timeline].sort((a, b) => homepageTimelineSortValue(b) - homepageTimelineSortValue(a))[0]
+    : null;
+  if (latestEvent) {
+    const eventDate = [formatHomepageEventDate(latestEvent), formatHomepageEventTime(latestEvent)].filter(Boolean).join(' ');
+    if (eventDate) return eventDate;
+  }
+  if (!shipment.updatedAt) return 'Not available';
+  const date = new Date(shipment.updatedAt);
+  return Number.isNaN(date.getTime()) ? 'Not available' : date.toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 function renderHomepageCustomSections(shipment) {
@@ -139,55 +218,14 @@ function renderHomepageCustomSections(shipment) {
 
   if (!sections.length) return '';
 
-  return `
-    <section class="homepage-custom-sections" aria-label="Additional shipment details">
-      <h4>Additional shipment details</h4>
-      ${sections.map((section) => `
-        <div class="homepage-custom-section">
-          ${section.title ? `<h5>${escapeHtml(section.title)}</h5>` : ''}
-          <div class="homepage-custom-fields">
-            ${section.fields.map((field) => `
-              <div><strong>${escapeHtml(field.label || 'Detail')}</strong><span>${escapeHtml(field.value || '')}</span></div>
-            `).join('')}
-          </div>
-        </div>
-      `).join('')}
+  return sections.map((section) => `
+    <section class="tracking-card shipment-custom-card" aria-label="${escapeHtml(section.title || 'Additional shipment details')}">
+      <div class="tracking-card-header"><h2>${escapeHtml(section.title || 'Additional shipment details')}</h2></div>
+      <div class="shipment-details-grid">
+        ${section.fields.map((field) => homepageField(field.label || 'Detail', field.value)).join('')}
+      </div>
     </section>
-  `;
-}
-
-function renderHomepageQuickEntryFields(shipment) {
-  const currentLocationText = shipment.currentLocationName || shipment.currentPackageLocation || shipment.currentLocation || '';
-  return [
-    ['Origin', shipment.originName || shipment.origin],
-    ['Destination', shipment.destinationName || shipment.destination],
-    ['Origin latitude', shipment.coordinates?.origin?.lat],
-    ['Origin longitude', shipment.coordinates?.origin?.lng],
-    ['Destination latitude', shipment.coordinates?.destination?.lat],
-    ['Destination longitude', shipment.coordinates?.destination?.lng],
-    ['Current Location', currentLocationText],
-    ['Current latitude', shipment.coordinates?.currentLocation?.lat],
-    ['Current longitude', shipment.coordinates?.currentLocation?.lng],
-    ['Estimated Delivery', shipment.estimatedDelivery],
-    ['Delivery Date', shipment.deliveryDate],
-    ['Shipment Type', shipment.shipmentType],
-    ['Carrier', shipment.carrier],
-    ['Package Description', shipment.packageDescription],
-    ['Package Weight', shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : '')],
-    ['Shipper Name', shipment.shipper?.name || shipment.senderName],
-    ['Shipper Phone', shipment.shipper?.phone],
-    ['Shipper Email', shipment.shipper?.email],
-    ['Shipper Address', shipment.shipper?.address],
-    ['Receiver Name', shipment.receiver?.name || shipment.receiverName],
-    ['Receiver Phone', shipment.receiver?.phone],
-    ['Receiver Email', shipment.receiver?.email],
-    ['Receiver Address', shipment.receiver?.address]
-  ].map(([label, value]) => buildHomepageFieldRow(label, value)).join('');
-}
-
-function formatCurrency(value) {
-  if (value == null || Number.isNaN(Number(value))) return '';
-  return `$${Number(Number(value)).toFixed(2)}`;
+  `).join('');
 }
 
 function homepageTimelineSortValue(event) {
@@ -225,7 +263,7 @@ function renderHomepageEvents(shipment) {
     const title = event.title || event.status || (isCurrent ? shipment.status : '') || 'Shipment update';
     const statusClass = homepageStatusClass(event.status || event.title || shipment.status);
     const description = event.description || event.remarks || '';
-    const location = event.location || event.currentLocationName || '';
+    const location = homepageLocationName(event.location, event.currentLocationName);
     const dateTime = [formatHomepageEventDate(event), formatHomepageEventTime(event)].filter(Boolean).join(' · ');
     return `
       <li class="homepage-event ${statusClass} ${progressClass}">
@@ -318,9 +356,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (result.success) {
         const shipment = result.data;
+        const currentStatus = shipment.status || 'In Transit';
         homepageActiveTrackingNumber = shipment.trackingNumber || trackingNumber;
 
-        const summaryRows = renderHomepageQuickEntryFields(shipment);
         const eventCount = Array.isArray(shipment.timeline) ? shipment.timeline.length : 0;
         if (!homepageTrackingRefreshTimer) {
           homepageTrackingRefreshTimer = window.setInterval(() => {
@@ -332,51 +370,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
         statusBox.classList.remove('is-loading');
         statusBox.innerHTML = `
-          <div class="tracking-result-card">
-            <div class="tracking-result-header">
-              <div>
-                <span class="tracking-result-label">Shipment tracking</span>
-                <h3>${escapeHtml(shipment.trackingNumber || trackingNumber)}</h3>
+          <div class="tracking-results-grid shipment-results homepage-shipment-results">
+            <section class="shipment-header-card">
+              <div class="shipment-header-topline"><span>Global Movement <span aria-hidden="true">/</span> Shipment record</span><span class="shipment-verified">${homepageContactIcon('shield')} Verified</span></div>
+              <div class="shipment-header-main">
+                <div class="shipment-number-block"><span>Tracking number</span><h2 class="tracking-number-heading">${escapeHtml(shipment.trackingNumber || trackingNumber)}</h2></div>
+                <a class="copy-button shipment-copy-button" href="track.html?tracking=${encodeURIComponent(shipment.trackingNumber || trackingNumber)}">More details</a>
               </div>
-              <span class="tracking-pill ${homepageStatusClass(shipment.status)}"><span class="status-indicator status-indicator--${homepageStatusIndicator(shipment.status)}" aria-hidden="true"></span>${escapeHtml(homepageStatusLabel(shipment.status))}</span>
+              <div class="shipment-header-meta">
+                <div><span>Current status</span><span class="tracking-pill ${homepageStatusClass(currentStatus)}"><span class="status-indicator status-indicator--${homepageStatusIndicator(currentStatus)}" aria-hidden="true"></span>${escapeHtml(homepageStatusLabel(currentStatus))}</span></div>
+                <div class="shipment-updated">${homepageContactIcon('calendar')}<span><small>Last updated</small><strong>${escapeHtml(homepageLastUpdated(shipment))}</strong></span></div>
+              </div>
+            </section>
+
+            <div class="shipment-parties">
+              ${renderHomepagePartyCard('Sender', shipment.shipper, shipment.senderName, shipment.senderLocation)}
+              ${renderHomepagePartyCard('Receiver', shipment.receiver, shipment.receiverName, shipment.receiverLocation)}
             </div>
-            <div class="tracking-result-grid">
-              ${summaryRows}
-            </div>
+
+            <section class="tracking-card shipment-details-card">
+              <div class="tracking-card-header"><div><p class="eyebrow">Shipment profile</p><h2>Shipment details</h2></div></div>
+              <div class="shipment-route-summary"><div><span>Origin</span><strong>${escapeHtml(homepageLocationName(shipment.originName, shipment.origin) || 'Not provided')}</strong></div><span class="shipment-route-arrow" aria-hidden="true">→</span><div><span>Destination</span><strong>${escapeHtml(homepageLocationName(shipment.destinationName, shipment.destination) || 'Not provided')}</strong></div></div>
+              <div class="shipment-details-grid">
+                ${homepageField('Weight', shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : shipment.cargo?.weight != null ? `${shipment.cargo.weight} kg` : 'Not provided'))}
+                ${homepageField('Type', shipment.shipmentType || shipment.cargo?.type)}
+                ${homepageField('Shipment Date', homepageShipmentDate(shipment))}
+                ${homepageStatusRow(currentStatus)}
+                ${homepageField('Current Location', homepageLocationName(shipment.currentLocationName, shipment.currentPackageLocation, shipment.currentLocation, shipment.latestUpdate?.location, shipment.deliveryLocation) || 'Not provided', true)}
+              </div>
+            </section>
+
+            <section class="tracking-card shipment-parcel-card">
+              <div class="tracking-card-header"><div><p class="eyebrow">Parcel profile</p><h2>Parcel information</h2></div></div>
+              <div class="shipment-details-grid">
+                ${homepageField('Weight', shipment.packageWeight != null ? `${shipment.packageWeight} kg` : (shipment.weight != null ? `${shipment.weight} kg` : shipment.cargo?.weight != null ? `${shipment.cargo.weight} kg` : 'Not provided'))}
+                ${homepageField('Pickup Date', shipment.pickupDate)}
+                ${homepageField('Expected Delivery', shipment.estimatedDelivery)}
+                ${homepageField('Delivery Mode', shipment.deliveryMethod || shipment.modeOfShipment || shipment.serviceType)}
+              </div>
+              ${shipment.packageDescription || shipment.description ? `<p class="shipment-description">${escapeHtml(shipment.packageDescription || shipment.description)}</p>` : ''}
+            </section>
+
             ${renderHomepageCustomSections(shipment)}
-            ${shipment.description ? `<p class="tracking-result-description">${escapeHtml(shipment.description)}</p>` : ''}
-            <button type="button" class="more-details-button js-toggle-shipment-events" data-expanded="false" aria-expanded="false">
-              View more shipments <span aria-hidden="true">→</span>
-            </button>
-            <section class="homepage-events hidden" aria-label="Shipment event history" aria-live="polite">
-              <div class="homepage-events-header">
-                <h4>Shipment events</h4>
-                <span>${eventCount} ${eventCount === 1 ? 'event' : 'events'}</span>
-              </div>
-              <div class="homepage-events-body">
-                ${renderHomepageEvents(shipment)}
-              </div>
+
+            <section class="tracking-card timeline-card shipment-history-card">
+              <div class="tracking-card-header"><div><p class="eyebrow">Milestone history</p><h2>Tracking timeline</h2></div><span class="shipment-event-count">${eventCount} ${eventCount === 1 ? 'event' : 'events'}</span></div>
+              ${renderHomepageEvents(shipment)}
             </section>
           </div>
         `;
-
-        const toggleButton = statusBox.querySelector('.js-toggle-shipment-events');
-        const shipmentEvents = statusBox.querySelector('.homepage-events');
-
-        if (toggleButton && shipmentEvents) {
-          toggleButton.addEventListener('click', () => {
-            const expanded = toggleButton.dataset.expanded === 'true';
-            const shouldExpand = !expanded;
-
-            toggleButton.dataset.expanded = String(shouldExpand);
-            toggleButton.setAttribute('aria-expanded', String(shouldExpand));
-            shipmentEvents.classList.toggle('hidden', !shouldExpand);
-
-            toggleButton.innerHTML = shouldExpand
-              ? 'Hide shipment events <span aria-hidden="true">↑</span>'
-              : 'View more shipments <span aria-hidden="true">→</span>';
-          });
-        }
 
         if (shipment.coordinates && (shipment.coordinates.origin || shipment.coordinates.currentLocation || shipment.coordinates.destination)) {
           showHomepageMap();
@@ -403,6 +445,8 @@ function showHomepageMap() {
   if (!mapEl) return;
   mapEl.classList.remove('hidden');
   mapEl.setAttribute('aria-hidden', 'false');
+  const heading = document.getElementById('homepage-map-heading');
+  heading?.classList.remove('hidden');
 }
 
 function hideHomepageMap() {
@@ -410,6 +454,8 @@ function hideHomepageMap() {
   if (!mapEl) return;
   mapEl.classList.add('hidden');
   mapEl.setAttribute('aria-hidden', 'true');
+  const heading = document.getElementById('homepage-map-heading');
+  heading?.classList.add('hidden');
 }
 
 function initializeHomepageMap(lat, lng) {
